@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Общество — Рейтинг клуба</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Montserrat:wght@300;400;500;600&display=swap');
+
+:root {
+  --dark: #1C1208;
+  --dark2: #251A0A;
+  --dark3: #2E2010;
+  --gold: #C9A96E;
+  --gold2: #E8D5A3;
+  --gold3: #A07840;
+  --bordeaux: #6B1F2A;
+  --bordeaux2: #8B2535;
+  --green: #1E3D2A;
+  --beige: #F5EDD8;
+  --beige2: #EDE0C4;
+  --text: #F0E6D0;
+  --text2: #C4AA80;
+  --text3: #8A7060;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--dark); font-family:'Montserrat',sans-serif; min-height:100vh; color:var(--text); overflow-x:hidden; }
+
+/* PARTICLES */
+#particles { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; overflow:hidden; }
+.particle { position:absolute; opacity:0; font-size:14px; animation:floatUp linear infinite; }
+@keyframes floatUp {
+  0% { transform:translateY(100vh) rotate(0deg); opacity:0; }
+  10% { opacity:0.15; }
+  90% { opacity:0.08; }
+  100% { transform:translateY(-100px) rotate(360deg); opacity:0; }
+}
+
+/* HEADER */
+.header { position:relative; z-index:10; background:linear-gradient(180deg, #0D0804 0%, var(--dark) 100%); padding:28px 16px 0; text-align:center; border-bottom:1px solid var(--gold3); }
+@keyframes logoPulse { 0%,100%{box-shadow:0 0 0 0 rgba(201,169,110,0.3)} 50%{box-shadow:0 0 20px 4px rgba(201,169,110,0.15)} }
+
+.header-title { font-family:'Cormorant Garamond',serif; font-size:38px; color:var(--gold2); font-weight:700; letter-spacing:6px; line-height:1; }
+.header-sub { font-size:9px; color:var(--gold3); letter-spacing:4px; margin-top:4px; padding-bottom:20px; }
+.header-line { height:1px; background:linear-gradient(90deg,transparent,var(--gold),transparent); margin:0 40px; }
+.header-tagline { background:var(--bordeaux); padding:9px; font-size:10px; color:var(--beige2); letter-spacing:2px; text-align:center; }
+
+/* TABS */
+.tabs { display:flex; background:var(--dark2); border-bottom:1px solid var(--gold3); position:relative; z-index:10; }
+.tab { flex:1; min-width:70px; padding:12px 6px; text-align:center; font-size:10px; letter-spacing:2px; color:var(--text3); cursor:pointer; border:none; background:none; font-family:'Montserrat',sans-serif; transition:color 0.3s; white-space:nowrap; }
+.tab.active { color:var(--gold); border-bottom:2px solid var(--gold); }
+.tab:hover { color:var(--text2); }
+
+/* PAGES */
+.page { display:none; padding:16px; min-height:calc(100vh - 160px); position:relative; z-index:10; }
+.page.active { display:block; }
+
+/* MONTH BAR */
+.month-bar { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+.month-label { font-family:'Cormorant Garamond',serif; font-size:20px; color:var(--gold); letter-spacing:3px; font-weight:600; }
+.month-nav { background:var(--dark3); color:var(--gold); border:1px solid var(--gold3); width:42px; height:42px; font-size:18px; cursor:pointer; border-radius:6px; transition:all 0.2s; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.month-nav:hover { background:var(--gold3); color:var(--dark); }
+.month-nav:active { transform:scale(0.93); background:var(--gold3); color:var(--dark); }
+.last-updated { font-size:9px; color:var(--text3); text-align:center; margin-bottom:10px; letter-spacing:1px; }
+
+/* SEARCH */
+.search-bar { margin-bottom:14px; }
+.search-bar input { width:100%; padding:10px 14px; border:1px solid var(--gold3); border-radius:4px; font-family:'Montserrat',sans-serif; font-size:13px; color:var(--text); background:var(--dark2); letter-spacing:1px; transition:border 0.2s; }
+.search-bar input::placeholder { color:var(--text3); }
+.search-bar input:focus { outline:none; border-color:var(--gold); }
+
+/* ANNOUNCE */
+.announce-box { background:var(--bordeaux); border:1px solid var(--bordeaux2); border-radius:6px; padding:14px 16px; margin-bottom:14px; display:none; animation:slideDown 0.4s ease; }
+@keyframes slideDown { from{opacity:0;transform:translateY(-10px)} to{opacity:1;transform:translateY(0)} }
+.announce-box .ann-label { font-size:9px; color:var(--gold2); letter-spacing:3px; margin-bottom:6px; }
+.announce-box .ann-text { font-size:13px; color:var(--beige); line-height:1.6; }
+
+/* RATING TABLE */
+.rating-table { width:100%; border-collapse:collapse; }
+.rating-table th { background:var(--dark3); color:var(--gold3); font-size:9px; letter-spacing:2px; padding:10px 6px; text-align:center; font-weight:500; border-bottom:1px solid var(--gold3); }
+.rating-table th:first-child { text-align:left; padding-left:14px; }
+.rating-table td { padding:12px 6px; text-align:center; font-size:13px; border-bottom:1px solid rgba(201,169,110,0.1); transition:background 0.2s; }
+.rating-table td:first-child { text-align:left; padding-left:14px; }
+.rating-table tbody tr { opacity:0; animation:rowFadeIn 0.5s ease forwards; }
+@keyframes rowFadeIn { from{opacity:0;transform:translateX(-16px)} to{opacity:1;transform:translateX(0)} }
+
+.place-1 td { background:rgba(201,169,110,0.12) !important; }
+.place-2 td { background:rgba(180,180,190,0.08) !important; }
+.place-3 td { background:rgba(107,31,42,0.15) !important; }
+.place-1 .player-name { color:var(--gold2) !important; }
+
+.gold-glow { animation:goldGlow 2s ease-in-out infinite; }
+@keyframes goldGlow { 0%,100%{text-shadow:0 0 0 transparent} 50%{text-shadow:0 0 12px rgba(201,169,110,0.6)} }
+
+.medal { font-size:18px; }
+.player-name { font-weight:600; font-size:13px; color:var(--text); cursor:pointer; letter-spacing:0.5px; transition:color 0.2s; }
+.player-name:hover { color:var(--gold); }
+.player-games { font-size:10px; color:var(--text3); margin-top:1px; }
+.points-big { font-size:19px; font-weight:700; color:var(--gold); font-family:'Cormorant Garamond',serif; }
+.top10-badge { background:var(--bordeaux); color:var(--beige2); font-size:8px; padding:2px 7px; border-radius:10px; letter-spacing:1px; margin-left:5px; vertical-align:middle; border:1px solid var(--bordeaux2); animation:badgePulse 2.5s ease-in-out infinite; }
+@keyframes badgePulse { 0%,100%{opacity:1} 50%{opacity:0.7} }
+.delta-up { color:#5BAD6F; font-size:10px; font-weight:700; margin-left:3px; }
+.delta-down { color:#C0404A; font-size:10px; font-weight:700; margin-left:3px; }
+.delta-same { color:var(--text3); font-size:10px; margin-left:3px; }
+.title-badge { font-size:9px; color:var(--gold3); display:block; margin-top:2px; letter-spacing:0.5px; }
+
+/* TOP10 BANNER */
+.top10-banner { margin-top:24px; background:var(--dark2); border:1px solid var(--gold3); border-radius:8px; padding:24px 16px; text-align:center; position:relative; overflow:hidden; animation:bannerAppear 0.8s ease; }
+@keyframes bannerAppear { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+.top10-banner::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,var(--gold),transparent); }
+.tb-label { font-size:9px; color:var(--gold3); letter-spacing:4px; margin-bottom:8px; }
+.tb-number { font-family:'Cormorant Garamond',serif; font-size:56px; color:var(--gold); font-weight:700; line-height:1; animation:numberShine 3s ease-in-out infinite; }
+@keyframes numberShine { 0%,100%{color:var(--gold)} 50%{color:var(--gold2)} }
+.tb-sub { font-size:10px; color:var(--text2); letter-spacing:2px; margin-top:4px; }
+.tb-house { display:inline-block; margin-top:14px; background:var(--bordeaux); color:var(--beige2); font-size:11px; padding:8px 20px; border-radius:20px; letter-spacing:1px; border:1px solid var(--bordeaux2); }
+
+/* EMPTY & LOADING */
+.empty-state { text-align:center; padding:60px 20px; color:var(--text3); }
+.empty-state .big { font-size:48px; margin-bottom:14px; opacity:0.6; }
+.empty-state p { font-size:13px; line-height:1.7; letter-spacing:0.5px; }
+.loading { text-align:center; padding:50px; color:var(--gold3); font-size:11px; letter-spacing:3px; }
+.loading-dot { animation:blink 1.4s infinite; display:inline-block; }
+.loading-dot:nth-child(2) { animation-delay:0.2s; }
+.loading-dot:nth-child(3) { animation-delay:0.4s; }
+@keyframes blink { 0%,80%,100%{opacity:0} 40%{opacity:1} }
+
+/* PROFILE MODAL */
+.modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:500; display:none; overflow-y:auto; backdrop-filter:blur(4px); }
+.modal { background:var(--dark2); margin:24px auto; max-width:480px; border-radius:10px; border:1px solid var(--gold3); overflow:hidden; animation:modalIn 0.35s ease; }
+@keyframes modalIn { from{opacity:0;transform:scale(0.92) translateY(20px)} to{opacity:1;transform:scale(1) translateY(0)} }
+.modal-header { background:var(--dark3); padding:18px 16px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--gold3); }
+.modal-header h2 { font-family:'Cormorant Garamond',serif; font-size:22px; color:var(--gold2); font-weight:700; letter-spacing:2px; }
+.modal-close { background:none; border:1px solid var(--gold3); color:var(--gold3); font-size:16px; cursor:pointer; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; transition:all 0.2s; }
+.modal-close:hover { border-color:var(--gold); color:var(--gold); }
+.modal-body { padding:16px; }
+.profile-stat { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid rgba(201,169,110,0.15); font-size:13px; }
+.profile-stat:last-child { border-bottom:none; }
+.profile-stat .ps-label { color:var(--text3); letter-spacing:0.5px; }
+.profile-stat .ps-val { font-weight:600; color:var(--text); }
+.ph-item { display:flex; justify-content:space-between; padding:8px 10px; border-radius:4px; font-size:11px; margin-bottom:4px; background:var(--dark3); border:1px solid rgba(201,169,110,0.1); }
+.ph-item .phi-day { color:var(--text3); }
+.ph-item .phi-place { color:var(--text); font-weight:600; }
+.ph-item .phi-pts { color:var(--gold); font-weight:700; }
+
+/* ADMIN */
+.admin-section { background:var(--dark2); border:1px solid rgba(201,169,110,0.2); border-radius:8px; padding:16px; margin-bottom:16px; }
+.admin-section h3 { font-size:9px; color:var(--gold3); letter-spacing:3px; margin-bottom:14px; border-bottom:1px solid rgba(201,169,110,0.15); padding-bottom:10px; }
+.form-row { margin-bottom:12px; }
+.form-row label { display:block; font-size:9px; color:var(--text3); letter-spacing:2px; margin-bottom:5px; }
+.form-row select, .form-row input, .form-row textarea {
+  width:100%; padding:11px 12px; border:1px solid rgba(201,169,110,0.25); border-radius:4px;
+  font-family:'Montserrat',sans-serif; font-size:13px; color:var(--text); background:var(--dark3);
+  appearance:none; transition:border 0.2s;
+}
+.form-row select:focus, .form-row input:focus, .form-row textarea:focus { outline:none; border-color:var(--gold); }
+.form-row textarea { height:80px; resize:vertical; }
+.form-row select option { background:var(--dark2); }
+
+.btn-gold { width:100%; padding:14px; background:var(--gold3); color:var(--dark); border:none; font-family:'Montserrat',sans-serif; font-size:11px; letter-spacing:3px; cursor:pointer; border-radius:4px; margin-top:4px; font-weight:600; transition:all 0.25s; }
+.btn-gold:hover { background:var(--gold); transform:translateY(-1px); }
+.btn-gold:active { transform:translateY(0); }
+.btn-dark { width:100%; padding:12px; background:var(--dark3); color:var(--gold3); border:1px solid rgba(201,169,110,0.25); font-family:'Montserrat',sans-serif; font-size:10px; letter-spacing:2px; cursor:pointer; border-radius:4px; margin-top:8px; transition:all 0.2s; }
+.btn-dark:hover { border-color:var(--gold); color:var(--gold); }
+.btn-sm { padding:5px 10px; background:var(--dark); color:var(--text3); border:1px solid rgba(201,169,110,0.2); font-family:'Montserrat',sans-serif; font-size:10px; cursor:pointer; border-radius:3px; transition:all 0.2s; }
+.btn-sm:hover { border-color:var(--bordeaux2); color:var(--bordeaux2); }
+
+.points-preview { background:var(--dark3); border:1px solid var(--gold3); border-radius:6px; padding:14px; text-align:center; margin-top:12px; display:none; animation:slideDown 0.3s ease; }
+.points-preview .pts { font-family:'Cormorant Garamond',serif; font-size:40px; font-weight:700; color:var(--gold); line-height:1; }
+.points-preview .pts-label { font-size:9px; color:var(--text3); letter-spacing:2px; margin-top:4px; }
+.warn-box { background:rgba(107,31,42,0.3); border:1px solid var(--bordeaux2); border-radius:4px; padding:10px 12px; font-size:11px; color:var(--beige2); margin-top:10px; display:none; }
+
+.toast { position:fixed; bottom:28px; left:50%; transform:translateX(-50%); background:var(--dark3); color:var(--gold2); padding:13px 26px; border-radius:6px; font-size:12px; border:1px solid var(--gold3); display:none; z-index:600; text-align:center; min-width:220px; letter-spacing:1px; animation:toastIn 0.3s ease; }
+@keyframes toastIn { from{opacity:0;transform:translateX(-50%) translateY(10px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+
+.players-list { display:flex; flex-direction:column; gap:8px; }
+.player-item { display:flex; justify-content:space-between; align-items:center; padding:10px 12px; background:var(--dark3); border:1px solid rgba(201,169,110,0.15); border-radius:4px; transition:border 0.2s; }
+.player-item:hover { border-color:rgba(201,169,110,0.35); }
+.player-item-name { font-size:13px; color:var(--text); font-weight:500; }
+.btn-remove { background:none; border:1px solid rgba(192,64,74,0.4); color:rgba(192,64,74,0.8); padding:4px 10px; border-radius:3px; font-size:10px; cursor:pointer; font-family:'Montserrat',sans-serif; transition:all 0.2s; }
+.btn-remove:hover { border-color:#C0404A; color:#C0404A; }
+
+.history-list { display:flex; flex-direction:column; gap:6px; max-height:420px; overflow-y:auto; }
+.history-list::-webkit-scrollbar { width:3px; }
+.history-list::-webkit-scrollbar-thumb { background:var(--gold3); border-radius:3px; }
+.history-item { display:flex; justify-content:space-between; align-items:center; padding:9px 12px; background:var(--dark3); border:1px solid rgba(201,169,110,0.1); border-radius:4px; font-size:12px; }
+.history-item .hi-name { font-weight:600; color:var(--text); }
+.history-item .hi-detail { color:var(--text3); font-size:10px; }
+.history-item .hi-date { color:var(--text3); font-size:9px; opacity:0.7; }
+.history-item .hi-pts { color:var(--gold); font-weight:700; font-family:'Cormorant Garamond',serif; font-size:16px; }
+.btn-undo { background:none; border:none; color:var(--text3); font-size:10px; cursor:pointer; font-family:'Montserrat',sans-serif; text-decoration:underline; transition:color 0.2s; }
+.btn-undo:hover { color:var(--bordeaux2); }
+
+.tournament-players { display:flex; flex-direction:column; gap:8px; margin-bottom:12px; }
+.tp-row { display:flex; gap:8px; align-items:center; background:var(--dark3); border:1px solid rgba(201,169,110,0.15); border-radius:4px; padding:8px 10px; animation:rowFadeIn 0.3s ease; }
+.tp-num { font-family:'Cormorant Garamond',serif; font-size:16px; color:var(--gold); font-weight:700; min-width:24px; }
+.tp-select { flex:1; padding:7px 8px; border:1px solid rgba(201,169,110,0.2); border-radius:4px; font-family:'Montserrat',sans-serif; font-size:12px; color:var(--text); background:var(--dark2); }
+.tp-select option { background:var(--dark2); }
+
+.stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
+.stat-card { background:var(--dark3); border:1px solid rgba(201,169,110,0.15); border-radius:6px; padding:14px; text-align:center; }
+.stat-card .sc-val { font-family:'Cormorant Garamond',serif; font-size:28px; font-weight:700; color:var(--gold); }
+.stat-card .sc-label { font-size:8px; color:var(--text3); letter-spacing:2px; margin-top:4px; }
+.day-bars { display:flex; flex-direction:column; gap:8px; }
+.day-bar-row { display:flex; align-items:center; gap:8px; font-size:11px; }
+.day-bar-row .db-label { min-width:90px; color:var(--text3); font-size:10px; }
+.day-bar-outer { flex:1; background:var(--dark3); border-radius:3px; height:14px; overflow:hidden; }
+.day-bar-inner { background:var(--gold3); height:14px; border-radius:3px; min-width:2px; transition:width 1s ease; }
+.day-bar-row .db-count { min-width:24px; text-align:right; color:var(--text); font-weight:600; font-size:11px; }
+
+.admin-lock { text-align:center; padding:40px 20px; }
+.pin-title { font-family:'Cormorant Garamond',serif; font-size:20px; color:var(--gold); letter-spacing:3px; margin-bottom:14px; }
+.pin-input { text-align:center; letter-spacing:12px; font-size:28px; width:170px; margin:0 auto 8px; display:block; background:var(--dark3); border:1px solid var(--gold3); color:var(--gold); border-radius:6px; padding:12px; font-family:'Montserrat',sans-serif; }
+.pin-hint { font-size:10px; color:var(--text3); letter-spacing:1px; }
+.sync-bar { font-size:9px; text-align:center; padding:7px; letter-spacing:2px; margin-bottom:12px; border-radius:4px; }
+.sync-ok { background:rgba(30,61,42,0.5); color:#5BAD6F; border:1px solid rgba(91,173,111,0.3); }
+.sync-err { background:rgba(107,31,42,0.3); color:#C0404A; border:1px solid rgba(192,64,74,0.3); }
+.sync-loading { background:var(--dark3); color:var(--gold3); border:1px solid rgba(201,169,110,0.2); }
+
+/* ABOUT PAGE */
+.about-section { background:var(--dark2); border:1px solid rgba(201,169,110,0.2); border-radius:8px; padding:16px; margin-bottom:16px; }
+.about-section h3 { font-size:9px; color:var(--gold3); letter-spacing:3px; margin-bottom:12px; border-bottom:1px solid rgba(201,169,110,0.15); padding-bottom:10px; }
+.about-section p { font-size:13px; color:var(--text2); line-height:1.7; margin-bottom:8px; }
+.day-schedule { display:flex; flex-direction:column; gap:8px; }
+.ds-row { display:flex; gap:12px; padding:11px 12px; border-radius:5px; background:var(--dark3); border:1px solid rgba(201,169,110,0.1); align-items:center; }
+.ds-day { font-weight:600; font-size:12px; color:var(--text); min-width:90px; }
+.ds-info { font-size:11px; color:var(--text3); line-height:1.5; flex:1; }
+.ds-pts { font-family:'Cormorant Garamond',serif; font-size:16px; font-weight:700; color:var(--gold); min-width:50px; text-align:right; }
+.rules-list { list-style:none; display:flex; flex-direction:column; gap:10px; }
+.rules-list li { font-size:12px; color:var(--text2); padding-left:18px; position:relative; line-height:1.6; }
+.rules-list li:before { content:"—"; position:absolute; left:0; color:var(--gold3); }
+</style>
+</head>
+<body>
+
+<!-- Floating card particles -->
+<div id="particles"></div>
+
+<div class="header">
+  <div class="header-title">ОБЩЕСТВО</div>
+  <div class="header-line"></div>
+  <div class="header-sub">БОЛЬШЕ ЧЕМ ИГРА</div>
+</div>
+<div class="header-tagline">РЕЙТИНГ КЛУБА · ИГРАЕШЬ — ЗАРАБАТЫВАЕШЬ ОЧКИ</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="showPage('rating',this)">РЕЙТИНГ</button>
+  <button class="tab" onclick="showPage('about',this)">О КЛУБЕ</button>
+  <button class="tab" onclick="showPage('admin',this)">АДМИН</button>
+</div>
+
+<!-- RATING -->
+<div class="page active" id="page-rating">
+  <div class="month-bar">
+    <button class="month-nav" onclick="changeMonth(-1)">◀</button>
+    <div class="month-label" id="month-label"></div>
+    <button class="month-nav" onclick="changeMonth(1)">▶</button>
+  </div>
+  <div class="last-updated" id="last-updated"></div>
+  <div class="announce-box" id="announce-box">
+    <div class="ann-label">ОБЪЯВЛЕНИЕ</div>
+    <div class="ann-text" id="announce-text"></div>
+  </div>
+  <div class="search-bar">
+    <input type="text" id="search-input" placeholder="Поиск игрока..." oninput="renderRating()">
+  </div>
+  <div id="rating-content">
+    <div class="loading">ЗАГРУЗКА<span class="loading-dot">.</span><span class="loading-dot">.</span><span class="loading-dot">.</span></div>
+  </div>
+  <div id="top10-banner" style="display:none;">
+    <div class="top10-banner">
+      <div class="tb-label">ФИНАЛ МЕСЯЦА</div>
+      <div class="tb-number">10</div>
+      <div class="tb-sub">ЛУЧШИХ ИГРОКОВ РЕЙТИНГА</div>
+      <div class="tb-house">🏡 ФИНАЛ В ЗАГОРОДНОМ ДОМЕ</div>
+    </div>
+  </div>
+</div>
+
+<!-- ABOUT -->
+<div class="page" id="page-about">
+  <div class="about-section">
+    <h3>О КЛУБЕ</h3>
+    <p>Общество — покерный клуб в Анапе. Мы играем каждый день, строим сообщество и ценим атмосферу. Покер здесь — больше чем игра.</p>
+    <p>До 30 игроков за вечер. Бронь обязательна — пиши в личные сообщения.</p>
+  </div>
+  <div class="about-section">
+    <h3>РАСПИСАНИЕ НЕДЕЛИ</h3>
+    <div class="day-schedule">
+      <div class="ds-row"><span class="ds-day">Понедельник</span><span class="ds-info">Фриролл</span><span class="ds-pts">70</span></div>
+      <div class="ds-row"><span class="ds-day">Вторник</span><span class="ds-info">Глубокая игра</span><span class="ds-pts">90</span></div>
+      <div class="ds-row" style="border-color:rgba(201,169,110,0.4);background:rgba(201,169,110,0.06)"><span class="ds-day" style="color:var(--gold)">Среда ×2</span><span class="ds-info" style="color:var(--text2)">Х2 Рейтинг</span><span class="ds-pts">140</span></div>
+      <div class="ds-row"><span class="ds-day">Четверг</span><span class="ds-info">Социальный день</span><span class="ds-pts">90</span></div>
+      <div class="ds-row"><span class="ds-day">Пятница</span><span class="ds-info">День экшена</span><span class="ds-pts">110</span></div>
+      <div class="ds-row" style="background:var(--bordeaux);border-color:var(--bordeaux2)"><span class="ds-day" style="color:var(--beige2)">Суббота</span><span class="ds-info" style="color:rgba(245,237,216,0.7)">Главный турнир</span><span class="ds-pts" style="color:var(--gold2)">160</span></div>
+      <div class="ds-row"><span class="ds-day">Воскресенье</span><span class="ds-info">Последний шанс</span><span class="ds-pts">120</span></div>
+    </div>
+  </div>
+  <div class="about-section">
+    <h3>ПРАВИЛА РЕЙТИНГА</h3>
+    <ul class="rules-list">
+      <li>Очки начисляются за занятое место в каждом турнире</li>
+      <li>1 место — 100% очков дня, 2 место — 80%, 3 место — 65% и далее</li>
+      <li>Просто участие — +15 очков</li>
+      <li>Ребаи и аддоны не влияют на рейтинг</li>
+      <li>Среда даёт двойные очки (максимум 140)</li>
+      <li>Суббота — максимум очков за неделю (160)</li>
+      <li>ТОП-10 лучших игроков месяца едут на финал в загородный дом</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div class="page" id="page-admin">
+  <div id="admin-lock-screen" class="admin-section">
+    <div class="admin-lock">
+      <div class="pin-title">КОД ДОСТУПА</div>
+      <input type="password" inputmode="numeric" maxlength="4" class="pin-input" id="pin-input" placeholder="••••">
+      <div class="pin-hint">PIN-код для администратора</div>
+      <button class="btn-gold" style="margin-top:18px;max-width:200px;margin-left:auto;margin-right:auto;display:block;" onclick="checkPin()">ВОЙТИ</button>
+      <div id="pin-error" style="color:#C0404A;font-size:11px;margin-top:10px;display:none;letter-spacing:1px;">НЕВЕРНЫЙ КОД</div>
+    </div>
+  </div>
+
+  <div id="admin-content" style="display:none;">
+    <div class="sync-bar sync-loading" id="sync-bar">● ПОДКЛЮЧЕНИЕ К ОБЛАКУ</div>
+
+    <div class="admin-section">
+      <h3>ОБЪЯВЛЕНИЕ ДЛЯ ИГРОКОВ</h3>
+      <div class="form-row">
+        <textarea id="ann-input" placeholder="Напиши объявление — оно появится на главной для всех. Оставь пустым чтобы убрать."></textarea>
+      </div>
+      <button class="btn-dark" onclick="saveAnnouncement()">СОХРАНИТЬ ОБЪЯВЛЕНИЕ</button>
+    </div>
+
+    <div class="admin-section">
+      <h3>ВНЕСТИ ИТОГИ ТУРНИРА</h3>
+      <div class="form-row">
+        <label>ДАТА ТУРНИРА</label>
+        <input type="date" id="sel-date">
+      </div>
+      <div class="form-row">
+        <label>ДЕНЬ НЕДЕЛИ</label>
+        <select id="sel-day">
+          <option value="">— выберите день —</option>
+          <option value="70">Понедельник (макс. 70 очков)</option>
+          <option value="90">Вторник (макс. 90 очков)</option>
+          <option value="140">Среда — Х2 (макс. 140 очков)</option>
+          <option value="90">Четверг (макс. 90 очков)</option>
+          <option value="110">Пятница (макс. 110 очков)</option>
+          <option value="160">Суббота — главный (макс. 160 очков)</option>
+          <option value="120">Воскресенье (макс. 120 очков)</option>
+        </select>
+      </div>
+      <div style="font-size:9px;color:var(--gold3);letter-spacing:2px;margin-bottom:10px;">МЕСТА ИГРОКОВ (1 место сверху)</div>
+      <div class="tournament-players" id="tournament-players"></div>
+      <button class="btn-dark" onclick="addTournamentRow()" style="margin-bottom:12px;">+ ДОБАВИТЬ ИГРОКА</button>
+      <div class="warn-box" id="dup-warn">⚠️ Некоторые игроки уже внесены за этот день</div>
+      <button class="btn-gold" onclick="saveTournament()">СОХРАНИТЬ ТУРНИР</button>
+    </div>
+
+    <div class="admin-section">
+      <h3>БЫСТРОЕ НАЧИСЛЕНИЕ</h3>
+      <div class="form-row">
+        <label>ИГРОК</label>
+        <select id="q-player"><option value="">— выберите игрока —</option></select>
+      </div>
+      <div class="form-row">
+        <label>ДЕНЬ</label>
+        <select id="q-day" onchange="updateQuickPreview()">
+          <option value="">— день —</option>
+          <option value="70">Понедельник (70)</option>
+          <option value="90">Вторник (90)</option>
+          <option value="140">Среда Х2 (140)</option>
+          <option value="90">Четверг (90)</option>
+          <option value="110">Пятница (110)</option>
+          <option value="160">Суббота (160)</option>
+          <option value="120">Воскресенье (120)</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>МЕСТО</label>
+        <select id="q-place" onchange="updateQuickPreview()">
+          <option value="">— место —</option>
+          <option value="100">1 место</option>
+          <option value="80">2 место</option>
+          <option value="65">3 место</option>
+          <option value="50">4 место</option>
+          <option value="40">5 место</option>
+          <option value="30">6 место</option>
+          <option value="25">7 место</option>
+          <option value="20">8 место</option>
+          <option value="15">9 место</option>
+          <option value="participation">Участие</option>
+        </select>
+      </div>
+      <div class="points-preview" id="q-preview">
+        <div class="pts" id="q-pts">0</div>
+        <div class="pts-label">ОЧКОВ БУДЕТ НАЧИСЛЕНО</div>
+      </div>
+      <button class="btn-gold" onclick="quickAdd()">НАЧИСЛИТЬ</button>
+    </div>
+
+    <div class="admin-section">
+      <h3>ПОСЛЕДНИЕ ЗАПИСИ</h3>
+      <div class="history-list" id="history-list">
+        <div style="text-align:center;color:var(--text3);font-size:12px;padding:20px;">Записей пока нет</div>
+      </div>
+    </div>
+
+    <div class="admin-section">
+      <h3>СПИСОК ИГРОКОВ</h3>
+      <div class="players-list" id="players-list"></div>
+      <div class="form-row" style="margin-top:12px;">
+        <label>ДОБАВИТЬ ИГРОКА</label>
+        <input type="text" id="new-player-input" placeholder="Имя игрока">
+      </div>
+      <button class="btn-dark" onclick="addPlayer()">+ ДОБАВИТЬ</button>
+    </div>
+
+    <div class="admin-section">
+      <h3>СТАТИСТИКА МЕСЯЦА</h3>
+      <div class="stats-grid" id="stats-grid"></div>
+      <div style="font-size:9px;color:var(--gold3);letter-spacing:2px;margin-bottom:10px;">ПОПУЛЯРНОСТЬ ПО ДНЯМ</div>
+      <div class="day-bars" id="day-bars"></div>
+    </div>
+
+    <div class="admin-section">
+      <h3>ЭКСПОРТ</h3>
+      <button class="btn-dark" onclick="exportCSV()">СКАЧАТЬ РЕЙТИНГ МЕСЯЦА (CSV)</button>
+    </div>
+
+    <div class="admin-section">
+      <h3>СМЕНИТЬ PIN-КОД</h3>
+      <div class="form-row"><label>ТЕКУЩИЙ КОД</label><input type="password" inputmode="numeric" maxlength="4" id="pin-current" placeholder="••••"></div>
+      <div class="form-row"><label>НОВЫЙ КОД</label><input type="password" inputmode="numeric" maxlength="4" id="pin-new" placeholder="••••"></div>
+      <div class="form-row"><label>ПОВТОРИТЬ</label><input type="password" inputmode="numeric" maxlength="4" id="pin-confirm" placeholder="••••"></div>
+      <div id="pin-change-error" style="color:#C0404A;font-size:11px;margin-bottom:8px;display:none;letter-spacing:1px;"></div>
+      <button class="btn-dark" onclick="changePin()">СМЕНИТЬ КОД</button>
+    </div>
+
+    <div style="text-align:center;margin:8px 0 24px;">
+      <button class="btn-undo" onclick="logout()" style="color:var(--text3);font-size:10px;letter-spacing:1px;background:none;border:none;cursor:pointer;text-decoration:underline;">Выйти из админки</button>
+    </div>
+  </div>
+</div>
+
+<!-- Profile Modal -->
+<div class="modal-overlay" id="profile-modal" onclick="closeProfile(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="profile-name"></h2>
+      <button class="modal-close" onclick="document.getElementById('profile-modal').style.display='none'">✕</button>
+    </div>
+    <div class="modal-body" id="profile-body"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const BIN_ID = '6a02cd9a250b1311c339aece';
+const API_KEY = '$2a$10$9nMnWc9CjefdUnq1tvyLj.BVKQF.UdoETackGcHVs9.qBHJG6rAu.';
+const BIN_URL = 'https://api.jsonbin.io/v3/b/' + BIN_ID;
+const MONTHS = ['ЯНВАРЬ','ФЕВРАЛЬ','МАРТ','АПРЕЛЬ','МАЙ','ИЮНЬ','ИЮЛЬ','АВГУСТ','СЕНТЯБРЬ','ОКТЯБРЬ','НОЯБРЬ','ДЕКАБРЬ'];
+const MONTHS_SHORT = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+const DAY_NAMES = ['Понедельник','Вторник','Среда Х2','Четверг','Пятница','Суббота','Воскресенье'];
+const SUITS = ['♠','♥','♦','♣'];
+
+let now = new Date();
+let currentMonth = now.getMonth();
+let currentYear = now.getFullYear();
+let db = null;
+let prevRating = {};
+
+// Particles
+function initParticles() {
+  let cont = document.getElementById('particles');
+  for (let i = 0; i < 18; i++) {
+    let p = document.createElement('div');
+    p.className = 'particle';
+    p.textContent = SUITS[Math.floor(Math.random()*4)];
+    p.style.left = Math.random()*100 + '%';
+    p.style.fontSize = (10 + Math.random()*12) + 'px';
+    p.style.color = Math.random() > 0.5 ? '#C9A96E' : '#6B1F2A';
+    p.style.animationDuration = (12 + Math.random()*20) + 's';
+    p.style.animationDelay = (Math.random()*15) + 's';
+    cont.appendChild(p);
+  }
+}
+
+// Counter animation
+function animateCounter(el, target, duration) {
+  let start = 0;
+  let step = target / (duration / 16);
+  let timer = setInterval(() => {
+    start += step;
+    if (start >= target) { start = target; clearInterval(timer); }
+    el.textContent = Math.round(start);
+  }, 16);
+}
+
+function getPin() { return localStorage.getItem('obshestvo_pin') || '1234'; }
+function getMonthKey(m,y) { return y+'-'+String(m+1).padStart(2,'0'); }
+function calcPoints(dayMax, placeVal) {
+  if (placeVal==='participation') return 15;
+  return Math.round(dayMax * parseInt(placeVal) / 100);
+}
+function formatDate(s) {
+  if (!s) return '';
+  let p=s.split('-');
+  return p[2]+' '+MONTHS_SHORT[parseInt(p[1])-1];
+}
+function todayStr() {
+  let d=new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
+function getPlayerTitle(name, results) {
+  let pr = results.filter(r => r.player===name);
+  if (!pr.length) return '';
+  let wins = pr.filter(r => r.placeName && r.placeName.includes('1 место')).length;
+  if (wins >= 3) return '👑 Акула';
+  let sat = pr.filter(r => r.dayName && r.dayName.includes('Суббота')).length;
+  if (sat >= 2) return '🏆 Король субботы';
+  if (pr.length >= 7) return '🔥 Железный игрок';
+  if (pr.length >= 4) return '⚡ Постоянный';
+  return '';
+}
+
+function getMonthRating(month, year) {
+  if (!db) return [];
+  let key = getMonthKey(month,year);
+  let results = db.results.filter(r => r.monthKey===key);
+  let map = {};
+  results.forEach(r => {
+    if (!map[r.player]) map[r.player]={points:0,games:0};
+    map[r.player].points += r.points;
+    map[r.player].games += 1;
+  });
+  return Object.entries(map).sort((a,b)=>b[1].points-a[1].points);
+}
+
+async function loadFromCloud() {
+  try {
+    let res = await fetch(BIN_URL+'/latest', {
+      method: 'GET',
+      headers: {
+        'X-Master-Key': API_KEY,
+        'X-Bin-Meta': 'false'
+      }
+    });
+    if (!res.ok) throw new Error('HTTP '+res.status);
+    let json = await res.json();
+    db = json.record || json;
+    if (!db.players) db.players=[];
+    if (!db.results) db.results=[];
+    if (!db.announcement) db.announcement='';
+    return true;
+  } catch(e) {
+    console.error('Cloud load error:', e);
+    return false;
+  }
+}
+
+async function saveToCloud() {
+  setSyncBar('loading');
+  db.lastUpdated = new Date().toISOString();
+  try {
+    await fetch(BIN_URL,{method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':API_KEY},body:JSON.stringify(db)});
+    setSyncBar('ok');
+  } catch(e){setSyncBar('err');}
+}
+
+function setSyncBar(state) {
+  let el = document.getElementById('sync-bar');
+  if (!el) return;
+  if (state==='ok'){el.textContent='● ДАННЫЕ СОХРАНЕНЫ В ОБЛАКЕ';el.className='sync-bar sync-ok';}
+  else if (state==='err'){el.textContent='● ОШИБКА — ПРОВЕРЬ ИНТЕРНЕТ';el.className='sync-bar sync-err';}
+  else {el.textContent='● СИНХРОНИЗАЦИЯ...';el.className='sync-bar sync-loading';}
+}
+
+function renderRating() {
+  document.getElementById('month-label').textContent = MONTHS[currentMonth]+' '+currentYear;
+  let el = document.getElementById('rating-content');
+  let upd = document.getElementById('last-updated');
+  let ann = document.getElementById('announce-box');
+  let banner = document.getElementById('top10-banner');
+
+  if (!db){
+    el.innerHTML='<div class="loading">ЗАГРУЗКА<span class="loading-dot">.</span><span class="loading-dot">.</span><span class="loading-dot">.</span></div>';
+    return;
+  }
+
+  if (db.lastUpdated){
+    let d=new Date(db.lastUpdated);
+    upd.textContent='Обновлено: '+d.getDate()+' '+MONTHS_SHORT[d.getMonth()]+' в '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  }
+
+  if (db.announcement && db.announcement.trim()){
+    document.getElementById('announce-text').textContent=db.announcement;
+    ann.style.display='block';
+  } else { ann.style.display='none'; }
+
+  let search = document.getElementById('search-input').value.toLowerCase().trim();
+  let rating = getMonthRating(currentMonth,currentYear);
+  banner.style.display = rating.length>=10 ? 'block':'none';
+
+  if (rating.length===0){
+    el.innerHTML='<div class="empty-state"><div class="big">🃏</div><p>Результатов за этот месяц пока нет.<br>Они появятся после первого турнира.</p></div>';
+    return;
+  }
+
+  let posMap={};
+  rating.forEach(([name],i)=>{posMap[name]=i+1;});
+  let filtered = search ? rating.filter(([name])=>name.toLowerCase().includes(search)) : rating;
+  let medals=['🥇','🥈','🥉'];
+
+  let rows = filtered.map(([name,d])=>{
+    let i = posMap[name]-1;
+    let cls = i<3?'place-'+(i+1):'';
+    let medal = i<3?'<span class="medal">'+medals[i]+'</span>':(i+1)+'.';
+    let badge = i<10?'<span class="top10-badge">ТОП-10</span>':'';
+    let title = getPlayerTitle(name,db.results);
+    let titleHtml = title?'<span class="title-badge">'+title+'</span>':'';
+    let nameClass = i===0?'player-name gold-glow':'player-name';
+
+    let delta='';
+    if (prevRating[name]!==undefined){
+      let diff=prevRating[name]-(i+1);
+      if(diff>0) delta=' <span class="delta-up">▲'+diff+'</span>';
+      else if(diff<0) delta=' <span class="delta-down">▼'+Math.abs(diff)+'</span>';
+      else delta=' <span class="delta-same">—</span>';
+    }
+
+    return `<tr class="${cls}" style="animation-delay:${i*0.06}s">
+      <td>${medal}</td>
+      <td><span class="${nameClass}" onclick="openProfile('${name}')">${name}</span>${badge}${delta}${titleHtml}<br><span class="player-games">${d.games} игр</span></td>
+      <td><span class="points-big" data-target="${d.points}">0</span></td>
+    </tr>`;
+  }).join('');
+
+  el.innerHTML=`<table class="rating-table">
+    <thead><tr>
+      <th style="width:36px;">#</th>
+      <th style="text-align:left;padding-left:14px;">ИГРОК</th>
+      <th>ОЧКИ</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+
+  // Animate counters
+  setTimeout(()=>{
+    el.querySelectorAll('.points-big[data-target]').forEach(span=>{
+      animateCounter(span, parseInt(span.dataset.target), 800);
+    });
+  }, 300);
+}
+
+function changeMonth(dir){
+  currentMonth+=dir;
+  if(currentMonth>11){currentMonth=0;currentYear++;}
+  if(currentMonth<0){currentMonth=11;currentYear--;}
+  prevRating={};
+  renderRating();
+}
+
+function openProfile(name){
+  if(!db) return;
+  let key=getMonthKey(currentMonth,currentYear);
+  let allResults=db.results.filter(r=>r.player===name);
+  let monthResults=allResults.filter(r=>r.monthKey===key);
+  let totalPts=monthResults.reduce((s,r)=>s+r.points,0);
+  let wins=allResults.filter(r=>r.placeName&&r.placeName.includes('1 место')).length;
+  let title=getPlayerTitle(name,db.results);
+
+  document.getElementById('profile-name').textContent=name;
+  let statsHtml=`
+    <div class="profile-stat"><span class="ps-label">Очков в этом месяце</span><span class="ps-val" style="color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:20px;">${totalPts}</span></div>
+    <div class="profile-stat"><span class="ps-label">Игр в этом месяце</span><span class="ps-val">${monthResults.length}</span></div>
+    <div class="profile-stat"><span class="ps-label">Всего игр</span><span class="ps-val">${allResults.length}</span></div>
+    <div class="profile-stat"><span class="ps-label">Побед (1 место)</span><span class="ps-val">${wins}</span></div>
+    ${title?'<div class="profile-stat"><span class="ps-label">Титул</span><span class="ps-val">'+title+'</span></div>':''}
+  `;
+  let histHtml='<div style="font-size:9px;color:var(--gold3);letter-spacing:2px;margin:14px 0 8px;">ИСТОРИЯ ЭТОГО МЕСЯЦА</div>';
+  if(!monthResults.length){histHtml+='<div style="font-size:12px;color:var(--text3);padding:8px;">Нет результатов за этот месяц</div>';}
+  else{histHtml+=[...monthResults].reverse().map(r=>`
+    <div class="ph-item">
+      <span class="phi-day">${r.dayName}${r.date?' · '+formatDate(r.date):''}</span>
+      <span class="phi-place">${r.placeName}</span>
+      <span class="phi-pts">+${r.points}</span>
+    </div>`).join('');}
+
+  document.getElementById('profile-body').innerHTML=statsHtml+histHtml;
+  document.getElementById('profile-modal').style.display='block';
+}
+
+function closeProfile(e){
+  if(e.target===document.getElementById('profile-modal'))
+    document.getElementById('profile-modal').style.display='none';
+}
+
+function renderPlayers(){
+  if(!db) return;
+  let sorted=[...db.players].sort((a,b)=>a.localeCompare(b,'ru'));
+  ['sel-player','q-player'].forEach(id=>{
+    let sel=document.getElementById(id);
+    if(!sel) return;
+    sel.innerHTML='<option value="">— выберите игрока —</option>';
+    sorted.forEach(p=>{sel.innerHTML+=`<option value="${p}">${p}</option>`;});
+  });
+  renderTournamentRows();
+  let list=document.getElementById('players-list');
+  list.innerHTML=db.players.length===0
+    ?'<div style="color:var(--text3);font-size:12px;padding:8px;">Игроков пока нет</div>'
+    :sorted.map(p=>`<div class="player-item"><span class="player-item-name">${p}</span><button class="btn-remove" onclick="removePlayer('${p}')">удалить</button></div>`).join('');
+}
+
+function renderHistory(){
+  if(!db) return;
+  let recent=[...db.results].reverse().slice(0,30);
+  let el=document.getElementById('history-list');
+  if(!recent.length){el.innerHTML='<div style="text-align:center;color:var(--text3);font-size:12px;padding:20px;">Записей пока нет</div>';return;}
+  el.innerHTML=recent.map((r,i)=>`
+    <div class="history-item">
+      <div>
+        <div class="hi-name">${r.player}</div>
+        <div class="hi-detail">${r.dayName} · ${r.placeName}</div>
+        <div class="hi-date">${r.date?formatDate(r.date):''}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="hi-pts">+${r.points}</span>
+        <button class="btn-undo" onclick="undoResult(${db.results.length-1-i})">отмена</button>
+      </div>
+    </div>`).join('');
+}
+
+function renderStats(){
+  if(!db) return;
+  let key=getMonthKey(currentMonth,currentYear);
+  let monthResults=db.results.filter(r=>r.monthKey===key);
+  let uniquePlayers=new Set(monthResults.map(r=>r.player)).size;
+  let map={};
+  let topPlayer='',topPts=0;
+  monthResults.forEach(r=>{
+    map[r.player]=(map[r.player]||0)+r.points;
+    if(map[r.player]>topPts){topPts=map[r.player];topPlayer=r.player;}
+  });
+  document.getElementById('stats-grid').innerHTML=`
+    <div class="stat-card"><div class="sc-val">${uniquePlayers}</div><div class="sc-label">ИГРОКОВ</div></div>
+    <div class="stat-card"><div class="sc-val">${monthResults.length}</div><div class="sc-label">ЗАПИСЕЙ</div></div>
+    <div class="stat-card" style="grid-column:1/-1;"><div class="sc-val" style="font-size:18px;">${topPlayer||'—'}</div><div class="sc-label">ЛИДЕР · ${topPts} очков</div></div>
+  `;
+  let dayCounts={};
+  DAY_NAMES.forEach(d=>{dayCounts[d]=0;});
+  monthResults.forEach(r=>{if(dayCounts[r.dayName]!==undefined)dayCounts[r.dayName]++;});
+  let maxCount=Math.max(...Object.values(dayCounts),1);
+  document.getElementById('day-bars').innerHTML=DAY_NAMES.map(d=>`
+    <div class="day-bar-row">
+      <span class="db-label">${d}</span>
+      <div class="day-bar-outer"><div class="day-bar-inner" style="width:${Math.round(dayCounts[d]/maxCount*100)}%"></div></div>
+      <span class="db-count">${dayCounts[d]}</span>
+    </div>`).join('');
+}
+
+let tournamentRowCount=0;
+function renderTournamentRows(){
+  let cont=document.getElementById('tournament-players');
+  if(!cont) return;
+  let sorted=db?[...db.players].sort((a,b)=>a.localeCompare(b,'ru')):[];
+  let opts='<option value="">— игрок —</option>'+sorted.map(p=>`<option value="${p}">${p}</option>`).join('');
+  Array.from(cont.querySelectorAll('select')).forEach(sel=>{let v=sel.value;sel.innerHTML=opts;sel.value=v;});
+}
+
+function addTournamentRow(){
+  tournamentRowCount++;
+  let cont=document.getElementById('tournament-players');
+  let sorted=db?[...db.players].sort((a,b)=>a.localeCompare(b,'ru')):[];
+  let opts='<option value="">— игрок —</option>'+sorted.map(p=>`<option value="${p}">${p}</option>`).join('');
+  let div=document.createElement('div');
+  div.className='tp-row';
+  div.innerHTML=`<span class="tp-num">${cont.children.length+1}</span>
+    <select class="tp-select">${opts}</select>
+    <button class="btn-sm" onclick="removeTournamentRow(this)">✕</button>`;
+  cont.appendChild(div);
+  updateRowNumbers();
+}
+
+function removeTournamentRow(btn){btn.closest('.tp-row').remove();updateRowNumbers();}
+function updateRowNumbers(){document.querySelectorAll('#tournament-players .tp-row').forEach((row,i)=>{row.querySelector('.tp-num').textContent=i+1;});}
+
+async function saveTournament(){
+  let date=document.getElementById('sel-date').value;
+  let dayEl=document.getElementById('sel-day');
+  if(!date||!dayEl.value){showToast('Выбери дату и день');return;}
+  let dayName=dayEl.options[dayEl.selectedIndex].text.split(' (')[0];
+  let rows=document.querySelectorAll('#tournament-players .tp-row');
+  let entries=[];let seen=new Set();
+  let percents=[100,80,65,50,40,30,25,20,15];
+  rows.forEach((row,i)=>{
+    let player=row.querySelector('select').value;
+    if(!player||seen.has(player)) return;
+    seen.add(player);
+    let pct=percents[i]||0;
+    let pts=pct>0?Math.round(parseInt(dayEl.value)*pct/100):15;
+    let placeName=pct>0?(i+1)+' место':'Участие';
+    entries.push({player,points:pts,dayName,placeName,date,monthKey:getMonthKey(currentMonth,currentYear),ts:Date.now()+i});
+  });
+  if(!entries.length){showToast('Добавь хотя бы одного игрока');return;}
+
+  prevRating={};
+  getMonthRating(currentMonth,currentYear).forEach(([name],i)=>{prevRating[name]=i+1;});
+  entries.forEach(e=>{db.results.push(e);});
+  document.getElementById('tournament-players').innerHTML='';
+  tournamentRowCount=0;
+  renderRating();renderHistory();renderStats();
+  showToast('✓ Турнир сохранён · '+entries.length+' игроков');
+  await saveToCloud();
+}
+
+function updateQuickPreview(){
+  let day=document.getElementById('q-day').value;
+  let place=document.getElementById('q-place').value;
+  let preview=document.getElementById('q-preview');
+  if(day&&place){document.getElementById('q-pts').textContent=calcPoints(parseInt(day),place);preview.style.display='block';}
+  else{preview.style.display='none';}
+}
+
+async function quickAdd(){
+  let player=document.getElementById('q-player').value;
+  let dayEl=document.getElementById('q-day');
+  let placeEl=document.getElementById('q-place');
+  let date=document.getElementById('sel-date').value||todayStr();
+  if(!player||!dayEl.value||!placeEl.value){showToast('Заполните все поля');return;}
+  let pts=calcPoints(parseInt(dayEl.value),placeEl.value);
+  let dayName=dayEl.options[dayEl.selectedIndex].text.split(' (')[0];
+  let placeName=placeEl.options[placeEl.selectedIndex].text;
+  prevRating={};
+  getMonthRating(currentMonth,currentYear).forEach(([name],i)=>{prevRating[name]=i+1;});
+  db.results.push({player,points:pts,dayName,placeName,date,monthKey:getMonthKey(currentMonth,currentYear),ts:Date.now()});
+  document.getElementById('q-player').value='';
+  document.getElementById('q-day').value='';
+  document.getElementById('q-place').value='';
+  document.getElementById('q-preview').style.display='none';
+  renderRating();renderHistory();renderStats();
+  showToast('✓ '+player+' — +'+pts+' очков');
+  await saveToCloud();
+}
+
+async function undoResult(idx){
+  db.results.splice(idx,1);
+  prevRating={};
+  renderRating();renderHistory();renderStats();
+  showToast('Запись удалена');
+  await saveToCloud();
+}
+
+async function addPlayer(){
+  let input=document.getElementById('new-player-input');
+  let name=input.value.trim();
+  if(!name) return;
+  if(!db){ showToast('Нет соединения с облаком'); return; }
+  if(db.players.includes(name)){showToast('Игрок уже есть');return;}
+  db.players.push(name);
+  input.value='';
+  renderPlayers();
+  showToast('Игрок добавлен: '+name);
+  await saveToCloud();
+}
+
+async function removePlayer(name){
+  db.players=db.players.filter(p=>p!==name);
+  renderPlayers();
+  await saveToCloud();
+}
+
+async function saveAnnouncement(){
+  db.announcement=document.getElementById('ann-input').value.trim();
+  await saveToCloud();
+  renderRating();
+  showToast('✓ Объявление сохранено');
+}
+
+function exportCSV(){
+  let key=getMonthKey(currentMonth,currentYear);
+  let rating=getMonthRating(currentMonth,currentYear);
+  let csv='Место,Игрок,Очки,Игр\n';
+  rating.forEach(([name,d],i)=>{csv+=`${i+1},"${name}",${d.points},${d.games}\n`;});
+  let blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+  let url=URL.createObjectURL(blob);
+  let a=document.createElement('a');
+  a.href=url;a.download='obshestvo_'+key+'.csv';a.click();
+}
+
+function showToast(msg){
+  let t=document.getElementById('toast');
+  t.textContent=msg;t.style.display='block';
+  setTimeout(()=>t.style.display='none',2500);
+}
+
+async function checkPin(){
+  let val=document.getElementById('pin-input').value;
+  if(val===getPin()){
+    document.getElementById('admin-lock-screen').style.display='none';
+    document.getElementById('admin-content').style.display='block';
+    document.getElementById('sel-date').value=todayStr();
+    setSyncBar('loading');
+    let ok=await loadFromCloud();
+    if(ok){
+      setSyncBar('ok');
+      if(db.announcement) document.getElementById('ann-input').value=db.announcement;
+      renderPlayers();renderHistory();renderStats();renderRating();
+    } else {
+      setSyncBar('err');
+      showToast('Нет связи с облаком — проверь интернет');
+    }
+  } else {document.getElementById('pin-error').style.display='block';}
+}
+
+function logout(){
+  document.getElementById('admin-lock-screen').style.display='block';
+  document.getElementById('admin-content').style.display='none';
+  document.getElementById('pin-input').value='';
+  document.getElementById('pin-error').style.display='none';
+}
+
+function changePin(){
+  let current=document.getElementById('pin-current').value;
+  let newPin=document.getElementById('pin-new').value;
+  let confirm=document.getElementById('pin-confirm').value;
+  let errEl=document.getElementById('pin-change-error');
+  errEl.style.display='none';
+  if(current!==getPin()){errEl.textContent='ТЕКУЩИЙ КОД НЕВЕРНЫЙ';errEl.style.display='block';return;}
+  if(newPin.length<4){errEl.textContent='КОД ДОЛЖЕН БЫТЬ 4 ЦИФРЫ';errEl.style.display='block';return;}
+  if(newPin!==confirm){errEl.textContent='КОДЫ НЕ СОВПАДАЮТ';errEl.style.display='block';return;}
+  localStorage.setItem('obshestvo_pin',newPin);
+  document.getElementById('pin-current').value='';
+  document.getElementById('pin-new').value='';
+  document.getElementById('pin-confirm').value='';
+  showToast('✓ PIN-код изменён');
+}
+
+function showPage(name,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  btn.classList.add('active');
+  if(name==='rating') loadFromCloud().then(()=>renderRating());
+}
+
+document.getElementById('pin-input').addEventListener('keyup',e=>{if(e.key==='Enter')checkPin();});
+
+initParticles();
+loadFromCloud().then(ok=>{
+  if(!ok){
+    document.getElementById('rating-content').innerHTML='<div class="empty-state"><div class="big">⚠️</div><p>Не удалось загрузить данные.<br>Проверь интернет и обнови страницу.</p></div>';
+  }
+  renderRating();
+});
+</script>
+</body>
+</html>
