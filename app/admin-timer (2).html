@@ -1,0 +1,1717 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Общество · Таймер</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ── ADMIN STYLES ──────────────────────────────────────────── */
+
+:root {
+  --bg: #0e0e10;
+  --dark2: #141418;
+  --dark3: #1a1a20;
+  --gold: #C9A96E;
+  --gold2: #E8C98A;
+  --gold3: rgba(201,169,110,0.5);
+  --text: #F0EBE1;
+  --text2: #B8AFA0;
+  --text3: rgba(184,175,160,0.5);
+  --ok: #5BAD6F;
+  --err: #C0404A;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Montserrat', 'Arial', sans-serif;
+  padding: 16px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+h1 { font-size: 14px; letter-spacing: 4px; color: var(--gold3); margin-bottom: 16px; }
+h2 { font-size: 11px; letter-spacing: 3px; color: var(--gold3); margin: 16px 0 8px; }
+
+.sync-bar {
+  font-size: 9px;
+  letter-spacing: 2px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+  text-align: center;
+  background: var(--dark3);
+  color: var(--gold3);
+  border: 1px solid rgba(201,169,110,0.2);
+}
+.sync-bar[data-status="ok"] { color: var(--ok); background: rgba(91,173,111,0.1); border-color: rgba(91,173,111,0.3); }
+.sync-bar[data-status="local"] { color: var(--gold); }
+.sync-bar[data-status="err"] { color: var(--err); background: rgba(192,64,74,0.1); border-color: rgba(192,64,74,0.3); }
+
+.section { background: var(--dark2); border: 1px solid rgba(201,169,110,0.15); border-radius: 8px; padding: 14px; margin-bottom: 12px; }
+
+.display-big { font-size: 48px; font-weight: 700; letter-spacing: -1px; text-align: center; margin: 8px 0; font-variant-numeric: tabular-nums; }
+.display-phase { font-size: 13px; letter-spacing: 3px; color: var(--gold2); text-align: center; margin-bottom: 4px; }
+.display-blinds { font-size: 16px; letter-spacing: 2px; color: var(--gold); text-align: center; }
+.display-progress { font-size: 9px; color: var(--text3); letter-spacing: 1px; text-align: center; margin-top: 4px; }
+
+.btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; }
+.btn-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+.btn-grid-1 { grid-template-columns: 1fr; }
+
+button {
+  background: var(--dark3);
+  border: 1px solid rgba(201,169,110,0.2);
+  color: var(--text2);
+  font-family: inherit;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  padding: 10px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+button:hover { border-color: rgba(201,169,110,0.5); color: var(--text); }
+button:disabled { opacity: 0.3; cursor: not-allowed; }
+button:disabled:hover { border-color: rgba(201,169,110,0.2); color: var(--text2); }
+
+.btn-gold { border-color: rgba(201,169,110,0.5); color: var(--gold); }
+.btn-ok { border-color: rgba(91,173,111,0.4); color: var(--ok); }
+.btn-err { border-color: rgba(192,64,74,0.4); color: var(--err); }
+.btn-full { grid-column: 1 / -1; }
+button.active { background: rgba(201,169,110,0.1); border-color: rgba(201,169,110,0.6); color: var(--gold2); }
+
+select, input[type="text"] {
+  background: var(--dark3);
+  border: 1px solid rgba(201,169,110,0.2);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 11px;
+  padding: 8px;
+  border-radius: 4px;
+  width: 100%;
+  margin-top: 4px;
+}
+
+label { font-size: 9px; letter-spacing: 2px; color: var(--text3); display: block; }
+
+.player-list { display: flex; flex-direction: column; gap: 4px; max-height: 200px; overflow-y: auto; }
+.player-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; background: var(--dark3); border-radius: 4px; font-size: 12px; }
+.btn-remove { background: none; border: none; color: var(--err); padding: 2px 6px; font-size: 12px; }
+
+.preview { font-size: 10px; color: var(--text3); line-height: 1.8; }
+.preview strong { color: var(--text2); }
+
+</style>
+</head>
+<body>
+<h1>УПРАВЛЕНИЕ ТАЙМЕРОМ</h1>
+
+<div id="admin-sync-bar" class="sync-bar">● ПОДКЛЮЧЕНИЕ…</div>
+
+<!-- Дисплей -->
+<div class="section">
+  <div id="admin-phase-name" class="display-phase">УРОВЕНЬ 1</div>
+  <div id="admin-timer-display" class="display-big">12:00</div>
+  <div id="admin-blinds" class="display-blinds">100 / 100</div>
+  <div id="admin-phase-progress" class="display-progress"></div>
+</div>
+
+<!-- Старт / Пауза -->
+<div class="section">
+  <h2>УПРАВЛЕНИЕ</h2>
+  <div class="btn-grid">
+    <button id="btn-start" class="btn-ok" onclick="timerStart()">▶ СТАРТ</button>
+    <button id="btn-pause" class="btn-err" onclick="timerPause()">⏸ ПАУЗА</button>
+    <button onclick="timerPrev()">← НАЗАД</button>
+    <button onclick="timerNext()">ДАЛЬШЕ →</button>
+    <button onclick="timerResetCurrentPhase()">↺ СБРОС УРОВНЯ</button>
+    <button id="btn-final" onclick="toggleFinalMode()">🏆 Финальный стол</button>
+  </div>
+  <div class="btn-grid btn-grid-1" style="margin-top:6px;">
+    <button class="btn-err" onclick="confirmResetAll()">⚠ СБРОСИТЬ ТУРНИР</button>
+  </div>
+</div>
+
+<!-- Структура -->
+<div class="section">
+  <h2>СТРУКТУРА</h2>
+  <label>Выбрать структуру</label>
+  <select id="sel-structure" onchange="applyStructure(this.value)">
+    <option value="default">Обычная / Суббота</option>
+    <option value="action30k">Экшен 30К</option>
+  </select>
+  <div id="admin-structure-name" style="font-size:10px;color:var(--text3);margin-top:6px;letter-spacing:1px;"></div>
+</div>
+
+<!-- Быстрый переход -->
+<div class="section">
+  <h2>БЫСТРЫЙ ПЕРЕХОД</h2>
+  <div class="btn-grid btn-grid-3">
+    <button onclick="timerGoToLevel(1)">1</button>
+    <button onclick="timerGoToLevel(5)">5</button>
+    <button onclick="timerGoToLevel(10)">10</button>
+    <button onclick="timerGoToLevel(11)">11</button>
+    <button onclick="timerGoToLevel(15)">15</button>
+    <button onclick="timerGoToLevel(20)">20</button>
+  </div>
+</div>
+
+<!-- Просмотр структуры -->
+<div class="section">
+  <h2>СТРУКТУРА БЛАЙНДОВ</h2>
+  <div class="btn-grid btn-grid-1">
+    <button onclick="toggleStructureView()" id="btn-show-structure">📋 ПОКАЗАТЬ ВСЕ УРОВНИ</button>
+  </div>
+  <div id="structure-view" style="display:none;margin-top:10px;max-height:300px;overflow-y:auto;">
+    <div id="structure-table" class="preview"></div>
+  </div>
+</div>
+
+<!-- Emergency -->
+<div class="section">
+  <h2>АВАРИЙНЫЙ РЕЖИМ</h2>
+  <div class="btn-grid btn-grid-1">
+    <button onclick="saveTimerNow()" class="btn-gold">💾 СОХРАНИТЬ СЕЙЧАС</button>
+    <button id="btn-emergency-local" onclick="toggleEmergencyLocal()">🆘 ЛОКАЛЬНЫЙ РЕЖИМ</button>
+  </div>
+  <div id="emergency-status" style="font-size:9px;color:var(--text3);letter-spacing:1px;margin-top:6px;text-align:center;"></div>
+</div>
+
+<!-- ── SCRIPTS ────────────────────────────────────────────── -->
+
+
+
+<script>
+
+
+// ── config.js ──────────────────────────────
+// ── APP CONFIG ────────────────────────────────────────────────
+
+const APP_CONFIG = {
+  cloudEnabled: true,
+  cloudUrl: 'https://script.google.com/macros/s/AKfycbxzZbHSIZ_IAsD7i4z8CkSqmEkb-vyDAZGWQg_u5b-ClF1NHGMoKujMKrTAh27T6Fne/exec',
+  cloudToken: 'obshestvo_tv_timer_2026_secret',
+  cloudTimeout: 6000,
+  env: 'prod'
+};
+
+
+// ── cloud-client.js ──────────────────────────────
+// ── CLOUD CLIENT ───────────────────────────────────────────────
+// Читает настройки из APP_CONFIG (src/core/config.js).
+// Подключать ПОСЛЕ config.js.
+//
+// Если APP_CONFIG.cloudEnabled = false → localStorage mock.
+// Если APP_CONFIG.cloudEnabled = true  → Google Script.
+
+const cloud = (function() {
+  const MOCK_PREFIX = 'obshestvo_cloud_mock_';
+
+  function isEnabled() {
+    if (typeof APP_CONFIG === 'undefined') return false;
+    // Emergency local mode может временно отключить cloud
+    if (APP_CONFIG._cloudOverride === false) return false;
+    return APP_CONFIG.cloudEnabled;
+  }
+
+  function getUrl()   { return APP_CONFIG.cloudUrl; }
+  function getToken() { return APP_CONFIG.cloudToken; }
+  function getTimeout() {
+    return (typeof APP_CONFIG !== 'undefined' && APP_CONFIG.cloudTimeout) || 6000;
+  }
+
+  // Fetch с таймаутом — П.6
+  async function fetchWithTimeout(url, opts) {
+    const timeout = getTimeout();
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeout);
+    try {
+      const res = await fetch(url, { ...opts, signal: controller.signal });
+      return res;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  async function cloudGet(path) {
+    if (!isEnabled()) {
+      // Mock: читаем из localStorage
+      const raw = localStorage.getItem(MOCK_PREFIX + path);
+      if (!raw) return null;
+      return JSON.parse(raw);
+    }
+    const url = getUrl() + '?path=' + encodeURIComponent(path) + '&token=' + getToken();
+    const res = await fetchWithTimeout(url, { method: 'GET' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    if (data && data.error) throw new Error(data.error);
+    return data;
+  }
+
+  async function cloudPost(path, data) {
+    if (!isEnabled()) {
+      // Mock: пишем в localStorage
+      localStorage.setItem(MOCK_PREFIX + path, JSON.stringify(data));
+      return { ok: true };
+    }
+    const url = getUrl() + '?token=' + getToken();
+    const res = await fetchWithTimeout(url, {
+      method: 'POST',
+      body: JSON.stringify({ path, data, _token: getToken() }),
+      headers: { 'Content-Type': 'text/plain' } // GAS требует text/plain для CORS
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const result = await res.json();
+    if (result && result.error) throw new Error(result.error);
+    return result;
+  }
+
+  return { cloudGet, cloudPost, isEnabled };
+})();
+
+function cloudGet(path)        { return cloud.cloudGet(path); }
+function cloudPost(path, data) { return cloud.cloudPost(path, data); }
+function cloudIsEnabled()      { return cloud.isEnabled(); }
+
+
+// ── structures.js ──────────────────────────────
+// ── TOURNAMENT STRUCTURES ──────────────────────────────────────
+// Перенесено 1 в 1 из рабочего файла obshestvo_rating.html.
+// НЕ МЕНЯТЬ без согласования с клубом.
+// Для проверки — см. таблицу в README.md.
+
+const TOURNAMENT_STRUCTURES = {
+  default: {
+    id: 'default',
+    name: 'Обычная / Суббота',
+    description: 'Базовая структура клуба',
+    phases: [
+      {type:'level', level:1,  sb:100,   bb:100,    ante:0,     duration:12*60},
+      {type:'level', level:2,  sb:100,   bb:200,    ante:0,     duration:12*60},
+      {type:'level', level:3,  sb:200,   bb:300,    ante:0,     duration:12*60},
+      {type:'level', level:4,  sb:200,   bb:400,    ante:0,     duration:12*60},
+      {type:'level', level:5,  sb:300,   bb:600,    ante:0,     duration:12*60},
+      {type:'break', title:'ПЕРЕРЫВ',               duration:10*60},
+      {type:'level', level:6,  sb:400,   bb:800,    ante:0,     duration:12*60},
+      {type:'level', level:7,  sb:500,   bb:1000,   ante:500,   duration:12*60},
+      {type:'level', level:8,  sb:600,   bb:1200,   ante:600,   duration:12*60},
+      {type:'level', level:9,  sb:800,   bb:1600,   ante:800,   duration:12*60},
+      {type:'level', level:10, sb:1000,  bb:2000,   ante:1000,  duration:12*60},
+      {type:'break', title:'АДД-ОН ПЕРЕРЫВ',        duration:10*60, addon:true},
+      {type:'level', level:11, sb:1500,  bb:3000,   ante:1500,  duration:10*60},
+      {type:'level', level:12, sb:2000,  bb:4000,   ante:2000,  duration:10*60},
+      {type:'level', level:13, sb:2500,  bb:5000,   ante:2500,  duration:10*60},
+      {type:'level', level:14, sb:3000,  bb:6000,   ante:3000,  duration:10*60},
+      {type:'level', level:15, sb:4000,  bb:8000,   ante:4000,  duration:10*60},
+      {type:'break', title:'ПЕРЕРЫВ',               duration:10*60},
+      {type:'level', level:16, sb:5000,  bb:10000,  ante:5000,  duration:10*60},
+      {type:'level', level:17, sb:6000,  bb:12000,  ante:6000,  duration:10*60},
+      {type:'level', level:18, sb:8000,  bb:16000,  ante:8000,  duration:10*60},
+      {type:'level', level:19, sb:10000, bb:20000,  ante:10000, duration:10*60},
+      {type:'level', level:20, sb:15000, bb:30000,  ante:15000, duration:10*60},
+      {type:'break', title:'КОРОТКИЙ ПЕРЕРЫВ',      duration:5*60},
+      {type:'level', level:21, sb:20000, bb:40000,  ante:20000, duration:10*60},
+      {type:'level', level:22, sb:30000, bb:60000,  ante:30000, duration:10*60},
+      {type:'level', level:23, sb:40000, bb:80000,  ante:40000, duration:10*60},
+      {type:'level', level:24, sb:50000, bb:100000, ante:50000, duration:10*60},
+      {type:'level', level:25, sb:75000, bb:150000, ante:75000, duration:10*60},
+    ]
+  },
+  action30k: {
+    id: 'action30k',
+    name: 'Экшен 30К',
+    description: '30К стек, быстрая структура, анте = малому блайнду',
+    phases: [
+      {type:'level', level:1,  sb:100,   bb:200,    ante:0,     duration:12*60},
+      {type:'level', level:2,  sb:200,   bb:300,    ante:0,     duration:12*60},
+      {type:'level', level:3,  sb:200,   bb:400,    ante:200,   duration:12*60},
+      {type:'level', level:4,  sb:300,   bb:600,    ante:300,   duration:12*60},
+      {type:'level', level:5,  sb:400,   bb:800,    ante:400,   duration:12*60},
+      {type:'break', title:'ПЕРЕРЫВ',               duration:10*60},
+      {type:'level', level:6,  sb:500,   bb:1000,   ante:500,   duration:12*60},
+      {type:'level', level:7,  sb:700,   bb:1400,   ante:700,   duration:12*60},
+      {type:'level', level:8,  sb:1000,  bb:2000,   ante:1000,  duration:12*60},
+      {type:'level', level:9,  sb:1200,  bb:2400,   ante:1200,  duration:12*60},
+      {type:'level', level:10, sb:1500,  bb:3000,   ante:1500,  duration:12*60},
+      {type:'break', title:'АДД-ОН ПЕРЕРЫВ',        duration:10*60, addon:true},
+      {type:'level', level:11, sb:2000,  bb:4000,   ante:2000,  duration:10*60},
+      {type:'level', level:12, sb:3000,  bb:6000,   ante:3000,  duration:10*60},
+      {type:'level', level:13, sb:4000,  bb:8000,   ante:4000,  duration:10*60},
+      {type:'level', level:14, sb:5000,  bb:10000,  ante:5000,  duration:10*60},
+      {type:'level', level:15, sb:6000,  bb:12000,  ante:6000,  duration:10*60},
+      {type:'break', title:'ПЕРЕРЫВ',               duration:10*60},
+      {type:'level', level:16, sb:8000,  bb:16000,  ante:8000,  duration:10*60},
+      {type:'level', level:17, sb:10000, bb:20000,  ante:10000, duration:10*60},
+      {type:'level', level:18, sb:15000, bb:30000,  ante:15000, duration:10*60},
+      {type:'level', level:19, sb:20000, bb:40000,  ante:20000, duration:10*60},
+      {type:'level', level:20, sb:30000, bb:60000,  ante:30000, duration:10*60},
+      {type:'break', title:'КОРОТКИЙ ПЕРЕРЫВ',      duration:5*60},
+      {type:'level', level:21, sb:40000, bb:80000,  ante:40000, duration:10*60},
+      {type:'level', level:22, sb:50000, bb:100000, ante:50000, duration:10*60},
+      {type:'level', level:23, sb:75000, bb:150000, ante:75000, duration:10*60},
+    ]
+  }
+};
+
+// ── HELPERS ────────────────────────────────────────────────────
+
+function getStructure(id) {
+  return TOURNAMENT_STRUCTURES[id] || TOURNAMENT_STRUCTURES.default;
+}
+function getPhases(structureId) {
+  return getStructure(structureId).phases;
+}
+function getPhase(structureId, phaseIndex) {
+  const phases = getPhases(structureId);
+  return phases[Math.max(0, Math.min(phaseIndex, phases.length - 1))];
+}
+function getNextLevel(structureId, phaseIndex) {
+  const phases = getPhases(structureId);
+  for (let i = phaseIndex + 1; i < phases.length; i++) {
+    if (phases[i].type === 'level') return phases[i];
+  }
+  return null;
+}
+function fmtChips(n) {
+  if (!n) return '0';
+  if (n >= 1000000) return (n/1000000).toFixed(n%1000000?1:0)+'M';
+  if (n >= 1000)    return (n/1000).toFixed(n%1000?1:0)+'K';
+  return String(n);
+}
+function fmtTime(sec) {
+  if (sec < 0) sec = 0;
+  const m = Math.floor(sec/60), s = sec%60;
+  return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+
+
+// ── timer-state.js ──────────────────────────────
+// ── TIMER STATE ────────────────────────────────────────────────
+
+const TIMER_STATE_VERSION = '2026-06-13-timer-v1';
+
+const DEFAULT_TIMER_STATE = {
+  version: TIMER_STATE_VERSION,
+  structureId: 'default',
+  phaseIndex: 0,
+  running: false,
+  startedAt: null,
+  remainingSec: 12 * 60,
+  finalMode: false,
+  updatedAt: null,
+  source: 'local'
+};
+
+function createTimerState(overrides) {
+  return Object.assign({}, DEFAULT_TIMER_STATE, overrides || {});
+}
+
+// Merge: берём state с более свежим updatedAt
+function mergeTimerState(local, cloud) {
+  if (!local && !cloud) return createTimerState();
+  if (!local) return cloud;
+  if (!cloud) return local;
+  const lt = local.updatedAt ? new Date(local.updatedAt).getTime() : 0;
+  const ct = cloud.updatedAt ? new Date(cloud.updatedAt).getTime() : 0;
+  if (lt >= ct) {
+    console.log('[TIMER MERGE] local wins', local.updatedAt, 'phase='+local.phaseIndex);
+    return local;
+  }
+  console.log('[TIMER MERGE] cloud wins', cloud.updatedAt, 'phase='+cloud.phaseIndex);
+  return cloud;
+}
+
+// Сколько секунд осталось — с учётом elapsed если running
+function getRemainingSec(state) {
+  if (!state) return 0;
+  let base = state.remainingSec != null ? state.remainingSec : 12*60;
+  // finalMode cap: уровни 6 минут
+  const phase = getPhase(state.structureId, state.phaseIndex);
+  if (state.finalMode && phase && phase.type === 'level' && base > 6*60) base = 6*60;
+  if (state.running && state.startedAt) {
+    const elapsed = Math.floor((Date.now() - new Date(state.startedAt).getTime()) / 1000);
+    return Math.max(0, base - elapsed);
+  }
+  return Math.max(0, base);
+}
+
+
+// ── timer-storage.js ──────────────────────────────
+// ── TIMER STORAGE ──────────────────────────────────────────────
+
+const TIMER_LS_KEY = 'obshestvo_timer_state_v1';
+
+function saveLocalTimerState(state) {
+  try {
+    localStorage.setItem(TIMER_LS_KEY, JSON.stringify(state));
+  } catch(e) {
+    console.warn('[TIMER STORAGE] save failed:', e);
+  }
+}
+
+function loadLocalTimerState() {
+  try {
+    const raw = localStorage.getItem(TIMER_LS_KEY);
+    if (!raw) return null;
+    const s = JSON.parse(raw);
+    // Базовая валидация
+    if (!s || typeof s.phaseIndex !== 'number') return null;
+    return s;
+  } catch(e) {
+    console.warn('[TIMER STORAGE] load failed:', e);
+    return null;
+  }
+}
+
+function clearLocalTimerState() {
+  try { localStorage.removeItem(TIMER_LS_KEY); } catch(e) {}
+}
+
+
+// ── timer-engine.js (absolute time + catchUp) ──
+// ── TIMER ENGINE ───────────────────────────────────────────────
+// Таймер работает по АБСОЛЮТНОМУ времени — не теряет уровни при сне устройства.
+//
+// Модель:
+//   admin-timer.html = writer (source: 'admin', обновляет updatedAt)
+//   tv.html = reader  (source: 'tv-preview', НЕ обновляет updatedAt)
+//
+// Ключевые поля состояния:
+//   phaseStartedAt — ISO когда началась текущая фаза
+//   remainingSec   — секунд осталось (пересчитывается из phaseStartedAt)
+//   running        — идёт ли таймер
+
+let _timerState = null;
+let _autoAdvanceTimeout = null;
+let _autoPhaseLock = false;
+let _isAdminWriter = false;
+
+function initTimerEngine(isWriter) {
+  _isAdminWriter = !!isWriter;
+  _timerState = loadLocalTimerState() || createTimerState();
+  // При инициализации догоняем пропущенные уровни (если устройство спало)
+  if (_timerState.running) {
+    catchUpPhases(_timerState);
+    scheduleAutoAdvance();
+  }
+}
+
+function getTimerState() { return _timerState; }
+function setTimerState(state) { _timerState = state; }
+
+// ── АБСОЛЮТНОЕ ВРЕМЯ ──────────────────────────────────────────
+// Реальный остаток секунд с учётом прошедшего времени с phaseStartedAt
+function getRemainingSec(state) {
+  if (!state || !state.running || !state.phaseStartedAt) {
+    return state ? (state.remainingSec || 0) : 0;
+  }
+  const elapsed = (Date.now() - new Date(state.phaseStartedAt).getTime()) / 1000;
+  return Math.max(0, (state.remainingSec || 0) - elapsed);
+}
+
+// Догоняем пропущенные уровни (если устройство спало или страница была закрыта)
+function catchUpPhases(state) {
+  if (!state || !state.running || !state.phaseStartedAt) return;
+  const phases = getPhases(state.structureId);
+  let catchupCount = 0;
+
+  while (true) {
+    const rem = getRemainingSec(state);
+    if (rem > 0) break; // текущий уровень ещё не закончился
+
+    if (state.phaseIndex >= phases.length - 1) {
+      // Конец турнира
+      state.running = false;
+      state.startedAt = null;
+      state.phaseStartedAt = null;
+      state.remainingSec = 0;
+      console.log('[CATCHUP] tournament ended during sleep');
+      break;
+    }
+
+    // Переходим на следующий уровень
+    const currentPhase = phases[state.phaseIndex];
+    const currentDuration = state.finalMode && currentPhase.type === 'level'
+      ? 6 * 60
+      : currentPhase.duration;
+    const nextIdx = state.phaseIndex + 1;
+    const nextPhase = phases[nextIdx];
+    const nextDuration = state.finalMode && nextPhase.type === 'level' ? 6*60 : nextPhase.duration;
+
+    // Новый старт = старый старт + длительность ТЕКУЩЕЙ фазы (не следующей)
+    const newStart = new Date(state.phaseStartedAt).getTime() + currentDuration * 1000;
+
+    state.phaseIndex = nextIdx;
+    state.remainingSec = nextDuration;
+    state.phaseStartedAt = new Date(newStart).toISOString();
+    catchupCount++;
+
+    if (catchupCount > 50) {
+      console.warn('[CATCHUP] too many phases, stopping');
+      break;
+    }
+  }
+
+  if (catchupCount > 0) {
+    console.log('[CATCHUP] caught up', catchupCount, 'phases, now at phase', state.phaseIndex);
+    state.updatedAt = new Date().toISOString();
+    state.source = _isAdminWriter ? 'admin' : 'tv-preview';
+  }
+}
+
+// ── ОПЕРАЦИИ (только для admin-writer) ─────────────────────────
+
+function timerStart() {
+  if (!_timerState || _timerState.running) return;
+  _timerState.running = true;
+  _timerState.startedAt = new Date().toISOString();
+  _timerState.phaseStartedAt = new Date().toISOString();
+  _timerState.updatedAt = new Date().toISOString();
+  _timerState.source = 'admin';
+  _persistTimerState('start');
+  scheduleAutoAdvance();
+}
+
+function timerPause() {
+  if (!_timerState || !_timerState.running) return;
+  _timerState.remainingSec = getRemainingSec(_timerState);
+  _timerState.running = false;
+  _timerState.startedAt = null;
+  _timerState.phaseStartedAt = null;
+  _timerState.updatedAt = new Date().toISOString();
+  _timerState.source = 'admin';
+  cancelAutoAdvance();
+  _persistTimerState('pause');
+}
+
+function timerNext() {
+  if (!_timerState) return;
+  const phases = getPhases(_timerState.structureId);
+  _applyPhaseChange(Math.min(phases.length - 1, _timerState.phaseIndex + 1), 'manual_next');
+}
+
+function timerPrev() {
+  if (!_timerState) return;
+  _applyPhaseChange(Math.max(0, _timerState.phaseIndex - 1), 'manual_prev');
+}
+
+function timerResetCurrentPhase() {
+  if (!_timerState) return;
+  const phase = getPhase(_timerState.structureId, _timerState.phaseIndex);
+  _timerState.remainingSec = _timerState.finalMode && phase.type==='level' ? 6*60 : phase.duration;
+  _timerState.startedAt = _timerState.running ? new Date().toISOString() : null;
+  _timerState.phaseStartedAt = _timerState.running ? new Date().toISOString() : null;
+  _timerState.updatedAt = new Date().toISOString();
+  _timerState.source = 'admin';
+  cancelAutoAdvance();
+  _persistTimerState('reset_phase');
+  if (_timerState.running) scheduleAutoAdvance();
+}
+
+function timerResetAll(structureId) {
+  cancelAutoAdvance();
+  _timerState = createTimerState({
+    structureId: structureId || 'default',
+    updatedAt: new Date().toISOString(),
+    source: 'admin'
+  });
+  _persistTimerState('reset_all');
+}
+
+function timerSetStructure(structureId) {
+  if (!TOURNAMENT_STRUCTURES[structureId]) return;
+  cancelAutoAdvance();
+  _timerState = createTimerState({
+    structureId,
+    updatedAt: new Date().toISOString(),
+    source: 'admin'
+  });
+  _persistTimerState('structure_change:' + structureId);
+}
+
+function timerSetFinalMode(enabled) {
+  if (!_timerState) return;
+  _timerState.finalMode = enabled;
+  const phase = getPhase(_timerState.structureId, _timerState.phaseIndex);
+  if (phase && phase.type === 'level') {
+    _timerState.remainingSec = enabled ? 6*60 : phase.duration;
+    _timerState.startedAt = _timerState.running ? new Date().toISOString() : null;
+    _timerState.phaseStartedAt = _timerState.running ? new Date().toISOString() : null;
+  }
+  _timerState.updatedAt = new Date().toISOString();
+  _timerState.source = 'admin';
+  cancelAutoAdvance();
+  _persistTimerState(enabled ? 'final_mode_on' : 'final_mode_off');
+  if (_timerState.running) scheduleAutoAdvance();
+}
+
+function timerGoToLevel(level) {
+  if (!_timerState) return;
+  const phases = getPhases(_timerState.structureId);
+  const idx = phases.findIndex(p => p.type === 'level' && p.level === level);
+  if (idx < 0) return;
+  _applyPhaseChange(idx, 'goto_level_' + level);
+}
+
+// ── ВНУТРЕННИЕ ────────────────────────────────────────────────
+
+function _applyPhaseChange(newIdx, reason) {
+  if (!_timerState) return;
+  const phase = getPhase(_timerState.structureId, newIdx);
+  if (!phase) return;
+  _timerState.phaseIndex = newIdx;
+  _timerState.remainingSec = _timerState.finalMode && phase.type==='level' ? 6*60 : phase.duration;
+  _timerState.startedAt = _timerState.running ? new Date().toISOString() : null;
+  _timerState.phaseStartedAt = _timerState.running ? new Date().toISOString() : null;
+  _timerState.updatedAt = new Date().toISOString();
+  _timerState.source = 'admin';
+  cancelAutoAdvance();
+  _persistTimerState(reason);
+  if (_timerState.running) scheduleAutoAdvance();
+}
+
+function _persistTimerState(reason) {
+  if (!_timerState) return;
+  saveLocalTimerState(_timerState);
+  if (typeof renderTimerTV === 'function') renderTimerTV(_timerState);
+  if (typeof renderTimerAdmin === 'function') renderTimerAdmin(_timerState);
+  if (_isAdminWriter) saveCloudTimerStateDebounced(_timerState, reason);
+}
+
+// ── AUTO-ADVANCE ──────────────────────────────────────────────
+// Использует абсолютное время — не теряет уровни при сне устройства
+
+function scheduleAutoAdvance() {
+  cancelAutoAdvance();
+  if (!_timerState || !_timerState.running) return;
+
+  // Сначала догоняем пропущенные уровни
+  catchUpPhases(_timerState);
+
+  const rem = getRemainingSec(_timerState);
+  if (rem <= 0) {
+    setTimeout(autoNextPhase, 100);
+    return;
+  }
+  _autoAdvanceTimeout = setTimeout(autoNextPhase, rem * 1000);
+  console.log('[AUTO-ADVANCE] scheduled in', Math.round(rem), 'sec, phase:', _timerState.phaseIndex, 'writer:', _isAdminWriter);
+}
+
+function cancelAutoAdvance() {
+  if (_autoAdvanceTimeout) {
+    clearTimeout(_autoAdvanceTimeout);
+    _autoAdvanceTimeout = null;
+  }
+}
+
+function autoNextPhase() {
+  if (_autoPhaseLock) return;
+  if (!_timerState || !_timerState.running) return;
+  _autoPhaseLock = true;
+
+  // Догоняем все пропущенные уровни (если setTimeout сработал поздно)
+  catchUpPhases(_timerState);
+
+  const phases = getPhases(_timerState.structureId);
+  const currentIdx = _timerState.phaseIndex;
+
+  if (!_timerState.running) {
+    // catchUpPhases мог остановить таймер (конец турнира)
+    if (_isAdminWriter) {
+      _timerState.updatedAt = new Date().toISOString();
+      _timerState.source = 'admin';
+      _persistTimerState('tournament_end');
+    } else {
+      saveLocalTimerState(_timerState);
+      if (typeof renderTimerTV === 'function') renderTimerTV(_timerState);
+    }
+    _autoPhaseLock = false;
+    return;
+  }
+
+  if (currentIdx >= phases.length - 1) {
+    _timerState.running = false;
+    _timerState.startedAt = null;
+    _timerState.phaseStartedAt = null;
+    _timerState.remainingSec = 0;
+
+    if (_isAdminWriter) {
+      _timerState.updatedAt = new Date().toISOString();
+      _timerState.source = 'admin';
+      _persistTimerState('tournament_end');
+    } else {
+      saveLocalTimerState(_timerState);
+      if (typeof renderTimerTV === 'function') renderTimerTV(_timerState);
+    }
+    _autoPhaseLock = false;
+    return;
+  }
+
+  // Переход на следующую фазу
+  const nextIdx = currentIdx + 1;
+  const nextPhase = phases[nextIdx];
+  _timerState.phaseIndex = nextIdx;
+  _timerState.remainingSec = _timerState.finalMode && nextPhase.type==='level' ? 6*60 : nextPhase.duration;
+  _timerState.phaseStartedAt = new Date().toISOString();
+  _timerState.startedAt = _timerState.phaseStartedAt;
+
+  if (_isAdminWriter) {
+    _timerState.updatedAt = new Date().toISOString();
+    _timerState.source = 'admin';
+    saveLocalTimerState(_timerState);
+    if (typeof renderTimerTV === 'function') renderTimerTV(_timerState);
+    if (typeof renderTimerAdmin === 'function') renderTimerAdmin(_timerState);
+    saveCloudTimerStateDebounced(_timerState, 'auto_next');
+  } else {
+    _timerState.source = 'tv-preview';
+    saveLocalTimerState(_timerState);
+    if (typeof renderTimerTV === 'function') renderTimerTV(_timerState);
+    console.log('[TV PREVIEW] local advance to phase', nextIdx);
+  }
+
+  _autoPhaseLock = false;
+  scheduleAutoAdvance();
+}
+
+// ── CLOUD REFRESH ─────────────────────────────────────────────
+
+function applyCloudTimerState(cloudState) {
+  if (!cloudState) return;
+
+  // TV: защита от отката при tv-preview
+  if (!_isAdminWriter && _timerState) {
+    const cloudSrc = cloudState.source || '';
+    const localSrc = _timerState.source || '';
+
+    if (cloudSrc === 'admin' && localSrc === 'tv-preview') {
+      const lt = _timerState.updatedAt ? new Date(_timerState.updatedAt).getTime() : 0;
+      const ct = cloudState.updatedAt ? new Date(cloudState.updatedAt).getTime() : 0;
+
+      if (ct > lt) {
+        console.log('[TV] new admin command wins, phase:', cloudState.phaseIndex);
+        _timerState = cloudState;
+        // Догоняем пропущенные уровни в cloud state
+        if (_timerState.running) catchUpPhases(_timerState);
+        saveLocalTimerState(_timerState);
+        cancelAutoAdvance();
+        if (typeof renderTimerTV === 'function') renderTimerTV(_timerState);
+        if (_timerState.running) scheduleAutoAdvance();
+      } else {
+        console.log('[TV] old cloud ignored, keeping tv-preview phase:', _timerState.phaseIndex);
+      }
+      return;
+    }
+  }
+
+  // Стандартный merge по updatedAt
+  const merged = mergeTimerState(_timerState, cloudState);
+  if (merged === _timerState) return;
+  _timerState = merged;
+  // Догоняем после merge
+  if (_timerState.running) catchUpPhases(_timerState);
+  saveLocalTimerState(_timerState);
+  cancelAutoAdvance();
+  if (typeof renderTimerTV === 'function') renderTimerTV(_timerState);
+  if (typeof renderTimerAdmin === 'function') renderTimerAdmin(_timerState);
+  if (_timerState.running) scheduleAutoAdvance();
+}
+
+
+// ── timer-cloud.js ──────────────────────────────
+// ── TIMER CLOUD ────────────────────────────────────────────────
+// Только admin-timer.html пишет в cloud.
+// TV только читает.
+//
+// Save queue: если save уже идёт, pending-флаг не даёт потерять
+// новое состояние — оно уйдёт сразу после завершения текущего save.
+
+let _timerCloudTimer   = null;
+let _timerCloudSaving  = false;
+let _timerCloudPending = false;
+let _timerCloudPendingReason = null;
+
+function saveCloudTimerStateDebounced(state, reason) {
+  reason = reason || 'unknown';
+  if (_timerCloudTimer) clearTimeout(_timerCloudTimer);
+  _timerCloudTimer = setTimeout(function() {
+    _timerCloudTimer = null;
+    _saveCloudTimerState(getTimerState(), reason);
+  }, 600);
+}
+
+async function _saveCloudTimerState(state, reason) {
+  // Если save уже идёт — запомнить pending, не терять последнее состояние
+  if (_timerCloudSaving) {
+    _timerCloudPending = true;
+    _timerCloudPendingReason = reason;
+    console.log('[TIMER CLOUD] pending save queued:', reason);
+    return;
+  }
+
+  _timerCloudSaving = true;
+  _timerCloudPending = false;
+
+  const sz = JSON.stringify(state).length;
+  console.log('[TIMER CLOUD SAVE]', reason, new Date().toISOString(), 'size:'+sz);
+
+  try {
+    await cloudPost('timer-state', state);
+    setTimerCloudStatus('ok');
+    console.log('[TIMER CLOUD SAVE OK]', reason);
+  } catch(e) {
+    console.error('[TIMER CLOUD SAVE ERR]', {reason, message: e.message, size: sz});
+    setTimerCloudStatus('local'); // таймер продолжает работать
+  } finally {
+    _timerCloudSaving = false;
+    // Если пришёл новый запрос пока сохраняли — отправить актуальное состояние
+    if (_timerCloudPending) {
+      const pendingReason = _timerCloudPendingReason || 'pending';
+      _timerCloudPending = false;
+      _timerCloudPendingReason = null;
+      console.log('[TIMER CLOUD] executing pending save:', pendingReason);
+      _saveCloudTimerState(getTimerState(), pendingReason);
+    }
+  }
+}
+
+async function loadCloudTimerState() {
+  try {
+    const state = await cloudGet('timer-state');
+    setTimerCloudStatus('ok');
+    return state;
+  } catch(e) {
+    console.warn('[TIMER CLOUD LOAD ERR]', e.message);
+    setTimerCloudStatus('offline');
+    return null;
+  }
+}
+
+// ── СТАТУСЫ ────────────────────────────────────────────────────
+let _timerStatusEl = null;
+function setTimerStatusElement(el) { _timerStatusEl = el; }
+
+function setTimerCloudStatus(status) {
+  if (!_timerStatusEl) return;
+  const cloudEnabled = typeof cloudIsEnabled === 'function' && cloudIsEnabled();
+  let text, dataStatus;
+  if (!cloudEnabled) {
+    text = '● ТАЙМЕР · ЛОКАЛЬНЫЙ ТЕСТ';
+    dataStatus = 'local';
+  } else if (status === 'ok') {
+    text = '● ТАЙМЕР · ОНЛАЙН';
+    dataStatus = 'ok';
+  } else {
+    text = '● ТАЙМЕР · ОБЛАКО НЕДОСТУПНО · ОТСЧЁТ ИДЁТ';
+    dataStatus = 'offline';
+  }
+  _timerStatusEl.textContent = text;
+  _timerStatusEl.dataset.status = dataStatus;
+}
+
+
+// ── timer-render-tv.js ──────────────────────────────
+// ── TIMER RENDER TV ────────────────────────────────────────────
+// Только рисует. Не меняет состояние.
+
+function renderTimerTV(state) {
+  if (!state) return;
+
+  const phase = getPhase(state.structureId, state.phaseIndex);
+  const rem = getRemainingSec(state);
+  const nextLevel = getNextLevel(state.structureId, state.phaseIndex);
+
+  // Главный таймер
+  const timerEl = document.getElementById('tv-timer-display');
+  if (timerEl) {
+    timerEl.textContent = fmtTime(rem);
+    timerEl.className = 'tv-timer-display' + (rem <= 30 && state.running ? ' tv-timer-warning' : '');
+  }
+
+  // Название фазы
+  const phaseNameEl = document.getElementById('tv-phase-name');
+  if (phaseNameEl) {
+    if (state.finalMode && phase && phase.type === 'level') {
+      phaseNameEl.textContent = 'ФИНАЛЬНЫЙ СТОЛ';
+    } else if (phase) {
+      phaseNameEl.textContent = phase.type === 'break' ? (phase.title || 'ПЕРЕРЫВ') : 'УРОВЕНЬ ' + phase.level;
+    }
+  }
+
+  // Блайнды
+  const blindsEl = document.getElementById('tv-blinds');
+  if (blindsEl && phase) {
+    if (phase.type === 'level') {
+      blindsEl.textContent = fmtChips(phase.sb) + ' / ' + fmtChips(phase.bb);
+    } else if (phase.type === 'break') {
+      blindsEl.textContent = nextLevel ? fmtChips(nextLevel.sb) + ' / ' + fmtChips(nextLevel.bb) : '—';
+    }
+  }
+
+  // Анте
+  const anteEl = document.getElementById('tv-ante');
+  if (anteEl && phase) {
+    if (phase.type === 'level' && phase.ante) {
+      anteEl.textContent = 'АНТЕ ' + fmtChips(phase.ante);
+      anteEl.style.display = '';
+    } else if (phase.type === 'break' && nextLevel && nextLevel.ante) {
+      anteEl.textContent = 'АНТЕ ' + fmtChips(nextLevel.ante);
+      anteEl.style.display = '';
+    } else {
+      anteEl.style.display = 'none';
+    }
+  }
+
+  // Следующий уровень
+  const nextEl = document.getElementById('tv-next-level');
+  if (nextEl) {
+    if (nextLevel) {
+      nextEl.textContent = 'Следующий: ' + fmtChips(nextLevel.sb) + '/' + fmtChips(nextLevel.bb) + (nextLevel.ante ? ' анте '+fmtChips(nextLevel.ante) : '');
+      nextEl.style.display = '';
+    } else {
+      nextEl.textContent = 'Финальный уровень';
+      nextEl.style.display = '';
+    }
+  }
+
+  // Статус (работает / пауза)
+  const runningEl = document.getElementById('tv-running-status');
+  if (runningEl) {
+    runningEl.textContent = state.running ? '' : '⏸ ПАУЗА';
+    runningEl.style.display = state.running ? 'none' : '';
+  }
+
+  // Регистрация
+  const regEl = document.getElementById('tv-registration');
+  if (regEl && phase) {
+    if (phase.type === 'level') {
+      regEl.textContent = phase.level <= 10 ? 'РЕГИСТРАЦИЯ ОТКРЫТА' : 'РЕГИСТРАЦИЯ ЗАКРЫТА';
+      regEl.className = 'tv-registration ' + (phase.level <= 10 ? 'tv-reg-open' : 'tv-reg-closed');
+    } else {
+      regEl.textContent = '';
+    }
+  }
+}
+
+
+// ── timer-render-admin.js ──────────────────────────────
+// ── TIMER RENDER ADMIN ─────────────────────────────────────────
+// Только рисует. Не меняет состояние.
+
+function renderTimerAdmin(state) {
+  if (!state) return;
+
+  const phase = getPhase(state.structureId, state.phaseIndex);
+  const rem = getRemainingSec(state);
+  const phases = getPhases(state.structureId);
+
+  // Таймер
+  const timerEl = document.getElementById('admin-timer-display');
+  if (timerEl) timerEl.textContent = fmtTime(rem);
+
+  // Фаза
+  const phaseEl = document.getElementById('admin-phase-name');
+  if (phaseEl && phase) {
+    phaseEl.textContent = phase.type === 'break'
+      ? (phase.title || 'ПЕРЕРЫВ')
+      : 'Уровень ' + phase.level + (state.finalMode ? ' · ФИНАЛ' : '');
+  }
+
+  // Блайнды
+  const blindsEl = document.getElementById('admin-blinds');
+  if (blindsEl && phase && phase.type === 'level') {
+    blindsEl.textContent = fmtChips(phase.sb) + ' / ' + fmtChips(phase.bb) + (phase.ante ? ' / анте ' + fmtChips(phase.ante) : '');
+  } else if (blindsEl) blindsEl.textContent = '';
+
+  // Кнопки старт/пауза
+  const startBtn = document.getElementById('btn-start');
+  const pauseBtn = document.getElementById('btn-pause');
+  if (startBtn) startBtn.disabled = state.running;
+  if (pauseBtn) pauseBtn.disabled = !state.running;
+
+  // Финальный стол
+  const finalBtn = document.getElementById('btn-final');
+  if (finalBtn) {
+    finalBtn.textContent = state.finalMode ? '🏆 ФИНАЛ ВКЛ' : '🏆 Финальный стол';
+    finalBtn.classList.toggle('active', !!state.finalMode);
+  }
+
+  // Прогресс фаз
+  const progressEl = document.getElementById('admin-phase-progress');
+  if (progressEl) {
+    progressEl.textContent = 'Фаза ' + (state.phaseIndex + 1) + ' из ' + phases.length;
+  }
+
+  // Структура
+  const structEl = document.getElementById('admin-structure-name');
+  if (structEl) {
+    const struct = getStructure(state.structureId);
+    structEl.textContent = struct ? struct.name : state.structureId;
+  }
+}
+
+
+// ── seating-state.js ──────────────────────────────
+// ── SEATING STATE ──────────────────────────────────────────────
+
+const SEATING_STATE_VERSION = '2026-06-13-seating-v1';
+
+const DEFAULT_SEATING_STATE = {
+  version: SEATING_STATE_VERSION,
+  tables: [],
+  players: [],
+  finalTable: false,
+  updatedAt: null,
+  source: 'local'
+};
+
+function createSeatingState(overrides) {
+  return Object.assign({}, DEFAULT_SEATING_STATE, overrides || {});
+}
+
+function mergeSeatingState(local, cloud) {
+  if (!local && !cloud) return createSeatingState();
+  if (!local) return cloud;
+  if (!cloud) return local;
+  const lt = local.updatedAt ? new Date(local.updatedAt).getTime() : 0;
+  const ct = cloud.updatedAt ? new Date(cloud.updatedAt).getTime() : 0;
+  if (lt >= ct) {
+    console.log('[SEATING MERGE] local wins', local.updatedAt);
+    return local;
+  }
+  console.log('[SEATING MERGE] cloud wins', cloud.updatedAt);
+  return cloud;
+}
+
+// Считает количество игроков за столами
+function countSeatedPlayers(state) {
+  if (!state || !state.tables) return 0;
+  return state.tables.reduce((sum, t) => sum + t.seats.filter(s => s.player).length, 0);
+}
+
+// Считает свободные места
+function countFreeSeats(state) {
+  if (!state || !state.tables) return 0;
+  return state.tables.reduce((sum, t) => sum + t.seats.filter(s => !s.player).length, 0);
+}
+
+
+// ── seating-storage.js ──────────────────────────────
+// ── SEATING STORAGE ────────────────────────────────────────────
+
+const SEATING_LS_KEY = 'obshestvo_seating_state_v1';
+
+function saveLocalSeatingState(state) {
+  try { localStorage.setItem(SEATING_LS_KEY, JSON.stringify(state)); } catch(e) {}
+}
+
+function loadLocalSeatingState() {
+  try {
+    const raw = localStorage.getItem(SEATING_LS_KEY);
+    if (!raw) return null;
+    const s = JSON.parse(raw);
+    if (!s || !Array.isArray(s.tables)) return null;
+    return s;
+  } catch(e) { return null; }
+}
+
+function clearLocalSeatingState() {
+  try { localStorage.removeItem(SEATING_LS_KEY); } catch(e) {}
+}
+
+
+// ── seating-engine.js ──────────────────────────────
+// ── SEATING ENGINE ─────────────────────────────────────────────
+
+const MAX_TABLES = 3;
+const MAX_SEATS = 10;
+const MAX_PLAYERS = MAX_TABLES * MAX_SEATS; // 30
+
+let _seatingState = null;
+let _isSeatingWriter = false;
+
+function initSeatingEngine(isWriter) {
+  _isSeatingWriter = !!isWriter;
+  _seatingState = loadLocalSeatingState() || createSeatingState();
+}
+
+function getSeatingState() { return _seatingState; }
+
+// Генерация рассадки
+function generateSeating(players, tableCount) {
+  if (!players || !players.length) return null;
+  tableCount = Math.min(tableCount || optimalTableCount(players.length), MAX_TABLES);
+
+  // Перемешиваем
+  const shuffled = players.slice().sort(() => Math.random() - 0.5);
+
+  const tables = [];
+  for (let i = 0; i < tableCount; i++) {
+    tables.push({
+      id: 'table-' + (i + 1),
+      name: 'Стол ' + (i + 1),
+      seats: Array.from({length: MAX_SEATS}, (_, j) => ({seat: j + 1, player: null}))
+    });
+  }
+
+  // Распределяем по столам
+  shuffled.forEach((player, idx) => {
+    const tableIdx = idx % tableCount;
+    const seatIdx = tables[tableIdx].seats.findIndex(s => !s.player);
+    if (seatIdx >= 0) tables[tableIdx].seats[seatIdx].player = player;
+  });
+
+  return tables;
+}
+
+function optimalTableCount(playerCount) {
+  if (playerCount <= 10) return 1;
+  if (playerCount <= 20) return 2;
+  return 3;
+}
+
+// Применить новую рассадку
+function applySeating(players, tableCount) {
+  const tables = generateSeating(players, tableCount);
+  if (!tables) { showSeatingError('Нет игроков'); return; }
+  _seatingState = createSeatingState({
+    tables,
+    players: players.slice(),
+    finalTable: false,
+    updatedAt: new Date().toISOString(),
+    source: 'local'
+  });
+  _persistSeatingState('generate');
+}
+
+// Добавить опоздавшего
+function addLatePlayer(name) {
+  if (!_seatingState) return false;
+  if (_seatingState.players.includes(name)) return false;
+  if (countSeatedPlayers(_seatingState) >= MAX_PLAYERS) return false;
+
+  // Найти свободное место
+  for (const table of _seatingState.tables) {
+    const seat = table.seats.find(s => !s.player);
+    if (seat) {
+      seat.player = name;
+      _seatingState.players.push(name);
+      _seatingState.updatedAt = new Date().toISOString();
+      _persistSeatingState('add_late:' + name);
+      return true;
+    }
+  }
+  return false; // нет мест
+}
+
+// Убрать игрока
+function removePlayerFromSeating(name) {
+  if (!_seatingState) return;
+  _seatingState.players = _seatingState.players.filter(p => p !== name);
+  for (const table of _seatingState.tables) {
+    for (const seat of table.seats) {
+      if (seat.player === name) seat.player = null;
+    }
+  }
+  _seatingState.updatedAt = new Date().toISOString();
+  _persistSeatingState('remove:' + name);
+}
+
+// Включить финальный стол
+function setFinalTable(enabled) {
+  if (!_seatingState) return;
+  _seatingState.finalTable = enabled;
+  _seatingState.updatedAt = new Date().toISOString();
+  _persistSeatingState('final_table:' + enabled);
+}
+
+// Очистить рассадку
+function clearSeating() {
+  _seatingState = createSeatingState({updatedAt: new Date().toISOString()});
+  _persistSeatingState('clear');
+}
+
+function _persistSeatingState(reason) {
+  if (!_seatingState) return;
+  saveLocalSeatingState(_seatingState);
+  if (typeof renderSeatingTV === 'function') renderSeatingTV(_seatingState);
+  if (typeof renderSeatingAdmin === 'function') renderSeatingAdmin(_seatingState);
+  if (_isSeatingWriter) saveCloudSeatingStateDebounced(_seatingState, reason);
+}
+
+// Применить cloud state
+function applyCloudSeatingState(cloudState) {
+  if (!cloudState) return;
+  const merged = mergeSeatingState(_seatingState, cloudState);
+  if (merged === _seatingState) return;
+  _seatingState = merged;
+  saveLocalSeatingState(_seatingState);
+  if (typeof renderSeatingTV === 'function') renderSeatingTV(_seatingState);
+  if (typeof renderSeatingAdmin === 'function') renderSeatingAdmin(_seatingState);
+}
+
+function showSeatingError(msg) {
+  console.warn('[SEATING]', msg);
+}
+
+
+// ── seating-cloud.js ──────────────────────────────
+// ── SEATING CLOUD ──────────────────────────────────────────────
+// Save queue с pending-флагом — последнее состояние не теряется
+// даже если admin быстро нажал несколько действий подряд.
+
+let _seatingCloudTimer   = null;
+let _seatingCloudSaving  = false;
+let _seatingCloudPending = false;
+let _seatingCloudPendingReason = null;
+
+function saveCloudSeatingStateDebounced(state, reason) {
+  if (_seatingCloudTimer) clearTimeout(_seatingCloudTimer);
+  _seatingCloudTimer = setTimeout(function() {
+    _seatingCloudTimer = null;
+    _saveCloudSeatingState(getSeatingState(), reason || 'unknown');
+  }, 800);
+}
+
+async function _saveCloudSeatingState(state, reason) {
+  if (_seatingCloudSaving) {
+    _seatingCloudPending = true;
+    _seatingCloudPendingReason = reason;
+    console.log('[SEATING CLOUD] pending save queued:', reason);
+    return;
+  }
+
+  _seatingCloudSaving = true;
+  _seatingCloudPending = false;
+
+  console.log('[SEATING CLOUD SAVE]', reason, new Date().toISOString());
+  try {
+    await cloudPost('seating-state', state);
+    setSeatingCloudStatus('ok');
+    console.log('[SEATING CLOUD SAVE OK]', reason);
+  } catch(e) {
+    console.error('[SEATING CLOUD SAVE ERR]', e.message);
+    setSeatingCloudStatus('local');
+  } finally {
+    _seatingCloudSaving = false;
+    if (_seatingCloudPending) {
+      const pendingReason = _seatingCloudPendingReason || 'pending';
+      _seatingCloudPending = false;
+      _seatingCloudPendingReason = null;
+      console.log('[SEATING CLOUD] executing pending save:', pendingReason);
+      _saveCloudSeatingState(getSeatingState(), pendingReason);
+    }
+  }
+}
+
+async function loadCloudSeatingState() {
+  try {
+    const state = await cloudGet('seating-state');
+    setSeatingCloudStatus('ok');
+    return state;
+  } catch(e) {
+    console.warn('[SEATING CLOUD LOAD ERR]', e.message);
+    setSeatingCloudStatus('offline');
+    return null;
+  }
+}
+
+// ── СТАТУСЫ ────────────────────────────────────────────────────
+let _seatingStatusEl = null;
+function setSeatingStatusElement(el) { _seatingStatusEl = el; }
+
+function setSeatingCloudStatus(status) {
+  if (!_seatingStatusEl) return;
+  const cloudEnabled = typeof cloudIsEnabled === 'function' && cloudIsEnabled();
+  let text, dataStatus;
+  if (!cloudEnabled) {
+    text = '● РАССАДКА · ЛОКАЛЬНЫЙ ТЕСТ';
+    dataStatus = 'local';
+  } else if (status === 'ok') {
+    text = '● РАССАДКА · ОНЛАЙН';
+    dataStatus = 'ok';
+  } else {
+    text = '● РАССАДКА · ПОСЛЕДНЯЯ СОХРАНЁННАЯ';
+    dataStatus = 'offline';
+  }
+  _seatingStatusEl.textContent = text;
+  _seatingStatusEl.dataset.status = dataStatus;
+}
+
+
+// ── seating-render-tv.js ──────────────────────────────
+// ── SEATING RENDER TV ──────────────────────────────────────────
+
+function renderSeatingTV(state) {
+  const cont = document.getElementById('tv-seating-content');
+  if (!cont) return;
+
+  if (!state || !state.tables || !state.tables.length) {
+    cont.innerHTML = '<div class="tv-seating-empty">РАССАДКА ЕЩЁ НЕ ГОТОВА</div>';
+    return;
+  }
+
+  const isFinal = state.finalTable;
+  const tables = state.tables;
+
+  // Считаем максимальное количество игроков за столом для масштабирования
+  const maxPlayers = Math.max(...tables.map(t => t.seats.filter(s => s.player).length));
+  const tableCount = tables.length;
+
+  let html = '';
+
+  if (isFinal) {
+    html += '<div class="tv-final-banner">🏆 ФИНАЛЬНЫЙ СТОЛ</div>';
+  }
+
+  html += '<div class="tv-tables tv-tables-' + tableCount + '">';
+
+  for (const table of tables) {
+    const seated = table.seats.filter(s => s.player);
+    const free = table.seats.filter(s => !s.player);
+
+    html += `<div class="tv-table ${isFinal ? 'tv-table-final' : ''}">`;
+    html += `<div class="tv-table-name">${escHtml(table.name)}</div>`;
+    html += '<div class="tv-seats">';
+
+    for (const seat of table.seats) {
+      if (seat.player) {
+        html += `<div class="tv-seat tv-seat-taken">
+          <span class="tv-seat-num">${seat.seat}</span>
+          <span class="tv-seat-name">${escHtml(seat.player)}</span>
+        </div>`;
+      } else {
+        html += `<div class="tv-seat tv-seat-empty">
+          <span class="tv-seat-num">${seat.seat}</span>
+          <span class="tv-seat-name">—</span>
+        </div>`;
+      }
+    }
+
+    html += '</div>'; // tv-seats
+    html += `<div class="tv-table-count">${seated.length} / ${table.seats.length}</div>`;
+    html += '</div>'; // tv-table
+  }
+
+  html += '</div>'; // tv-tables
+
+  // Общий счёт
+  const total = tables.reduce((s, t) => s + t.seats.filter(x => x.player).length, 0);
+  html += `<div class="tv-seating-total">Всего за столами: ${total}</div>`;
+
+  cont.innerHTML = html;
+}
+
+function escHtml(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+
+// ── seating-render-admin.js ──────────────────────────────
+// ── SEATING RENDER ADMIN ───────────────────────────────────────
+// data-player + делегирование вместо inline onclick с именем.
+// Безопасно для имён с апострофом, кавычками и спецсимволами.
+
+// Инициализация делегирования — вызвать один раз при загрузке
+function initSeatingAdminEvents() {
+  const list = document.getElementById('admin-player-list');
+  if (!list) return;
+  // Делегирование: один обработчик на весь список
+  list.addEventListener('click', function(e) {
+    const btn = e.target.closest('.btn-remove');
+    if (!btn) return;
+    const name = btn.dataset.player;
+    if (name !== undefined) {
+      removePlayerFromSeating(name);
+      updateLatePlayerSelect && updateLatePlayerSelect();
+    }
+  });
+}
+
+function renderSeatingAdmin(state) {
+  // Preview рассадки
+  const preview = document.getElementById('admin-seating-preview');
+  if (preview) {
+    if (!state || !state.tables || !state.tables.length) {
+      preview.innerHTML = '<div class="admin-no-seating" style="font-size:10px;color:var(--text3);">Рассадка не создана</div>';
+    } else {
+      let html = '';
+      for (const table of state.tables) {
+        const players = table.seats.filter(s => s.player).map(s => escHtmlAdmin(s.player));
+        html += `<div class="admin-table-preview" style="margin-bottom:4px;">
+          <strong style="color:var(--text2);">${escHtmlAdmin(table.name)}</strong>:
+          ${players.length ? players.join(', ') : '<em style="color:var(--text3);">пусто</em>'}
+        </div>`;
+      }
+      preview.innerHTML = html;
+    }
+  }
+
+  // Список игроков
+  const playerList = document.getElementById('admin-player-list');
+  if (playerList) {
+    const players = (state && state.players) || [];
+    if (!players.length) {
+      playerList.innerHTML = '<div style="font-size:10px;color:var(--text3);">Нет игроков</div>';
+    } else {
+      // data-player — безопасно для любых имён
+      playerList.innerHTML = players.map(p =>
+        `<div class="player-item">
+          <span>${escHtmlAdmin(p)}</span>
+          <button class="btn-remove" data-player="${escAttr(p)}" title="Удалить">✕</button>
+        </div>`
+      ).join('');
+    }
+  }
+
+  // Счётчик
+  const countEl = document.getElementById('admin-player-count');
+  if (countEl) {
+    const count = (state && state.players || []).length;
+    const max = typeof MAX_PLAYERS !== 'undefined' ? MAX_PLAYERS : 30;
+    countEl.textContent = count + ' / ' + max;
+    countEl.style.color = count >= max ? 'var(--err)' : 'var(--text3)';
+  }
+
+  // Финальный стол
+  const finalBtn = document.getElementById('btn-final-table');
+  if (finalBtn && state) {
+    finalBtn.textContent = state.finalTable ? '🏆 ФИНАЛ ВКЛ' : '🏆 Финальный стол';
+    finalBtn.classList.toggle('active', !!state.finalTable);
+  }
+}
+
+// Экранирование для HTML-контента
+function escHtmlAdmin(s) {
+  if (s == null) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+// Экранирование для HTML-атрибутов (data-player="...")
+function escAttr(s) {
+  if (s == null) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+
+// ── tv-tabs.js ──────────────────────────────
+// ── TV TABS ────────────────────────────────────────────────────
+
+const TV_TAB_LS_KEY = 'obshestvo_tv_last_tab';
+const TV_LITE_LS_KEY = 'obshestvo_tv_lite_mode';
+
+function showTVTab(name) {
+  // Скрываем все вкладки
+  document.querySelectorAll('.tv-tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tv-tab-btn').forEach(el => el.classList.remove('active'));
+
+  // Показываем нужную
+  const content = document.getElementById('tv-tab-' + name);
+  const btn = document.querySelector('.tv-tab-btn[data-tab="' + name + '"]');
+  if (content) content.classList.add('active');
+  if (btn) btn.classList.add('active');
+
+  // Запоминаем
+  rememberLastTab(name);
+
+  // При переключении на таймер — рендерим актуальное состояние
+  if (name === 'timer') {
+    const state = getTimerState();
+    if (state) renderTimerTV(state);
+  }
+  if (name === 'seating') {
+    const state = getSeatingState();
+    if (state) renderSeatingTV(state);
+  }
+}
+
+function rememberLastTab(name) {
+  try { localStorage.setItem(TV_TAB_LS_KEY, name); } catch(e) {}
+}
+
+function restoreLastTab() {
+  try {
+    const last = localStorage.getItem(TV_TAB_LS_KEY);
+    return last || 'seating';
+  } catch(e) { return 'seating'; }
+}
+
+function toggleLiteMode() {
+  const body = document.body;
+  const isLite = body.classList.toggle('lite');
+  try { localStorage.setItem(TV_LITE_LS_KEY, isLite ? '1' : ''); } catch(e) {}
+  const btn = document.getElementById('btn-lite');
+  if (btn) btn.textContent = isLite ? 'FULL' : 'LITE';
+}
+
+function restoreLiteMode() {
+  try {
+    if (localStorage.getItem(TV_LITE_LS_KEY)) {
+      document.body.classList.add('lite');
+      const btn = document.getElementById('btn-lite');
+      if (btn) btn.textContent = 'FULL';
+    }
+  } catch(e) {}
+}
+
+
+// ── INIT ─────────────────────────────────────────────────────
+
+// ── ADMIN TIMER INIT ─────────────────────────────────────────
+// admin-timer.html — единственный writer таймера
+
+setTimerStatusElement(document.getElementById('admin-sync-bar'));
+
+// isWriter = true — пишем в cloud
+initTimerEngine(true);
+
+// Первый рендер
+renderTimerAdmin(getTimerState());
+
+// Рендер каждую секунду (только рисует)
+setInterval(function() {
+  renderTimerAdmin(getTimerState());
+}, 1000);
+
+// Cloud sync — читаем и мержим каждые 30 сек (медленнее чем TV)
+setInterval(async function() {
+  const cloudState = await loadCloudTimerState();
+  if (cloudState) applyCloudTimerState(cloudState);
+}, 30000);
+
+// Загружаем из cloud при старте
+(async function() {
+  setTimerCloudStatus('loading');
+  const cloudState = await loadCloudTimerState();
+  if (cloudState) {
+    applyCloudTimerState(cloudState);
+  }
+  // null = cloud работает, просто timer-state ещё не создан — не offline
+})();
+
+// ── КНОПКИ ───────────────────────────────────────────────────
+
+function toggleFinalMode() {
+  const state = getTimerState();
+  timerSetFinalMode(!state.finalMode);
+}
+
+function applyStructure(id) {
+  if (!confirm('Сменить структуру? Таймер сбросится.')) {
+    document.getElementById('sel-structure').value = getTimerState().structureId;
+    return;
+  }
+  timerSetStructure(id);
+}
+
+function confirmResetAll() {
+  if (!confirm('Сбросить весь турнир? Это вернёт таймер к началу.')) return;
+  const id = document.getElementById('sel-structure').value;
+  timerResetAll(id);
+}
+
+// ── АВАРИЙНЫЙ РЕЖИМ ───────────────────────────────────────
+// Временно отключает cloud-запись, работает только с localStorage.
+// Полезно если Google Script упал или нет интернета.
+
+let _emergencyLocalMode = false;
+
+function toggleStructureView() {
+  const view = document.getElementById('structure-view');
+  const btn  = document.getElementById('btn-show-structure');
+  const open = view.style.display === 'none';
+  view.style.display = open ? '' : 'none';
+  btn.textContent = open ? '▲ СКРЫТЬ' : '📋 ПОКАЗАТЬ ВСЕ УРОВНИ';
+  if (open) renderStructureTable();
+}
+
+function renderStructureTable() {
+  const state = getTimerState();
+  if (!state) return;
+  const struct = getStructure(state.structureId);
+  const phases = struct.phases;
+  let html = '<div style="font-size:9px;color:var(--gold3);letter-spacing:2px;margin-bottom:6px;">'
+    + struct.name.toUpperCase() + ' · ' + phases.filter(p=>p.type==="level").length + ' УРОВНЕЙ</div>';
+  html += '<table style="width:100%;border-collapse:collapse;font-size:10px;">'
+    + '<tr style="color:var(--text3);"><th style="text-align:left;padding:2px 4px;">#</th>'
+    + '<th style="padding:2px 4px;">СБ</th><th style="padding:2px 4px;">ББ</th>'
+    + '<th style="padding:2px 4px;">Анте</th><th style="padding:2px 4px;">Время</th></tr>';
+  const currentIdx = state.phaseIndex || 0;
+  phases.forEach((p, i) => {
+    const isCurrent = i === currentIdx;
+    const style = isCurrent
+      ? 'background:rgba(201,169,110,0.15);color:var(--gold);'
+      : 'color:var(--text2);';
+    if (p.type === 'break') {
+      html += '<tr style="'+style+'border-top:1px solid rgba(201,169,110,0.1);">'
+        + '<td style="padding:3px 4px;" colspan="5">— ' + (p.title||'ПЕРЕРЫВ')
+        + ' ' + Math.floor(p.duration/60) + 'мин'
+        + (isCurrent ? ' ◀' : '') + '</td></tr>';
+    } else {
+      const fmt = n => n>=1000?(n/1000)+(n%1000?'K':'K'):''+n;
+      html += '<tr style="'+style+'">'
+        + '<td style="padding:2px 4px;">' + p.level + (isCurrent?' ◀':'') + '</td>'
+        + '<td style="padding:2px 4px;text-align:center;">' + fmt(p.sb) + '</td>'
+        + '<td style="padding:2px 4px;text-align:center;">' + fmt(p.bb) + '</td>'
+        + '<td style="padding:2px 4px;text-align:center;">' + (p.ante ? fmt(p.ante) : '—') + '</td>'
+        + '<td style="padding:2px 4px;text-align:center;">' + Math.floor(p.duration/60) + '</td></tr>';
+    }
+  });
+  html += '</table>';
+  document.getElementById('structure-table').innerHTML = html;
+}
+
+function toggleEmergencyLocal() {
+  _emergencyLocalMode = !_emergencyLocalMode;
+  const btn = document.getElementById('btn-emergency-local');
+  const status = document.getElementById('emergency-status');
+
+  if (_emergencyLocalMode) {
+    // Принудительно переключаем cloud на off
+    if (typeof APP_CONFIG !== 'undefined') APP_CONFIG._cloudOverride = false;
+    btn.textContent = '☁️ ВЕРНУТЬ CLOUD';
+    btn.classList.add('active');
+    if (status) status.textContent = '⚠️ ЛОКАЛЬНЫЙ РЕЖИМ АКТИВЕН — cloud не пишется';
+    setTimerCloudStatus('local');
+  } else {
+    if (typeof APP_CONFIG !== 'undefined') APP_CONFIG._cloudOverride = undefined;
+    btn.textContent = '🆘 ЛОКАЛЬНЫЙ РЕЖИМ';
+    btn.classList.remove('active');
+    if (status) status.textContent = '';
+    setTimerCloudStatus('loading');
+    // Сразу пытаемся сохранить в cloud
+    saveCloudTimerStateDebounced(getTimerState(), 'emergency_restore');
+  }
+}
+
+function saveTimerNow() {
+  const state = getTimerState();
+  saveLocalTimerState(state);
+  saveCloudTimerStateDebounced(state, 'manual_save');
+  setTimerCloudStatus('loading');
+}
+
+// Синхронизируем select со структурой
+setInterval(function() {
+  const state = getTimerState();
+  if (!state) return;
+  const sel = document.getElementById('sel-structure');
+  if (sel && sel.value !== state.structureId) sel.value = state.structureId;
+}, 2000);
+
+
+</script>
+</body>
+</html>
