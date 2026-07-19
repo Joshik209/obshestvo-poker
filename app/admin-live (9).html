@@ -1,0 +1,3324 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Общество · Live Room</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0A0A0C;--card:#111115;--card2:#16161C;
+  --border:rgba(201,169,110,0.12);--gold:#C9A96E;--gold2:#E8C98A;--gold3:rgba(201,169,110,0.4);
+  --ok:#4DAF6F;--err:#C0404A;--warn:#E8A020;--live:#8B1E3F;
+  --text:#F0EBE1;--text2:#A89880;--text3:rgba(168,152,128,0.5);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Montserrat',sans-serif;font-size:13px;min-height:100vh;}
+
+/* PIN */
+#pin-screen{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1000;gap:20px;}
+.pin-logo{font-family:'Cormorant Garamond',serif;font-size:30px;letter-spacing:10px;color:var(--gold);font-weight:300;}
+.pin-sub{font-size:9px;letter-spacing:4px;color:var(--text3);}
+.pin-input{background:var(--card);border:1px solid var(--border);color:var(--text);font-family:'Montserrat',sans-serif;font-size:22px;letter-spacing:10px;padding:12px 20px;border-radius:4px;text-align:center;width:180px;outline:none;}
+.pin-btn{background:rgba(201,169,110,0.1);border:1px solid var(--gold3);color:var(--gold);font-family:'Montserrat',sans-serif;font-size:10px;letter-spacing:3px;padding:11px 28px;border-radius:4px;cursor:pointer;}
+.pin-btn:hover{background:rgba(201,169,110,0.2);}
+.pin-err{font-size:10px;color:var(--err);letter-spacing:2px;height:16px;}
+
+/* APP */
+#app{display:none;}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;}
+.topbar-logo{font-family:'Cormorant Garamond',serif;font-size:16px;letter-spacing:5px;color:var(--gold);font-weight:300;}
+.topbar-sub{font-size:8px;letter-spacing:3px;color:var(--live);}
+.topbar-right{display:flex;align-items:center;gap:8px;}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:var(--ok);}
+.sync-dot.err{background:var(--err);}
+.sync-dot.warn{background:var(--warn);}
+.sync-dot.loading{background:var(--gold);animation:pulse 1s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
+.sync-lbl{font-size:8px;letter-spacing:1px;color:var(--text3);}
+.btn-exit{background:none;border:1px solid var(--border);color:var(--text3);font-family:inherit;font-size:9px;letter-spacing:2px;padding:5px 10px;border-radius:3px;cursor:pointer;}
+
+/* TEST BANNER */
+#test-banner{display:none;background:var(--warn);color:#000;text-align:center;padding:6px;font-size:10px;letter-spacing:3px;font-weight:600;}
+
+/* TABS */
+.tabs{display:flex;gap:2px;padding:0 16px;background:var(--card);border-bottom:1px solid var(--border);overflow-x:auto;}
+.tab{background:none;border:none;border-bottom:2px solid transparent;color:var(--text3);font-family:inherit;font-size:9px;letter-spacing:2px;padding:9px 12px;cursor:pointer;white-space:nowrap;transition:all 0.15s;}
+.tab:hover{color:var(--text2);}
+.tab.active{color:var(--gold);border-bottom-color:var(--gold);}
+
+/* PAGES */
+.page{display:none;padding:16px;max-width:960px;margin:0 auto;}
+.page.active{display:block;}
+
+/* STATUS BAR */
+#status-bar{background:var(--card2);border-bottom:1px solid var(--border);padding:8px 16px;display:flex;gap:16px;flex-wrap:wrap;align-items:center;}
+.sb-item{display:flex;flex-direction:column;gap:1px;}
+.sb-label{font-size:7px;letter-spacing:2px;color:var(--text3);}
+.sb-val{font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--text);}
+.sb-val.gold{color:var(--gold);}
+.sb-val.ok{color:var(--ok);}
+.sb-val.err{color:var(--err);}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:14px;margin-bottom:10px;}
+.card-title{font-size:9px;letter-spacing:3px;color:var(--gold3);margin-bottom:10px;}
+
+/* FORMS */
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.fg3{grid-template-columns:1fr 1fr 1fr;}
+.fg1{grid-template-columns:1fr;}
+@media(max-width:540px){.fg,.fg3{grid-template-columns:1fr;}}
+.field{display:flex;flex-direction:column;gap:3px;}
+.field label{font-size:8px;letter-spacing:2px;color:var(--text3);}
+.field input,.field select{background:var(--card2);border:1px solid var(--border);color:var(--text);font-family:inherit;font-size:12px;padding:8px 9px;border-radius:4px;outline:none;width:100%;}
+.field select{appearance:none;cursor:pointer;}
+
+/* BUTTONS */
+.btn{background:rgba(201,169,110,0.08);border:1px solid var(--gold3);color:var(--gold);font-family:inherit;font-size:9px;letter-spacing:2px;padding:8px 14px;border-radius:4px;cursor:pointer;transition:all 0.15s;}
+.btn:hover{background:rgba(201,169,110,0.15);}
+.btn.primary{background:var(--gold);color:var(--bg);border-color:var(--gold);}
+.btn.primary:hover{background:var(--gold2);}
+.btn.danger{border-color:rgba(192,64,74,0.4);color:var(--err);}
+.btn.danger:hover{background:rgba(192,64,74,0.1);}
+.btn.ok{border-color:rgba(77,175,111,0.4);color:var(--ok);}
+.btn.ok:hover{background:rgba(77,175,111,0.1);}
+.btn.sm{padding:4px 9px;font-size:8px;}
+.btn:disabled{opacity:0.3;cursor:not-allowed;}
+.btn-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
+
+/* PLAYER CARDS */
+.player-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;}
+.player-card{background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:10px;}
+.player-card.playing{border-color:rgba(77,175,111,0.3);}
+.player-card.eliminated{border-color:rgba(192,64,74,0.2);opacity:0.6;}
+.player-card.no-show{border-color:rgba(232,160,32,0.2);opacity:0.5;}
+.player-card.waiting{border-color:var(--border);}
+.pc-name{font-size:13px;color:var(--text);font-weight:500;margin-bottom:4px;}
+.pc-badges{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px;}
+.badge{font-size:8px;letter-spacing:1px;padding:2px 6px;border-radius:3px;border:1px solid;}
+.badge-ok{border-color:rgba(77,175,111,0.4);color:var(--ok);}
+.badge-warn{border-color:rgba(201,169,110,0.4);color:var(--gold);}
+.badge-err{border-color:rgba(192,64,74,0.4);color:var(--err);}
+.badge-gray{border-color:rgba(168,152,128,0.3);color:var(--text3);}
+.pc-actions{display:flex;gap:4px;flex-wrap:wrap;}
+
+/* TABLES */
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+th{font-size:8px;letter-spacing:2px;color:var(--text3);padding:7px 8px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap;}
+td{font-size:11px;padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.03);color:var(--text2);}
+
+/* TOAST */
+#toast{position:fixed;bottom:16px;right:16px;background:var(--card2);border:1px solid var(--border);color:var(--text);font-size:10px;padding:9px 14px;border-radius:4px;z-index:2000;opacity:0;transition:opacity 0.3s;pointer-events:none;}
+#toast.show{opacity:1;}
+
+.empty{text-align:center;padding:32px;color:var(--text3);font-size:11px;letter-spacing:2px;}
+.section-title{font-size:9px;letter-spacing:4px;color:var(--gold3);margin-bottom:10px;}
+.stat-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.03);}
+.stat-name{font-size:10px;color:var(--text3);}
+.stat-val{font-family:'Cormorant Garamond',serif;font-size:16px;}
+</style>
+</head>
+<body>
+
+<div id="pin-screen">
+  <div style="text-align:center;">
+    <div class="pin-logo">ОБЩЕСТВО</div>
+    <div class="pin-sub" style="margin-top:4px;">LIVE ROOM</div>
+  </div>
+  <input type="password" class="pin-input" id="pin-input" placeholder="••••" maxlength="6" inputmode="numeric">
+  <div class="pin-err" id="pin-err"></div>
+  <button class="pin-btn" onclick="checkPin()">ВОЙТИ</button>
+</div>
+
+<div id="app">
+  <div id="test-banner">⚠️ ТЕСТОВЫЙ РЕЖИМ — ДАННЫЕ НЕ СОХРАНЯЮТСЯ</div>
+  <div class="topbar">
+    <div><div class="topbar-logo">ОБЩЕСТВО</div><div class="topbar-sub">LIVE ROOM</div></div>
+    <div class="topbar-right">
+      <div id="sync-dot" class="sync-dot"></div>
+      <span id="sync-lbl" class="sync-lbl">ОНЛАЙН</span>
+      <button class="btn-exit" onclick="exitApp()">ВЫЙТИ</button>
+    </div>
+  </div>
+
+  <div id="timer-warn-bar" style="display:none;background:rgba(232,160,32,0.15);border-bottom:1px solid rgba(232,160,32,0.3);padding:6px 16px;font-size:9px;letter-spacing:2px;color:var(--warn);">⚠️ LIVE ЗАПУЩЕН — ТАЙМЕР НЕ ИДЁТ. Запусти таймер в Live Room или admin-timer.html</div>
+
+  <!-- ═══ АВТОПИЛОТ: ПОМОЩНИК АДМИНИСТРАТОРА ═══ -->
+  <div id="autopilot-bar" style="display:none;padding:14px 16px;border-bottom:1px solid var(--border);">
+    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+      <div id="autopilot-icon" style="font-size:28px;line-height:1;">🎯</div>
+      <div style="flex:1;min-width:180px;">
+        <div style="font-size:9px;letter-spacing:2px;color:var(--text3);margin-bottom:2px;">СЛЕДУЮЩЕЕ ДЕЙСТВИЕ</div>
+        <div id="autopilot-text" style="font-size:14px;font-weight:600;color:var(--text);">—</div>
+        <div id="autopilot-sub" style="font-size:11px;color:var(--text2);margin-top:2px;"></div>
+      </div>
+      <button id="autopilot-btn" class="btn" style="display:none;white-space:nowrap;" onclick="runAutopilotAction()">ДЕЙСТВИЕ</button>
+    </div>
+  </div>
+
+  <div id="checklist-bar" style="background:rgba(201,169,110,0.04);border-bottom:1px solid var(--border);padding:6px 16px;display:flex;gap:12px;flex-wrap:wrap;font-size:9px;letter-spacing:1px;overflow-x:auto;"></div>
+  <div id="status-bar">
+    <div class="sb-item"><div class="sb-label">В ИГРЕ</div><div class="sb-val" id="sb-playing">0</div></div>
+    <div class="sb-item"><div class="sb-label">ВЫБЫЛО</div><div class="sb-val err" id="sb-elim">0</div></div>
+    <div class="sb-item"><div class="sb-label">НО-ШОУ</div><div class="sb-val" style="color:var(--warn)" id="sb-noshow">0</div></div>
+    <div class="sb-item"><div class="sb-label">КАССА</div><div class="sb-val gold" id="sb-cash">0 ₽</div></div>
+    <div class="sb-item"><div class="sb-label">АДДОНЫ</div><div class="sb-val" id="sb-addon">—</div></div>
+    <div class="sb-item"><div class="sb-label">СТАТУС</div><div class="sb-val" id="sb-status" style="font-size:11px;font-family:'Montserrat',sans-serif;">—</div></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-page="shift" onclick="showPage('shift',this)">СМЕНА</button>
+    <button class="tab" data-page="players" onclick="showPage('players',this)">ИГРОКИ</button>
+    <button class="tab" data-page="live" onclick="showPage('live',this)">LIVE</button>
+    <button class="tab" data-page="cashier" onclick="showPage('cashier',this)">КАССА</button>
+    <button class="tab" data-page="results" onclick="showPage('results',this)">ИТОГИ</button>
+    <button class="tab" data-page="log" onclick="showPage('log',this)">ЖУРНАЛ</button>
+    <button class="tab" data-page="backup" onclick="showPage('backup',this)">BACKUP</button>
+  </div>
+
+  <!-- SHIFT -->
+  <div class="page active" id="page-shift">
+    <div id="shift-restore-block" style="display:none;" class="card" style="border-color:rgba(232,160,32,0.3);">
+      <div class="card-title" style="color:var(--warn);">🆘 НАЙДЕН НЕЗАКРЫТЫЙ ТУРНИР</div>
+      <div id="shift-restore-info" style="font-size:11px;color:var(--text2);margin-bottom:10px;"></div>
+      <div class="btn-row">
+        <button class="btn ok" onclick="restoreShift()">🆘 ВОССТАНОВИТЬ ТУРНИР</button>
+        <button class="btn danger" onclick="discardRestore()">НАЧАТЬ ЗАНОВО</button>
+      </div>
+    </div>
+
+    <div id="shift-open-block">
+      <div class="card">
+        <div class="card-title">ОТКРЫТИЕ СМЕНЫ</div>
+        <div class="fg fg3">
+          <div class="field"><label>ДАТА</label><input type="date" id="s-date"></div>
+          <div class="field"><label>ФОРМАТ</label>
+            <select id="s-format" onchange="onFormatChange()">
+              <option value="">— выбрать —</option>
+              <option value="tuesday">День новичка (Вт)</option>
+              <option value="wednesday">Рейтинговая среда (Ср)</option>
+              <option value="friday">Главный турнир недели (Пт)</option>
+              <option value="saturday">Покерный спринт (Сб)</option>
+              <option value="sunday">Закрытие недели (Вс)</option>
+            </select>
+          </div>
+          <div class="field"><label>СИСТЕМА БЛАЙНДОВ</label>
+            <select id="s-blinds">
+              <option value="">— выбрать —</option>
+              <option>Обычная / Суббота</option>
+              <option>Экшен 30К</option>
+              <option>Фриролл динамичный</option>
+              <option>Быстрая структура</option>
+              <option>Аварийная структура</option>
+            </select>
+          </div>
+          <div class="field"><label>ВХОД, ₽</label><input type="number" id="s-entry" min="0" value="0"></div>
+          <div class="field"><label>РЕБАЙ, ₽</label><input type="number" id="s-rebuy" min="0" value="0"></div>
+          <div class="field"><label>АДДОН, ₽</label><input type="number" id="s-addon" min="0" value="0"></div>
+          <div class="field"><label>ВМЕСТИМОСТЬ</label><input type="number" id="s-cap" min="1" value="20"></div>
+          <div class="field"><label>СТОЛОВ</label><input type="number" id="s-tables" min="1" value="2"></div>
+          <div class="field"><label>КОЛ-ВО СОТРУДНИКОВ</label><input type="number" id="s-staff-cnt" min="0" value="3"></div>
+        </div>
+        <div class="fg" style="margin-top:8px;">
+          <div class="field"><label>ДИЛЕРЫ</label><input type="text" id="s-dealer" placeholder="Имена"></div>
+          <div class="field"><label>АДМИНИСТРАТОР</label><input type="text" id="s-admin"></div>
+          <div class="field"><label>БАР</label><input type="text" id="s-bar"></div>
+          <div class="field"><label>КОММЕНТАРИЙ</label><input type="text" id="s-comment"></div>
+        </div>
+        <div class="btn-row">
+          <button class="btn primary" onclick="openShift()">▶ ОТКРЫТЬ СМЕНУ</button>
+          <button class="btn" onclick="startTestMode()" style="border-color:rgba(232,160,32,0.4);color:var(--warn);">🧪 ТЕСТОВЫЙ ТУРНИР</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="shift-info-block" style="display:none;">
+      <div class="card">
+        <div class="card-title">ТЕКУЩАЯ СМЕНА</div>
+        <div id="shift-info-content"></div>
+        <div class="btn-row" id="shift-action-btns"></div>
+      </div>
+
+      <!-- ЧЕК-ЛИСТ ГОТОВНОСТИ (раздел 4 ТЗ) -->
+      <div class="card" id="readiness-card">
+        <div class="card-title">🚦 ГОТОВНОСТЬ СМЕНЫ</div>
+        <div id="readiness-status" style="font-size:13px;font-weight:600;margin-bottom:10px;">—</div>
+        <div id="readiness-list" style="font-size:12px;line-height:1.9;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PLAYERS -->
+  <div class="page" id="page-players">
+    <div class="card">
+      <div class="card-title">ДОБАВИТЬ ИГРОКА</div>
+      <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
+        <div class="field" style="flex:1;min-width:160px;"><label>ИМЯ</label><input type="text" id="p-name" placeholder="Имя игрока..." onkeydown="if(event.key==='Enter')addPlayer()"></div>
+        <div class="field"><label>НОВЫЙ</label>
+          <select id="p-new"><option value="0">Повторный</option><option value="1">Новый</option></select>
+        </div>
+        <button class="btn ok" onclick="addPlayer()">+ ДОБАВИТЬ</button>
+      </div>
+    </div>
+    
+    <div class="card">
+      <div class="card-title">БЫСТРО ДОБАВИТЬ ИГРОКОВ СПИСКОМ</div>
+      <textarea id="bulk-players-textarea" placeholder="Павел&#10;Федоров&#10;Котофей&#10;Анна" style="width:100%;min-height:80px;padding:8px;border:1px solid var(--border);border-radius:4px;font-family:monospace;font-size:12px;resize:vertical;background:var(--card);color:var(--text);"></textarea>
+      <div class="btn-row">
+        <button class="btn ok" onclick="bulkAddPlayers()" style="width:100%;">➕ ДОБАВИТЬ ВСЕХ</button>
+      </div>
+      <div id="bulk-add-report" style="display:none;"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <div class="section-title" style="margin:0;">СПИСОК ИГРОКОВ (<span id="players-count">0</span>)</div>
+      <button class="btn sm" onclick="sendPlayersToSeating()" title="Отправить список в рассадку TV">🪑 → TV РАССАДКА</button>
+    </div>
+    <div id="players-list" class="player-grid"></div>
+  </div>
+
+  <!-- LIVE -->
+  <div class="page" id="page-live">
+    <div id="live-start-block">
+      <div class="card">
+        <div class="card-title">ЗАПУСК LIVE</div>
+        <div id="live-start-checks" style="font-size:11px;color:var(--text2);line-height:1.8;"></div>
+        <div class="btn-row">
+          <button class="btn primary" id="btn-start-live" onclick="startLive()">🚀 ЗАПУСТИТЬ LIVE</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="live-arrival-block" style="display:none;">
+      <div class="card">
+        <div class="card-title">ОТМЕТИТЬ ЯВКУ</div>
+        <div class="btn-row" style="margin-top:0;margin-bottom:10px;">
+          <button class="btn ok" onclick="markAllArrived()">✅ ВСЕ ЯВИЛИСЬ</button>
+        </div>
+        <div id="arrival-list" class="player-grid"></div>
+      </div>
+    </div>
+
+    <div id="live-game-block" style="display:none;">
+      <div class="card" style="border-color:rgba(139,30,63,0.3);background:rgba(139,30,63,0.04);">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+          <div class="card-title" style="margin:0;color:var(--live);">LIVE — ТУРНИР ИДЁТ</div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn sm" onclick="undoLastElimination()" id="btn-undo-elim">↩ ОТМЕНИТЬ ВЫЛЕТ</button>
+            <button class="btn sm" style="border-color:rgba(232,160,32,0.4);color:var(--warn);" onclick="fixAddonBreak()">⏸ АДДОН-ПЕРЕРЫВ</button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-title">⏱️ ТАЙМЕР</div>
+        <div id="timer-structure-status" style="font-size:12px;color:var(--text2);margin-bottom:10px;"></div>
+        <button class="btn ok" onclick="startTimerFromLiveRoom()" style="width:100%;">Запустить таймер по настройкам смены</button>
+      </div>
+      
+      <div class="card">
+        <div class="card-title">🪑 ПОСАДИТЬ ОПОЗДАВШЕГО</div>
+        <div id="seat-recommendation" style="display:none;font-size:12px;padding:8px 10px;margin-bottom:8px;background:rgba(120,190,120,0.10);border:1px solid rgba(120,190,120,0.28);border-radius:4px;color:var(--ok);"></div>
+        <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
+          <div class="field" style="flex:1;min-width:180px;"><label>ИГРОК</label><select id="late-player-select" style="width:100%;"></select></div>
+          <button class="btn ok" onclick="seatLatePlayerInSeating()">+ Посадить</button>
+        </div>
+        <div style="font-size:10px;color:var(--text3);margin-top:6px;">Опоздавший будет посажен на свободное место без пересборки</div>
+      </div>
+
+      <div id="balance-card" class="card" style="display:none;border-color:rgba(232,160,32,0.3);">
+        <div class="card-title" style="color:var(--warn);">⚖️ БАЛАНСИРОВКА СТОЛОВ</div>
+        <div id="balance-info" style="font-size:12px;color:var(--text2);margin-bottom:8px;"></div>
+        <button class="btn" onclick="checkTableBalance(true)">🔄 ПРОВЕРИТЬ БАЛАНС</button>
+      </div>
+      
+      <div class="section-title">В ИГРЕ</div>
+      <div id="live-players-list" class="player-grid"></div>
+      <div id="final-table-alert" style="display:none;" class="card" style="border-color:rgba(201,169,110,0.4);text-align:center;margin-top:10px;">
+        <div style="font-size:14px;margin-bottom:8px;">🏆 ФИНАЛЬНЫЙ СТОЛ</div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:10px;">Осталось 10 игроков</div>
+        <button class="btn ok" onclick="createFinalTable()">СОЗДАТЬ ФИНАЛЬНЫЙ СТОЛ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CASHIER -->
+  <div class="page" id="page-cashier">
+    <div class="section-title" style="margin-top:4px;">КАССА</div>
+    <div class="card">
+      <div id="cashier-content"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">АДДОНЫ</div>
+      <div id="addon-content"></div>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="page" id="page-results">
+    <div class="section-title" style="margin-top:4px;">ИТОГИ ТУРНИРА</div>
+    <div class="card">
+      <div id="results-content"></div>
+    </div>
+    <div id="results-issues" class="card" style="display:none;border-color:rgba(232,160,32,0.3);"></div>
+    <div id="save-results-block" class="card" style="border-color:rgba(201,169,110,0.2);">
+      <div class="card-title">СОХРАНЕНИЕ</div>
+      <div id="save-results-info" style="font-size:11px;color:var(--text2);margin-bottom:10px;line-height:1.8;"></div>
+      <div class="btn-row">
+        <button class="btn primary" id="btn-save-results" onclick="saveResultsToRating()">💾 СОХРАНИТЬ В РЕЙТИНГ</button>
+        <button class="btn" id="btn-cr-draft" onclick="createControlRoomDraft()" style="display:none;">📊 ЧЕРНОВИК В CONTROL ROOM</button>
+        <button class="btn" id="btn-close-shift" onclick="closeShift()" style="display:none;border-color:rgba(192,64,74,0.4);color:var(--err);">🔒 ЗАКРЫТЬ СМЕНУ</button>
+      </div>
+    </div>
+
+    <!-- ГЕНЕРАТОР ИТОГОВОГО ТЕКСТА (раздел 15 ТЗ) -->
+    <div class="card" style="border-color:rgba(201,169,110,0.2);">
+      <div class="card-title">📣 ГЕНЕРАТОР ПОСТОВ</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+        <button class="btn sm" onclick="genPost('vk')">VK-пост</button>
+        <button class="btn sm" onclick="genPost('tg')">Telegram</button>
+        <button class="btn sm" onclick="genPost('stories')">Stories</button>
+        <button class="btn sm" onclick="genPost('signup')">Запись на игру</button>
+      </div>
+      <textarea id="post-output" style="width:100%;min-height:140px;font-size:12px;background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:10px;font-family:inherit;" placeholder="Выбери тип поста — текст сгенерируется автоматически"></textarea>
+      <div style="margin-top:8px;">
+        <button class="btn sm" onclick="copyPost()">📋 Копировать</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOG -->
+  <div class="page" id="page-log">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <div class="section-title" style="margin:0;">ЖУРНАЛ ДЕЙСТВИЙ</div>
+      <span id="log-count" style="font-size:9px;color:var(--text3);"></span>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>ВРЕМЯ</th><th>ДЕЙСТВИЕ</th><th>ИГРОК</th><th>ДЕТАЛИ</th></tr></thead>
+      <tbody id="log-table"></tbody>
+    </table></div>
+  </div>
+
+  <!-- BACKUP -->
+  <div class="page" id="page-backup">
+    <div class="section-title" style="margin-top:4px;">BACKUP LIVE</div>
+    <div class="card">
+      <div class="card-title">ОБЛАКО</div>
+      <div class="btn-row">
+        <button class="btn" onclick="forceSaveCloud()">☁️ СОХРАНИТЬ В ОБЛАКО</button>
+        <button class="btn" onclick="forceLoadCloud()">🔄 ЗАГРУЗИТЬ ИЗ ОБЛАКА</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">ЭКСПОРТ / ИМПОРТ</div>
+      <div class="btn-row">
+        <button class="btn" onclick="exportLive()">📥 ЭКСПОРТ JSON</button>
+        <button class="btn" onclick="document.getElementById('import-live').click()">📤 ИМПОРТ JSON</button>
+        <input type="file" id="import-live" accept=".json" style="display:none" onchange="importLive(this)">
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="color:var(--warn);">ТЕСТОВЫЙ РЕЖИМ</div>
+      <div class="btn-row">
+        <button class="btn" style="border-color:rgba(232,160,32,0.4);color:var(--warn);" onclick="exitTestMode()">🧪 ВЫЙТИ ИЗ ТЕСТА</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="color:var(--err);">ОПАСНАЯ ЗОНА</div>
+      <div class="btn-row">
+        <button class="btn danger" onclick="clearLiveData()">🗑 ОЧИСТИТЬ LIVE ДАННЫЕ</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+// CONFIG
+const LIVE_PIN = '2026';
+const LIVE_LS_KEY = 'obshestvo_live_shift_v1';
+const LIVE_TEST_LS_KEY = 'obshestvo_live_test_v1';
+const LIVE_URL = 'https://script.google.com/macros/s/AKfycbzq2DKHbP3U8Lebapim3sXZGAnacU2WCPdYnXglRZ5onTDx172odEV7bH7hViwk4FWRvw/exec';
+const LIVE_TOKEN = 'obshestvo_secret_2026';
+const CR_LS_KEY = 'obshestvo_control_v1';
+const CR_URL = 'https://script.google.com/macros/s/AKfycby5444WFEQZxxeh4lFSbWPMhOHfYaZxe8rgiav2x2oX9nqMXRisLxgT6W_LOZ-8CZW7/exec';
+const CR_TOKEN = 'obshestvo_cr_2026';
+
+// TV-модуль (рассадка) — берёт игроков из Live Room
+const TV_URL = 'https://script.google.com/macros/s/AKfycbxzZbHSIZ_IAsD7i4z8CkSqmEkb-vyDAZGWQg_u5b-ClF1NHGMoKujMKrTAh27T6Fne/exec';
+const TV_TOKEN = 'obshestvo_tv_timer_2026_secret';
+
+// ══════════════════════════════════════════════════════════
+// ЕДИНЫЕ КЛЮЧИ ХРАНИЛИЩА
+// ══════════════════════════════════════════════════════════
+const STORAGE_KEYS = {
+  TIMER_STATE: 'obshestvo_timer_state_v1',
+  SEATING_STATE: 'seating-state',
+  LIVE_STATE: 'obshestvo_live_shift_v1',
+  RESULTS: 'obshestvo_results_v1'
+};
+
+// ══════════════════════════════════════════════════════════
+// RATING CONFIG (скопировано из рейтинга)
+// ══════════════════════════════════════════════════════════
+// ВЕРСИЯ ПРАВИЛ РЕЙТИНГА
+// ══════════════════════════════════════════════════════════
+const RATING_RULES_VERSION = '2026-07-06-weekly-points-v2';
+
+// ══════════════════════════════════════════════════════════
+// КОНФИГУРАЦИЯ ДНЕЙ НЕДЕЛИ
+// ══════════════════════════════════════════════════════════
+const DAY_CONFIG = {
+  tuesday: {
+    dayName: 'Вторник',
+    formatName: 'День новичка',
+    maxPoints: 70,
+    defaultEntryPrice: 0,
+    freeEntry: true,
+    active: true,
+    startStack: 30000,
+    rebuyPrice: 1000,
+    rebuyStack: 30000,
+    addonPrice: 1000,
+    addonStack: 70000
+  },
+
+  wednesday: {
+    dayName: 'Среда',
+    formatName: 'Рейтинговая среда',
+    maxPoints: 110,
+    defaultEntryPrice: 500,
+    freeEntry: false,
+    womenFreeEntry: true,
+    active: true,
+    startStack: 30000,
+    reentryPrice: 500,
+    reentryStack: 30000,
+    addonPrice: 1000,
+    addonStack: 70000
+  },
+
+  friday: {
+    dayName: 'Пятница',
+    formatName: 'Главный турнир недели',
+    maxPoints: 160,
+    defaultEntryPrice: 1000,
+    freeEntry: false,
+    active: true,
+    mainEvent: true,
+    buffet: true,
+    startStack: 40000,
+    reentryPrice: 1000,
+    reentryStack: 40000,
+    addonPrice: 1000,
+    addonStack: 80000
+  },
+
+  saturday: {
+    dayName: 'Суббота',
+    formatName: 'Покерный спринт',
+    maxPoints: 50,
+    defaultEntryPrice: 0,
+    freeEntry: true,
+    active: true,
+    startStack: 15000,
+    rebuyPrice: 500,
+    rebuyStack: 30000,
+    addonPrice: 1000,
+    addonStack: 60000
+  },
+
+  sunday: {
+    dayName: 'Воскресенье',
+    formatName: 'Закрытие недели',
+    maxPoints: 130,
+    defaultEntryPrice: 800,
+    freeEntry: false,
+    active: true,
+    freeRebuyDay: true,
+    freeRebuyCount: 1,
+    startStack: 30000,
+    reentryPrice: 0,
+    reentryStack: 30000,
+    addonPrice: 1000,
+    addonStack: 70000
+  }
+};
+
+// Маппинг систем блайндов на структуры таймера
+const BLINDS_TO_STRUCTURE = {
+  'Обычная / Суббота': 'default',
+  'Экшен 30К': 'action30k',
+  'Фриролл динамичный': 'freeroll_dynamic',
+  'Быстрая структура': 'fast',
+  'Аварийная структура': 'emergency'
+};
+const PLACE_PERCENT = {1:1.00,2:0.70,3:0.55,4:0.45,5:0.38,6:0.32,7:0.27,8:0.22,9:0.18,10:0.15};
+function calcPoints(dayMax, place) {
+  const p=parseInt(place); if(isNaN(p)) return 15;
+  const pct=PLACE_PERCENT[p]; if(pct===undefined) return 15;
+  return Math.round(dayMax*pct)+15;
+}
+
+// ══════════════════════════════════════════════════════════
+// TV CLOUD — получение и отправка данных
+// ══════════════════════════════════════════════════════════
+
+async function getFromTvCloud(path) {
+  try {
+    const response = await fetch(
+      TV_URL + '?path=' + encodeURIComponent(path) + '&token=' + TV_TOKEN
+    );
+
+    if (!response.ok) {
+      throw new Error('TV cloud HTTP ' + response.status);
+    }
+
+    const data = await response.json();
+
+    if (data && data.error) {
+      throw new Error(data.error);
+    }
+
+    if (data) {
+      localStorage.setItem(path, JSON.stringify(data));
+    }
+
+    return data;
+  } catch (e) {
+    console.warn('[TV CLOUD GET FAILED]', path, e.message);
+    try {
+      const raw = localStorage.getItem(path);
+      return raw ? JSON.parse(raw) : null;
+    } catch (_) {
+      return null;
+    }
+  }
+}
+
+async function postToTvCloud(path, data) {
+  localStorage.setItem(path, JSON.stringify(data));
+
+  const response = await fetch(TV_URL + '?token=' + TV_TOKEN, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify({
+      path,
+      data,
+      _token: TV_TOKEN
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error('TV cloud HTTP ' + response.status);
+  }
+
+  const result = await response.json().catch(() => ({}));
+
+  if (result && result.error) {
+    throw new Error(result.error);
+  }
+
+  return result;
+}
+
+const MONTHS_SHORT=['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+const WEEKDAYS=['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+
+// ══════════════════════════════════════════════════════════
+// STATE
+let liveDb = null;
+let isTestMode = false;
+let autoSaveTimer = null;
+
+function defaultLiveDb() {
+  return {
+    shiftId:'', status:'draft', date:'', dayKey:'', formatName:'', blindsSystem:'',
+    startTime:'', endTime:'', maxCapacity:20, tables:2, tablesCount:2, staffCount:3,
+    dealer:'', adminStaff:'', barStaff:'', comment:'',
+    players:[], eliminatedPlayers:[],
+    playersReachedAddon:0, addonBreakFixed:false, timerStartedFromLive:false,
+    addonPercent:0, teamBonusPerPerson:0, teamBonusTotal:0,
+    finalTableCreated:false, finalTableSize:9, savedToRating:false, controlRoomDraftCreated:false, winnerId:null,
+    shiftStage:'draft', postDraftCreated:false,
+    cashier:{
+      entryPrice:0, rebuyPrice:0, addonPrice:0,
+      entriesCount:0, entriesRevenue:0,
+      paidRebuysCount:0, rebuysRevenue:0, freeRebuysCount:0,
+      addonsCount:0, addonsRevenue:0, totalTournamentRevenue:0
+    },
+    transactions:[],
+    actionLog:[], createdAt:'', updatedAt:'', syncId:'',
+    schemaVersion:1, revision:0, updatedBy:''
+  };
+}
+
+// ══════════════════════════════════════════════════════════
+// UTILS
+function fmt(n){return Number(n||0).toLocaleString('ru')+' ₽';}
+function fmtN(n){return Number(n||0).toLocaleString('ru');}
+function fmtPct(n){return Math.round(n||0)+'%';}
+function gv(id){return parseFloat(document.getElementById(id)?.value)||0;}
+function gs(id){return document.getElementById(id)?.value||'';}
+function sv(id,v){const el=document.getElementById(id);if(el)el.value=v==null?'':v;}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+function logAction(type,player,details){
+  if(!liveDb) return;
+  liveDb.actionLog.push({id:'a_'+Date.now(),type,player:player||'',details:details||'',time:new Date().toISOString()});
+}
+function getPlaying(){return (liveDb?.players||[]).filter(p=>p.status==='playing');}
+function getWaiting(){return (liveDb?.players||[]).filter(p=>p.status==='waiting');}
+function getNoShow(){return (liveDb?.players||[]).filter(p=>p.status==='no_show');}
+
+// ══════════════════════════════════════════════════════════
+// SYNC STATUS
+function setSyncStatus(s){
+  const dot=document.getElementById('sync-dot'),lbl=document.getElementById('sync-lbl');
+  if(!dot||!lbl) return;
+  dot.className='sync-dot'+(s==='ok'?'':s==='err'?' err':s==='warn'?' warn':' loading');
+  lbl.textContent=s==='ok'?'ОНЛАЙН':s==='err'?'ОШИБКА':s==='warn'?'ЛОКАЛЬНО':'СОХРАНЯЮ…';
+}
+
+// ══════════════════════════════════════════════════════════
+// LOCAL STORAGE
+function saveLocal(){
+  if(!liveDb) return;
+  liveDb.updatedAt=new Date().toISOString();
+  try{
+    const key=isTestMode?LIVE_TEST_LS_KEY:LIVE_LS_KEY;
+    localStorage.setItem(key,JSON.stringify(liveDb));
+  }catch(e){}
+}
+function loadLocal(){
+  try{const r=localStorage.getItem(LIVE_LS_KEY);return r?normalizeLiveDb(JSON.parse(r)):null;}catch(e){return null;}
+}
+
+// Нормализация загруженной смены (миграция полей старых версий) — P2 #7 отчёта
+function defaultCashier(){
+  return {
+    entryPrice:0, rebuyPrice:0, addonPrice:0,
+    entriesCount:0, entriesRevenue:0,
+    paidRebuysCount:0, rebuysRevenue:0, freeRebuysCount:0,
+    addonsCount:0, addonsRevenue:0, totalTournamentRevenue:0
+  };
+}
+
+function normalizeLiveDb(db){
+  if(!db||typeof db!=='object') return db;
+  // Восстанавливаем отсутствующие разделы (P1 files37)
+  db.players = Array.isArray(db.players) ? db.players : [];
+  db.transactions = Array.isArray(db.transactions) ? db.transactions : [];
+  db.actionLog = Array.isArray(db.actionLog) ? db.actionLog : [];
+  db.eliminatedPlayers = Array.isArray(db.eliminatedPlayers) ? db.eliminatedPlayers : [];
+  db.cashier = {...defaultCashier(), ...(db.cashier||{})};
+  // Поля версионирования для оптимистической блокировки (files43)
+  if(typeof db.revision !== 'number') db.revision = 0;
+  if(typeof db.schemaVersion !== 'number') db.schemaVersion = 1;
+  if(typeof db.updatedBy !== 'string') db.updatedBy = '';
+  // Миграция транзакций старого формата
+  db.transactions.forEach(tx=>{
+    // Старые смены хранили время в поле timestamp — приводим к каноническому time
+    if(!tx.time) tx.time = tx.timestamp || new Date().toISOString();
+    if(typeof tx.cancelled === 'undefined') tx.cancelled = false;
+    if(typeof tx.amount !== 'number') tx.amount = Number(tx.amount)||0;
+  });
+  // Пересчитываем кассу из активных транзакций (P1 files38)
+  // Если старая смена содержит верные транзакции, но устаревшие суммы — исправляем
+  if(db.transactions.length){
+    const c=db.cashier;
+    const active=db.transactions.filter(tx=>!tx.cancelled);
+    c.entriesCount=active.filter(tx=>tx.type==='ENTRY'&&tx.amount>0).length;
+    c.entriesRevenue=active.filter(tx=>tx.type==='ENTRY').reduce((s,tx)=>s+tx.amount,0);
+    c.paidRebuysCount=active.filter(tx=>tx.type==='PAID_REBUY').length;
+    c.rebuysRevenue=active.filter(tx=>tx.type==='PAID_REBUY').reduce((s,tx)=>s+tx.amount,0);
+    c.freeRebuysCount=active.filter(tx=>tx.type==='FREE_REBUY').length;
+    c.addonsCount=active.filter(tx=>tx.type==='ADDON').length;
+    c.addonsRevenue=active.filter(tx=>tx.type==='ADDON').reduce((s,tx)=>s+tx.amount,0);
+    c.totalTournamentRevenue=c.entriesRevenue+c.rebuysRevenue+c.addonsRevenue;
+  }
+  return db;
+}
+
+// ══════════════════════════════════════════════════════════
+// CLOUD
+// ── ОПТИМИСТИЧЕСКАЯ БЛОКИРОВКА (клиентская, files43) ──────
+// Защищает двух администраторов от молчаливой перезаписи чужих правок.
+// Не является серверной защитой, но предотвращает реальную потерю данных.
+const DEVICE_ID = (function(){
+  try {
+    let id = localStorage.getItem('obshestvo_device_id');
+    if(!id){
+      id = 'dev_' + Math.random().toString(36).slice(2,10);
+      localStorage.setItem('obshestvo_device_id', id);
+    }
+    return id;
+  } catch(e){ return 'dev_temp'; }
+})();
+
+let _lastKnownCloudRevision = 0;   // ревизия, которую мы последний раз видели/записали
+let _conflictDetected = false;      // блокирует автосейв до решения администратора
+
+// Отслеживание реальных изменений (P0 files44)
+// Автосохранение не должно плодить ревизии при простом просмотре страницы
+let _changeSeq = 0;   // растёт при каждом настоящем изменении данных
+let _savedSeq = 0;    // значение _changeSeq, которое подтверждено в облаке
+
+function markLiveDirty(){ _changeSeq++; }
+function isLiveDirty(){ return _changeSeq > _savedSeq; }
+
+// Ревизия обязана быть строго монотонной, иначе блокировка сломается (P0 files44)
+function bumpRevision(minRevision){
+  if(!liveDb) return;
+  liveDb.revision = Math.max(
+    Number(liveDb.revision||0),
+    Number(minRevision||0),
+    Number(_lastKnownCloudRevision||0)
+  ) + 1;
+  liveDb.updatedBy = DEVICE_ID;
+}
+
+// Проверка: не переписываем ли мы чужие изменения
+async function checkCloudConflict(){
+  try {
+    const res = await fetch(LIVE_URL+'?token='+LIVE_TOKEN+'&type=live&_='+Date.now());
+    if(!res.ok) return {ok:true}; // облако недоступно — не блокируем работу
+    const cloud = await res.json();
+    const cd = cloud?.liveDb;
+    if(!cd) return {ok:true};
+    // Другая смена в облаке — не наш конфликт
+    if(cd.shiftId && liveDb.shiftId && cd.shiftId !== liveDb.shiftId) return {ok:true};
+    const cloudRev = Number(cd.revision||0);
+    // Чужое устройство записало более свежую ревизию, чем мы видели
+    if(cloudRev > _lastKnownCloudRevision && cd.updatedBy && cd.updatedBy !== DEVICE_ID){
+      return {ok:false, cloudRev, cloudBy:cd.updatedBy, cloudAt:cd.updatedAt, cloudDb:cd};
+    }
+    return {ok:true};
+  } catch(e){
+    return {ok:true}; // сетевая ошибка не должна останавливать сохранение
+  }
+}
+
+async function saveCloud(){
+  if(isTestMode) return true; // тест не пишет в cloud
+  if(!liveDb) return false;
+  if(_conflictDetected){
+    setSyncStatus('err');
+    return false; // ждём решения администратора
+  }
+  try{
+    setSyncStatus('loading');
+
+    // Проверяем конфликт до записи (P2 files42 / files43)
+    const conflict = await checkCloudConflict();
+    if(!conflict.ok){
+      _conflictDetected = true;
+      setSyncStatus('err');
+      showConflictWarning(conflict);
+      return false;
+    }
+
+    const syncId='sync_'+Date.now();
+    // Фиксируем номер изменения на момент старта записи.
+    // Если во время POST придёт новое изменение, dirty не сбросится ошибочно.
+    const seqAtSaveStart = _changeSeq;
+    liveDb.syncId=syncId;
+    bumpRevision();
+    saveLocal(); // local first
+    // Сохраняем в GAS как live-state через отдельный ключ
+    const payload={_token:LIVE_TOKEN,_type:'live',liveDb:liveDb};
+    // Дожидаемся завершения записи, а не fire-and-forget (P2 files39)
+    try {
+      const postRes=await fetch(LIVE_URL+'?token='+LIVE_TOKEN,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)});
+      if(!postRes.ok) throw new Error('POST HTTP '+postRes.status);
+    } catch(postErr) {
+      // Запись не ушла — данные уже в localStorage, помечаем warn
+      setSyncStatus('warn');
+      console.warn('[LIVE] POST не прошёл, данные локально:', postErr.message);
+      return false;
+    }
+    // Верифицируем с несколькими попытками (GAS отвечает не мгновенно)
+    for(let attempt=0; attempt<3; attempt++){
+      await new Promise(r=>setTimeout(r, attempt===0?800:1000));
+      try {
+        const res=await fetch(LIVE_URL+'?token='+LIVE_TOKEN+'&type=live&_='+Date.now());
+        const cloud=await res.json();
+        if(cloud?.liveDb?.syncId===syncId){
+          _lastKnownCloudRevision = Number(liveDb.revision||0);
+          _savedSeq = seqAtSaveStart; // подтверждено ровно то, что отправляли
+          setSyncStatus('ok');
+          return true;
+        }
+      } catch(verErr){ /* повтор */ }
+    }
+    // GAS не подтвердил live syncId за отведённые попытки — только локально
+    setSyncStatus('warn');
+    console.warn('[LIVE] cloud не подтвердил syncId, данные сохранены локально');
+    return false;
+  }catch(e){setSyncStatus('err');console.error('[LIVE]',e.message);return false;}
+}
+
+// Экран конфликта: показываем, что произошло, и даём выбор
+// Сохраняем снимок версии перед разрешением конфликта (P1 files44)
+// Храним последние 10 снимков, чтобы ничего нельзя было потерять безвозвратно
+function saveConflictBackup(db, label){
+  try {
+    const key = 'obshestvo_conflict_backup_' + Date.now();
+    localStorage.setItem(key, JSON.stringify({
+      label, savedAt: new Date().toISOString(),
+      device: DEVICE_ID, revision: db?.revision||0, db
+    }));
+    // Чистим старые снимки, оставляя 10 последних
+    const keys = Object.keys(localStorage).filter(k=>k.startsWith('obshestvo_conflict_backup_')).sort();
+    while(keys.length > 10){ localStorage.removeItem(keys.shift()); }
+    console.log('[CONFLICT] backup сохранён:', key);
+    return key;
+  } catch(e){
+    console.warn('[CONFLICT] не удалось сохранить backup:', e.message);
+    return null;
+  }
+}
+
+function showConflictWarning(conflict){
+  stopAutoSave();
+  const when = conflict.cloudAt ? new Date(conflict.cloudAt).toLocaleTimeString('ru-RU') : 'неизвестно';
+  const myRev = Number(liveDb.revision||0);
+
+  // Снимок ЛОКАЛЬНОЙ версии делаем сразу, до любого решения
+  saveConflictBackup(liveDb, 'local-before-conflict');
+
+  const answer = prompt(
+    '⚠️ КОНФЛИКТ ДАННЫХ\n\n'+
+    'Смену изменило другое устройство ('+conflict.cloudBy+') в '+when+'.\n'+
+    'Ревизия в облаке: '+conflict.cloudRev+' · твоя: '+myRev+'\n\n'+
+    'Резервная копия твоей версии уже сохранена локально.\n\n'+
+    'Введи номер действия:\n'+
+    '  1 — Загрузить облачную версию (рекомендуется)\n'+
+    '  2 — Ничего не делать, разобраться позже\n'+
+    '  3 — Перезаписать облако МОЕЙ версией\n',
+    '1'
+  );
+
+  if(answer === '1'){
+    // Принимаем облачную версию (локальная уже в backup)
+    liveDb = normalizeLiveDb(conflict.cloudDb);
+    _lastKnownCloudRevision = Number(liveDb.revision||0);
+    _savedSeq = _changeSeq; // облачная версия актуальна, своих несохранённых правок нет
+    _conflictDetected = false;
+    saveLocal();
+    renderAll();
+    startAutoSave();
+    showToast('✅ Загружена облачная версия (копия твоей — в резерве)');
+
+  } else if(answer === '3'){
+    // Разрушительное действие — требуем отдельное подтверждение
+    if(!confirm('Точно перезаписать облако своей версией?\n\nИзменения другого устройства (ревизия '+conflict.cloudRev+') будут заменены.')){
+      showToast('Отменено. Конфликт не разрешён — сохранение приостановлено.');
+      return;
+    }
+    saveConflictBackup(conflict.cloudDb, 'cloud-before-override');
+    // КРИТИЧНО: ревизия должна стать строго больше облачной (P0 files44)
+    liveDb.revision = Math.max(myRev, Number(conflict.cloudRev||0));
+    _lastKnownCloudRevision = Number(conflict.cloudRev||0);
+    _conflictDetected = false;
+    logAction('CONFLICT_OVERRIDE','','Перезапись поверх ревизии '+conflict.cloudRev);
+    startAutoSave();
+    showToast('⚠️ Твоя версия записывается поверх облачной');
+    markLiveDirty();
+    queueCloudSave();
+
+  } else {
+    // Ничего не делаем — работа продолжается локально, облако не трогаем
+    showToast('⏸ Конфликт не разрешён. Данные сохраняются только локально.');
+    // _conflictDetected остаётся true — автосейв в облако приостановлен
+  }
+}
+
+async function loadCloud(){
+  if(isTestMode) return null;
+  try{
+    setSyncStatus('loading');
+    const res=await fetch(LIVE_URL+'?token='+LIVE_TOKEN+'&type=live&_='+Date.now());
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const cloud=await res.json();
+    setSyncStatus('ok');
+    if(!cloud?.liveDb) return null;
+    const normalized=normalizeLiveDb(cloud.liveDb);
+    // Запоминаем ревизию облака — иначе первое же сохранение даст ложный конфликт
+    _lastKnownCloudRevision = Number(normalized.revision||0);
+    return normalized;
+  }catch(e){setSyncStatus('err');return null;}
+}
+
+// ── ОЧЕРЕДЬ ОБЛАЧНЫХ СОХРАНЕНИЙ (P1 files40) ──────────────
+// Все saveCloud идут через одну очередь, чтобы исключить гонку
+// параллельных syncId (действие + автосейв + ручное сохранение)
+// Флаги requested/running гарантируют, что запрос, возникший во время
+// выполняющегося POST, не потеряется и в облако уйдёт последняя версия (P1 files41)
+let _cloudSaveChain = Promise.resolve();
+let _cloudSaveRequested = false;
+let _cloudSaveRunning = false;
+let _lastSaveOk = true;
+
+function queueCloudSave(){
+  _cloudSaveRequested = true;
+
+  // Уже выполняется — текущий цикл подхватит новый запрос
+  if(_cloudSaveRunning) return _cloudSaveChain;
+
+  _cloudSaveRunning = true;
+  _cloudSaveChain = _cloudSaveChain
+    .catch(()=>{})
+    .then(async ()=>{
+      // Цикл: пока есть запросы — сохраняем актуальное состояние
+      while(_cloudSaveRequested){
+        _cloudSaveRequested = false;
+        _lastSaveOk = await saveCloud();
+      }
+      return _lastSaveOk;
+    })
+    .finally(()=>{ _cloudSaveRunning = false; });
+
+  return _cloudSaveChain;
+}
+
+async function forceSaveCloud(){
+  markLiveDirty(); // ручное сохранение пишем всегда
+  const ok=await queueCloudSave();
+  showToast(ok?'✅ Сохранено в облако':'❌ Ошибка облака — данные в кэше');
+}
+async function forceLoadCloud(){
+  if(!confirm('Загрузить из облака? Локальные данные будут заменены.')) return;
+  const cloud=await loadCloud();
+  if(cloud){liveDb=cloud;saveLocal();renderAll();showToast('✅ Загружено из облака');}
+  else showToast('❌ Ошибка загрузки');
+}
+
+// ── AUTOSAVE ──────────────────────────────────────────────
+function startAutoSave(){
+  stopAutoSave();
+  // Сохраняем в облако только при реальных изменениях (P0 files44)
+  autoSaveTimer=setInterval(()=>{
+    saveLocal();
+    if(isLiveDirty()) queueCloudSave();
+  },5000);
+}
+function stopAutoSave(){if(autoSaveTimer){clearInterval(autoSaveTimer);autoSaveTimer=null;}}
+
+window.addEventListener('beforeunload',()=>{if(liveDb)saveLocal();});
+
+// ══════════════════════════════════════════════════════════
+// ЗАЩИТА ОТ НЕСКОЛЬКИХ ВКЛАДОК (раздел 18 ТЗ)
+// Если другая вкладка изменила состояние смены — предупреждаем
+// ══════════════════════════════════════════════════════════
+let _lastKnownSave = 0;
+window.addEventListener('storage', (e) => {
+  if(e.key !== STORAGE_KEYS.LIVE_STATE) return;
+  if(!liveDb || liveDb.status==='closed') return;
+  // Другая вкладка записала более свежую версию.
+  // Сравниваем по revision, а не по времени: часы могут врать,
+  // а близкие по времени операции дают неоднозначный результат (P1 files44)
+  try {
+    const incoming = e.newValue ? JSON.parse(e.newValue) : null;
+    if(!incoming) return;
+    if(incoming.shiftId !== liveDb.shiftId) return;
+    const incomingRev = Number(incoming.revision||0);
+    const myRev = Number(liveDb.revision||0);
+    if(incomingRev > myRev){
+      showToast('⚠️ Смена изменена в другой вкладке (ревизия '+incomingRev+'). Обновите страницу, чтобы не потерять данные.');
+      const bar=document.getElementById('sync-lbl');
+      if(bar){ bar.textContent='КОНФЛИКТ ВКЛАДОК'; bar.style.color='var(--err)'; }
+    }
+  } catch(err){ /* ignore parse errors */ }
+});
+
+// ══════════════════════════════════════════════════════════
+// PIN
+function checkPin(){
+  if(document.getElementById('pin-input').value===LIVE_PIN){
+    sessionStorage.setItem('live_auth','1');
+    document.getElementById('pin-screen').style.display='none';
+    document.getElementById('app').style.display='block';
+    initApp();
+  }else{
+    document.getElementById('pin-err').textContent='НЕВЕРНЫЙ КОД';
+    document.getElementById('pin-input').value='';
+    setTimeout(()=>document.getElementById('pin-err').textContent='',2000);
+  }
+}
+function exitApp(){
+  if(!confirm('Выйти?')) return;
+  sessionStorage.removeItem('live_auth');
+  document.getElementById('app').style.display='none';
+  document.getElementById('pin-screen').style.display='flex';
+  document.getElementById('pin-input').value='';
+}
+document.getElementById('pin-input').addEventListener('keydown',e=>{if(e.key==='Enter')checkPin();});
+
+// ══════════════════════════════════════════════════════════
+// NAVIGATION
+function showPage(name,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  if(btn) btn.classList.add('active');
+  if(name==='live') renderLivePage();
+  if(name==='cashier') renderCashier();
+  if(name==='results') renderResults();
+  if(name==='log') renderLog();
+  if(name==='players') renderPlayers();
+}
+
+// ══════════════════════════════════════════════════════════
+// INIT
+let pendingRestoreShift = null;
+
+function initApp(){
+  document.getElementById('s-date').value=new Date().toISOString().slice(0,10);
+  const local=loadLocal();
+
+  // Сначала показываем локальные данные, потом сравниваем с облаком
+  if(local&&local.status&&local.status!=='closed'&&local.status!=='draft'){
+    pendingRestoreShift=local;
+    showRestoreBlock(local);
+  } else {
+    liveDb=local||defaultLiveDb();
+    if(liveDb.status==='closed'||liveDb.status==='draft') liveDb=defaultLiveDb();
+    renderShift();
+  }
+  renderStatusBar();
+
+  // Асинхронно проверяем облако
+  loadCloud().then(cloud=>{
+    if(!cloud) return;
+    const localT=pendingRestoreShift?.updatedAt?new Date(pendingRestoreShift.updatedAt).getTime():0;
+    const cloudT=cloud.updatedAt?new Date(cloud.updatedAt).getTime():0;
+    if(cloudT>localT&&cloud.status&&cloud.status!=='closed'&&cloud.status!=='draft'){
+      // Cloud новее — предлагаем его
+      pendingRestoreShift=cloud;
+      showRestoreBlock(cloud);
+      const info=document.getElementById('shift-restore-info');
+      if(info) info.textContent+=' (из облака, свежее локального)';
+    }
+  });
+}
+
+function showRestoreBlock(data){
+  const block=document.getElementById('shift-restore-block');
+  block.style.display='block';
+  document.getElementById('shift-open-block').style.display='none';
+  document.getElementById('shift-info-block').style.display='none';
+  const playing=data.players?.filter(p=>p.status==='playing').length||0;
+  const elim=data.eliminatedPlayers?.length||0;
+  document.getElementById('shift-restore-info').textContent=
+    'Дата: '+data.date+' · '+data.formatName+' · В игре: '+playing+' · Выбыло: '+elim;
+}
+
+function restoreShift(){
+  liveDb=pendingRestoreShift||loadLocal();
+  pendingRestoreShift=null;
+  saveLocal();
+  document.getElementById('shift-restore-block').style.display='none';
+  logAction('RESTORE_FROM_LOCAL','','Восстановлен из сохранения');
+  renderAll();
+  startAutoSave();
+  showToast('✅ Турнир восстановлен');
+}
+
+function discardRestore(){
+  if(!confirm('Начать заново? Текущий турнир будет удалён.')) return;
+  liveDb=defaultLiveDb();
+  saveLocal();
+  document.getElementById('shift-restore-block').style.display='none';
+  document.getElementById('shift-open-block').style.display='block';
+  renderAll();
+}
+
+// ══════════════════════════════════════════════════════════
+// SHIFT
+function onFormatChange(){
+  const key=gs('s-format');
+  if(!key||!DAY_CONFIG[key]) return;
+  const cfg=DAY_CONFIG[key];
+  sv('s-entry',cfg.defaultEntryPrice||0);
+  sv('s-rebuy',cfg.defaultRebuyPrice||0);
+  sv('s-addon',cfg.defaultAddonPrice||0);
+}
+
+function openShift(){
+  const date=gs('s-date'),dayKey=gs('s-format');
+  if(!date){showToast('Укажи дату');return;}
+  if(!dayKey){showToast('Выбери формат');return;}
+  if(!gs('s-blinds')){showToast('Выбери систему блайндов');return;}
+
+  const cfg=DAY_CONFIG[dayKey];
+  liveDb=defaultLiveDb();
+  liveDb.shiftId=date+'_'+dayKey;
+  liveDb.status='opened';
+  liveDb.date=date;
+  liveDb.dayKey=dayKey;
+  liveDb.formatName=cfg.formatName;
+  liveDb.blindsSystem=gs('s-blinds');
+  liveDb.maxCapacity=gv('s-cap')||20;
+  liveDb.tablesCount=gv('s-tables')||2;
+  liveDb.tables=liveDb.tablesCount;
+  liveDb.staffCount=gv('s-staff-cnt')||3;
+  liveDb.dealer=gs('s-dealer');
+  liveDb.adminStaff=gs('s-admin');
+  liveDb.barStaff=gs('s-bar');
+  liveDb.comment=gs('s-comment');
+  liveDb.cashier.entryPrice=gv('s-entry');
+  liveDb.cashier.rebuyPrice=gv('s-rebuy');
+  liveDb.cashier.addonPrice=gv('s-addon');
+  liveDb.createdAt=new Date().toISOString();
+
+  // Транзакции входа создаются при явке (markArrived) и добавлении опоздавшего (addLatePlayer),
+  // а не при открытии смены — список игроков здесь ещё пуст.
+
+  logAction('SHIFT_OPENED','','Смена открыта: '+cfg.formatName);
+  markLiveDirty(); saveLocal(); queueCloudSave();
+  startAutoSave();
+  renderAll();
+  showToast('✅ Смена открыта — '+cfg.formatName);
+}
+
+function startTestMode(){
+  if(liveDb&&liveDb.status==='running'){
+    if(!confirm('Идёт реальный турнир. Точно запустить тест?')) return;
+    if(!confirm('Это нельзя отменить. Продолжить?')) return;
+  }
+  isTestMode=true;
+  document.getElementById('test-banner').style.display='block';
+  liveDb=defaultLiveDb();
+  liveDb.shiftId='test_'+Date.now();
+  liveDb.status='opened';
+  liveDb.date=new Date().toISOString().slice(0,10);
+  liveDb.dayKey='saturday';
+  liveDb.formatName='ТЕСТ · Главный турнир';
+  liveDb.blindsSystem='Обычная / Суббота';
+  liveDb.cashier={entryPrice:1000,rebuyPrice:1000,addonPrice:500,entriesCount:0,entriesRevenue:0,paidRebuysCount:0,rebuysRevenue:0,freeRebuysCount:0,addonsCount:0,addonsRevenue:0,totalTournamentRevenue:0};
+  liveDb.maxCapacity=20;
+  // 18 тестовых игроков
+  const names=['Алекс','Борис','Виктор','Григорий','Денис','Евгений','Иван','Кирилл','Леонид','Максим','Никита','Олег','Павел','Роман','Сергей','Тимур','Федор','Юрий'];
+  liveDb.players=names.map((n,i)=>makePlayer(n,false));
+  logAction('SHIFT_OPENED','','Тестовый режим');
+  renderAll();
+  showToast('🧪 Тестовый режим запущен');
+}
+
+function emergencyCloseShift(){
+  if(!confirm('Аварийно закрыть смену БЕЗ сохранения результатов?')) return;
+  if(!confirm('Точно? Очки могут не попасть в рейтинг.')) return;
+  liveDb.status='closed';
+  liveDb.endTime=liveDb.endTime||new Date().toTimeString().slice(0,5);
+  liveDb.closedAt=new Date().toISOString();
+  logAction('SHIFT_CLOSED','','Аварийное закрытие');
+  stopAutoSave(); commitLiveChange();
+  showToast('⚠️ Смена аварийно закрыта');
+}
+
+// ── PREFLIGHT ПЕРЕД ЗАКРЫТИЕМ СМЕНЫ (P0 files41) ──────────
+function runClosePreflight(){
+  const d=liveDb;
+  const issues=[];
+  if(!d) return ['Нет активной смены'];
+
+  const playing=getPlaying();
+  const waiting=getWaiting();
+
+  // Победитель определён
+  if(playing.length>1) issues.push(`Победитель не определён — в игре ещё ${playing.length}`);
+  if(playing.length===1 && !d.winnerId && playing[0].place!==1) issues.push('Победителю не назначено 1 место');
+
+  // Все статусы разобраны
+  if(waiting.length>0) issues.push(`${waiting.length} игрок(ов) без отметки явки`);
+  const noStatus=(d.players||[]).filter(p=>!p.status);
+  if(noStatus.length) issues.push(`${noStatus.length} игрок(ов) без статуса`);
+
+  // Неоплаченные входы
+  const unpaid=(d.players||[]).filter(p=>playerHasUnpaidEntry(p));
+  if(unpaid.length) issues.push(`Неоплаченный вход: ${unpaid.map(p=>p.name).join(', ')}`);
+
+  // Касса сходится с транзакциями
+  const active=(d.transactions||[]).filter(tx=>!tx.cancelled);
+  const txTotal=active.filter(tx=>['ENTRY','PAID_REBUY','ADDON'].includes(tx.type)).reduce((s,tx)=>s+(tx.amount||0),0);
+  if(txTotal!==d.cashier.totalTournamentRevenue){
+    issues.push(`Касса не сходится: транзакции ${fmt(txTotal)}, показано ${fmt(d.cashier.totalTournamentRevenue)}`);
+  }
+
+  // Транзакции с некорректным playerId
+  const badTx=active.filter(tx=>tx.playerId && !(d.players||[]).some(p=>p.id===tx.playerId));
+  if(badTx.length) issues.push(`${badTx.length} транзакц. с неизвестным игроком`);
+
+  // Результаты и Control Room
+  if(!d.savedToRating) issues.push('Результаты не сохранены в рейтинг');
+  if(!d.controlRoomDraftCreated) issues.push('Черновик Control Room не создан');
+
+  return issues;
+}
+
+function closeShift(){
+  // Не бросаем сразу в аварийный режим — показываем, что осталось сделать (P1 files42)
+  if(!liveDb.savedToRating||!liveDb.controlRoomDraftCreated){
+    const missing=[];
+    if(!liveDb.savedToRating) missing.push('сохранить результаты в рейтинг');
+    if(!liveDb.controlRoomDraftCreated) missing.push('создать черновик Control Room');
+    alert('Смена ещё не готова к закрытию.\n\nОсталось:\n• '+missing.join('\n• ')+
+      '\n\nПерейди на вкладку ИТОГИ и заверши эти шаги.\nЕсли смену нужно закрыть без них — используй красную кнопку «Аварийно закрыть».');
+    return;
+  }
+  // Preflight: закрытие только при зелёном статусе (P0 files41)
+  const issues=runClosePreflight();
+  if(issues.length){
+    alert('❌ Смену нельзя закрыть — есть проблемы:\n\n'+
+      issues.map((i,n)=>(n+1)+'. '+i).join('\n')+
+      '\n\nИсправь их или используй «Аварийно закрыть».');
+    return;
+  }
+  if(!confirm('Все проверки пройдены. Закрыть смену?')) return;
+  liveDb.status='closed';
+  liveDb.endTime=liveDb.endTime||new Date().toTimeString().slice(0,5);
+  liveDb.closedAt=new Date().toISOString();
+  logAction('SHIFT_CLOSED','','Смена закрыта (preflight OK)');
+  stopAutoSave();
+  markLiveDirty(); saveLocal(); queueCloudSave();
+  renderAll();
+  showToast('✅ Смена закрыта');
+}
+
+function renderShift(){
+  const hasShift=liveDb&&liveDb.status&&liveDb.status!=='draft';
+  document.getElementById('shift-open-block').style.display=hasShift?'none':'block';
+  document.getElementById('shift-info-block').style.display=hasShift?'block':'none';
+  if(!hasShift) return;
+  const d=liveDb;
+  document.getElementById('shift-info-content').innerHTML=`
+    <div class="stat-row"><span class="stat-name">ДАТА</span><span class="stat-val">${d.date}</span></div>
+    <div class="stat-row"><span class="stat-name">ФОРМАТ</span><span class="stat-val" style="font-size:13px;font-family:'Montserrat',sans-serif;">${d.formatName}</span></div>
+    <div class="stat-row"><span class="stat-name">БЛАЙНДЫ</span><span class="stat-val" style="font-size:13px;font-family:'Montserrat',sans-serif;">${d.blindsSystem||'—'}</span></div>
+    <div class="stat-row"><span class="stat-name">СТАТУС</span><span class="stat-val" style="font-size:13px;font-family:'Montserrat',sans-serif;">${d.status}</span></div>
+    <div class="stat-row"><span class="stat-name">ВХОД / РЕБАЙ / АДДОН</span><span class="stat-val" style="font-size:13px;font-family:'Montserrat',sans-serif;">${fmt(d.cashier.entryPrice)} / ${fmt(d.cashier.rebuyPrice)} / ${fmt(d.cashier.addonPrice)}</span></div>
+  `;
+  const btns=document.getElementById('shift-action-btns');
+  btns.innerHTML='';
+  if(d.status!=='closed'){
+    // Закрытие смены только после сохранения результатов
+    if(d.savedToRating&&d.controlRoomDraftCreated){
+      const b=document.createElement('button');
+      b.className='btn danger';b.textContent='🔒 ЗАКРЫТЬ СМЕНУ';b.onclick=closeShift;
+      btns.appendChild(b);
+    } else {
+      const info=document.createElement('div');
+      info.style.cssText='font-size:9px;color:var(--text3);letter-spacing:1px;';
+      info.textContent=(d.savedToRating?'✅':'❌')+' Рейтинг · '+(d.controlRoomDraftCreated?'✅':'❌')+' Control Room — нужно для закрытия';
+      btns.appendChild(info);
+    }
+    // Аварийное закрытие — всегда доступно
+    const em=document.createElement('button');
+    em.className='btn danger sm';em.style.marginTop='8px';
+    em.textContent='⚠️ Аварийно закрыть';
+    em.onclick=emergencyCloseShift;
+    btns.appendChild(em);
+  }
+  renderReadiness();
+}
+
+// ══════════════════════════════════════════════════════════
+// ЧЕК-ЛИСТ ГОТОВНОСТИ СМЕНЫ (раздел 4 ТЗ)
+// ══════════════════════════════════════════════════════════
+function renderReadiness(){
+  const card=document.getElementById('readiness-card');
+  const listEl=document.getElementById('readiness-list');
+  const statusEl=document.getElementById('readiness-status');
+  if(!card||!listEl||!statusEl||!liveDb) return;
+
+  // Во время игры чек-лист готовности не нужен
+  if(liveDb.status==='running'||liveDb.status==='closed'){
+    card.style.display='none';
+    return;
+  }
+  card.style.display='block';
+
+  const d=liveDb;
+  const registered=(d.players||[]).filter(p=>p.status!=='no_show');
+  // {label, ok, critical}
+  const checks=[
+    {label:'Система блайндов выбрана', ok:!!d.blindsSystem, critical:true},
+    {label:'Количество столов указано', ok:Number(d.tablesCount||d.tables)>=1, critical:true},
+    {label:'Стоимость входа задана', ok:d.cashier && d.cashier.entryPrice>=0, critical:false},
+    {label:'Есть администратор смены', ok:!!(d.adminStaff&&d.adminStaff.trim()), critical:false},
+    {label:'Зарегистрирован хотя бы 1 игрок', ok:registered.length>=1, critical:false},
+    {label:'Достаточно игроков для старта (2+)', ok:registered.length>=2, critical:true},
+    {label:'Локальная резервная копия работает', ok:_backupWorks(), critical:false},
+  ];
+
+  const criticalFail=checks.some(c=>c.critical&&!c.ok);
+  const anyFail=checks.some(c=>!c.ok);
+
+  let color, text;
+  if(criticalFail){ color='var(--err)'; text='🔴 КРАСНЫЙ — старт заблокирован'; }
+  else if(anyFail){ color='var(--warn)'; text='🟡 ЖЁЛТЫЙ — есть предупреждения'; }
+  else { color='var(--ok)'; text='🟢 ЗЕЛЁНЫЙ — можно начинать'; }
+
+  statusEl.textContent=text;
+  statusEl.style.color=color;
+
+  listEl.innerHTML=checks.map(c=>{
+    const icon=c.ok?'✅':(c.critical?'🔴':'⚠️');
+    const col=c.ok?'var(--text2)':(c.critical?'var(--err)':'var(--warn)');
+    return `<div style="color:${col};">${icon} ${esc(c.label)}${c.critical&&!c.ok?' <span style="font-size:9px;opacity:0.7;">(критично)</span>':''}</div>`;
+  }).join('');
+}
+
+function _backupWorks(){
+  try {
+    const k='__ready_test__';
+    localStorage.setItem(k,'1');
+    localStorage.removeItem(k);
+    return true;
+  } catch(e){ return false; }
+}
+
+// ══════════════════════════════════════════════════════════
+// PLAYERS
+function makePlayer(name, isNew){
+  return {
+    id:'p_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),
+    name, isNew:!!isNew,
+    status:'registered',
+    entryPaid:0, entryStatus:'unknown', entryNote:'',
+    rebuys:0, paidRebuys:0,
+    freeRebuyAvailable:DAY_CONFIG[liveDb?.dayKey]?.freeRebuyDay||false,
+    freeRebuyUsed:false,
+    addon:false, addonPaid:0,
+    table:null, seat:null, place:null, points:0
+  };
+}
+
+function calculateEntryForPlayer(p){
+  if(DAY_CONFIG[liveDb?.dayKey]?.freeEntry) return 0;
+  if(p.isNew) return 0; // новый игрок — вход бесплатный
+  if(['first_time_free','club_compliment','manual_free','free_day'].includes(p.entryStatus)) return 0;
+  return liveDb?.cashier?.entryPrice||0;
+}
+
+// Есть ли у игрока реальный долг за вход (P0/P1 отчёта files37)
+// Проверяем расчётную стоимость конкретного игрока, а не цену дня
+function playerHasUnpaidEntry(p){
+  return p.status==='playing'
+    && calculateEntryForPlayer(p) > 0
+    && Number(p.entryPaid||0) <= 0;
+}
+
+// Повторный приём оплаты входа (после отмены ENTRY) — P1 отчёта files37
+function collectEntryPayment(id){
+  const p=liveDb?.players.find(x=>x.id===id);
+  if(!p) return;
+  const amount=calculateEntryForPlayer(p);
+  if(amount<=0){showToast('У игрока бесплатный вход');return;}
+  if(Number(p.entryPaid||0)>0){showToast('Вход уже оплачен');return;}
+  if(!lockOperation('entry_'+id,800)){showToast('⏳ Подожди секунду');return;}
+  p.entryPaid=amount;
+  addTransaction('ENTRY',p.id,amount,p.name+' · вход '+fmt(amount));
+  logAction('ENTRY_COLLECTED',p.name,fmt(amount));
+  commitLiveChange();
+  showToast('💰 Вход принят: '+p.name+' · '+fmt(amount));
+}
+
+function normalizeName(name){
+  // Убираем лишние пробелы, нормализуем регистр первой буквы
+  return name.trim().replace(/\s+/g,' ').replace(/^(\S)/,s=>s.toUpperCase());
+}
+
+function findSimilarPlayer(name){
+  const n=normalizeName(name).toLowerCase();
+  return liveDb?.players.find(p=>{
+    const pn=p.name.toLowerCase();
+    // Точное совпадение или очень похожее (первые 3 символа + длина близкая)
+    if(pn===n) return true;
+    if(n.length>=3&&pn.startsWith(n.slice(0,3))&&Math.abs(pn.length-n.length)<=2) return true;
+    return false;
+  });
+}
+
+function addPlayer(){
+  if(!liveDb||liveDb.status==='closed'){showToast('Сначала открой смену');return;}
+  if(liveDb.status==='running'){
+    addLatePlayer();return;
+  }
+  const rawName=gs('p-name').trim();
+  if(!rawName){showToast('Введи имя');return;}
+  const name=normalizeName(rawName);
+  if(liveDb.players.find(p=>p.name===name)){showToast('Игрок уже есть');return;}
+  // Проверка похожих имён
+  const similar=findSimilarPlayer(name);
+  if(similar&&similar.name!==name){
+    if(!confirm('Похожий игрок уже есть: «'+similar.name+'».\nДобавить «'+name+'» как нового?')) return;
+  }
+  const isNew=gs('p-new')==='1';
+  liveDb.players.push(makePlayer(name,isNew));
+  logAction('PLAYER_ADDED',name,'');
+  sv('p-name',''); saveLocal();
+  renderPlayers(); renderStatusBar();
+  showToast('+ '+name);
+}
+
+function addLatePlayer(){
+  const name=gs('p-name').trim();
+  if(!name){showToast('Введи имя опоздавшего');return;}
+  if(liveDb.players.find(p=>p.name===name)){showToast('Игрок уже есть');return;}
+  const isNew=gs('p-new')==='1';
+  const p=makePlayer(name,isNew);
+  p.status='playing'; // сразу в игру
+  p.entryPaid=calculateEntryForPlayer(p);
+  
+  // ✅ Добавляем игрока
+  liveDb.players.push(p);
+  
+  // ✅ Создаём транзакцию входа (если есть оплата)
+  if(p.entryPaid > 0){
+    addTransaction('ENTRY', p.id, p.entryPaid, 'Опоздавший вход: ' + name);
+  }
+  
+  logAction('PLAYER_ADDED',name,'Опоздавший · вход: '+fmt(p.entryPaid));
+  // Сбрасываем флаг рассадки — надо переотправить
+  liveDb.playersSentToSeating=false;
+  sv('p-name',''); 
+  markLiveDirty();
+  saveLocal(); 
+  queueCloudSave();
+  refreshLatePlayerSelect();
+  renderAll();
+  showToast('Игрок добавлен. Теперь выбери его в блоке «Посадить опоздавшего»');
+}
+
+function setEntryStatus(id, status){
+  const p=liveDb?.players.find(x=>x.id===id);
+  if(!p) return;
+  p.entryStatus=status;
+  saveLocal(); renderPlayers();
+  showToast(status==='paid'?'💰 Вход оплачен':status==='first_time_free'?'🆓 Первый раз бесплатно':'🎁 Комплимент клуба');
+}
+
+function removePlayer(id){
+  if(!liveDb) return;
+  const p=liveDb.players.find(x=>x.id===id);
+  if(!p) return;
+  if(liveDb.status==='running'){showToast('Нельзя удалить во время игры');return;}
+  if(!confirm('Удалить '+p.name+'?')) return;
+  liveDb.players=liveDb.players.filter(x=>x.id!==id);
+  logAction('PLAYER_REMOVED',p.name,'');
+  saveLocal(); renderPlayers(); renderStatusBar();
+}
+
+function toggleNew(id){
+  const p=liveDb?.players.find(x=>x.id===id);
+  if(!p) return;
+  p.isNew=!p.isNew;
+  saveLocal(); renderPlayers();
+}
+
+function renderPlayers(){
+  document.getElementById('players-count').textContent=liveDb?.players?.length||0;
+  const list=document.getElementById('players-list');
+  if(!liveDb?.players?.length){list.innerHTML='<div class="empty">Нет игроков</div>';return;}
+  const isClosed=liveDb.status==='closed';
+  list.innerHTML=liveDb.players.map(p=>{
+    const badges=[];
+    if(p.isNew) badges.push('<span class="badge badge-ok">НОВЫЙ</span>');
+    if(p.status==='playing') badges.push('<span class="badge badge-ok">ИГРАЕТ</span>');
+    if(p.status==='no_show') badges.push('<span class="badge badge-warn">НО-ШОУ</span>');
+    if(p.status==='eliminated') badges.push('<span class="badge badge-err">ВЫБЫЛ #'+p.place+'</span>');
+    if(p.freeRebuyAvailable&&!p.freeRebuyUsed) badges.push('<span class="badge badge-warn">FREE R</span>');
+    return `<div class="player-card ${p.status==='playing'?'playing':p.status==='no_show'?'no-show':p.status==='eliminated'?'eliminated':''}">
+      <div class="pc-name">${esc(p.name)}</div>
+      <div class="pc-badges">${badges.join('')}</div>
+      ${!isClosed&&liveDb.status!=='running'?`<div class="pc-actions">
+        <button class="btn sm" onclick="toggleNew('${p.id}')">${p.isNew?'повторный':'новый'}</button>
+        <button class="btn sm" onclick="setEntryStatus('${p.id}','paid')" style="${p.entryStatus==='paid'?'background:rgba(77,175,111,0.15);':''}" title="Вход оплачен">💰</button>
+        <button class="btn sm" onclick="setEntryStatus('${p.id}','first_time_free')" style="${p.entryStatus==='first_time_free'?'background:rgba(201,169,110,0.15);':''}" title="Первый раз бесплатно">🆓</button>
+        <button class="btn sm" onclick="setEntryStatus('${p.id}','club_compliment')" style="${p.entryStatus==='club_compliment'?'background:rgba(201,169,110,0.15);':''}" title="Комплимент клуба">🎁</button>
+        <button class="btn sm danger" onclick="removePlayer('${p.id}')">✕</button>
+      </div>`:''}
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════════
+// LIVE START
+function startLive(){
+  if(!liveDb){showToast('Сначала открой смену');return;}
+  const checks=validateLiveStart();
+  if(checks.errors.length){showToast('❌ '+checks.errors[0]);return;}
+  if(!confirm('Запустить live?\nВсе игроки получат статус ожидания.')) return;
+
+  liveDb.status='running';
+  liveDb.startTime=new Date().toTimeString().slice(0,5);
+  liveDb.players.forEach(p=>{p.status='waiting';});
+  logAction('LIVE_STARTED','','В игре: '+liveDb.players.length+' игроков');
+  markLiveDirty(); saveLocal(); queueCloudSave();
+  renderAll();
+  showToast('🚀 LIVE ЗАПУЩЕН!');
+}
+
+function validateLiveStart(){
+  const errors=[];
+  if(!liveDb?.date) errors.push('Нет даты');
+  if(!liveDb?.dayKey) errors.push('Нет формата');
+  if(!liveDb?.blindsSystem) errors.push('Нет системы блайндов');
+  if(!liveDb?.players?.length||liveDb.players.length<2) errors.push('Нужно минимум 2 игрока');
+  if(!liveDb?.cashier?.entryPrice&&!DAY_CONFIG[liveDb?.dayKey]?.freeEntry){
+    // не блокируем если фриролл
+  }
+  return {errors};
+}
+
+function renderLivePage(){
+  if(!liveDb) return;
+  const status=liveDb.status;
+  const checks=validateLiveStart();
+  document.getElementById('live-start-block').style.display=status==='opened'||status==='draft'?'block':'none';
+  document.getElementById('live-arrival-block').style.display=status==='running'&&getWaiting().length>0?'block':'none';
+  document.getElementById('live-game-block').style.display=status==='running'?'block':'none';
+
+  if(status==='opened'||status==='draft'){
+    const ok=checks.errors.length===0;
+    document.getElementById('live-start-checks').innerHTML=
+      ['Дата: '+liveDb.date,'Формат: '+(liveDb.formatName||'—'),'Блайнды: '+(liveDb.blindsSystem||'—'),
+       'Игроков: '+(liveDb.players?.length||0)].map(s=>'✅ '+s).join('<br>')+
+      (checks.errors.map(e=>'❌ '+e).join('<br>')?'<br>'+checks.errors.map(e=>'❌ '+e).join('<br>'):'');
+    document.getElementById('btn-start-live').disabled=!ok;
+  }
+
+  if(status==='running'){
+    renderArrivalList();
+    renderLivePlayers();
+    checkFinalTable();
+  }
+}
+
+function renderArrivalList(){
+  const waiting=getWaiting();
+  const list=document.getElementById('arrival-list');
+  if(!waiting.length){
+    document.getElementById('live-arrival-block').style.display='none';
+    return;
+  }
+  list.innerHTML=waiting.map(p=>`
+    <div class="player-card waiting">
+      <div class="pc-name">${esc(p.name)}</div>
+      <div class="pc-actions">
+        <button class="btn sm ok" onclick="markArrived('${p.id}')">✅ ЯВИЛСЯ</button>
+        <button class="btn sm danger" onclick="markNoShow('${p.id}')">❌ НЕ ЯВИЛСЯ</button>
+      </div>
+    </div>`).join('');
+}
+
+function markAllArrived(){
+  getWaiting().forEach(p=>markArrived(p.id,true));
+  markLiveDirty(); saveLocal(); queueCloudSave();
+  renderAll(); showToast('✅ Все отмечены');
+}
+
+function markArrived(id, batch){
+  const p=liveDb?.players.find(x=>x.id===id);
+  if(!p||p.status!=='waiting') return;
+  p.status='playing';
+  p.entryPaid=calculateEntryForPlayer(p);
+  // Касса обновляется транзакцией — ручной учёт убран во избежание двойного счёта
+  addTransaction('ENTRY',p.id,p.entryPaid,p.name+' · вход '+fmt(p.entryPaid));
+  logAction('PLAYER_ARRIVED',p.name,'Вход: '+fmt(p.entryPaid));
+  if(!batch){commitLiveChange();}
+}
+
+async function markNoShow(id){
+  const p=liveDb?.players.find(x=>x.id===id);
+  if(!p||p.status!=='waiting') return;
+  p.status='no_show';
+  logAction('PLAYER_NO_SHOW',p.name,'');
+
+  saveLocal();
+  renderAll();
+
+  // Ждём удаления из рассадки на TV, показываем статус (P2 files40)
+  const ok = await removePlayerFromSeating(p.name);
+  if(ok===false){
+    showToast('⚠️ '+p.name+': no-show отмечен, но рассадка на TV не обновилась');
+  }
+  markLiveDirty();
+  queueCloudSave();
+}
+
+async function removePlayerFromSeating(playerName) {
+  try {
+    // Получаем текущую рассадку
+    let seatingState = await getFromTvCloud(STORAGE_KEYS.SEATING_STATE);
+    
+    if(!seatingState || !seatingState.tables) {
+      console.warn('[NO-SHOW] Рассадка не найдена');
+      return true; // рассадки нет — удалять нечего, не ошибка
+    }
+    
+    // Удаляем игрока из всех столов
+    let removed = false;
+    seatingState.tables.forEach(table => {
+      if(table.seats) {
+        table.seats.forEach(seat => {
+          if(seat.player === playerName) {
+            seat.player = null;
+            removed = true;
+          }
+        });
+      }
+    });
+    
+    // Обновляем список игроков
+    if(seatingState.players) {
+      seatingState.players = seatingState.players.filter(n => n !== playerName);
+    }
+    
+    if(removed) {
+      // Отправляем обновлённую рассадку на TV
+      seatingState.updatedAt = new Date().toISOString();
+      await postToTvCloud(STORAGE_KEYS.SEATING_STATE, seatingState);
+      localStorage.setItem(STORAGE_KEYS.SEATING_STATE, JSON.stringify(seatingState));
+      console.log('[NO-SHOW] Удалён из рассадки: ' + playerName);
+    }
+    return true;
+  } catch(e) {
+    console.warn('[NO-SHOW SEATING UPDATE FAILED]', e);
+    return false; // облако недоступно — рассадка на TV могла не обновиться
+  }
+}
+
+function renderLivePlayers(){
+  const playing=getPlaying();
+  const list=document.getElementById('live-players-list');
+  const isClosed=liveDb.status==='closed';
+  list.innerHTML=playing.map(p=>{
+    const badges=[];
+    if(p.paidRebuys>0) badges.push('<span class="badge badge-warn">R×'+p.paidRebuys+'</span>');
+    if(p.freeRebuyUsed) badges.push('<span class="badge badge-gray">FREE R</span>');
+    if(p.addon) badges.push('<span class="badge badge-ok">A</span>');
+    if(p.isNew) badges.push('<span class="badge badge-ok">NEW</span>');
+    // Долг за вход — только если у КОНКРЕТНОГО игрока расчётный вход > 0 (P0 files37)
+    const unpaidEntry=playerHasUnpaidEntry(p);
+    if(unpaidEntry) badges.push('<span class="badge badge-warn" title="Вход не оплачен">ВХОД 0₽</span>');
+    const canFreeRebuy=p.freeRebuyAvailable&&!p.freeRebuyUsed;
+    return `<div class="player-card playing">
+      <div class="pc-name">${esc(p.name)}</div>
+      <div class="pc-badges">${badges.join('')}</div>
+      ${!isClosed?`<div class="pc-actions">
+        ${unpaidEntry?`<button class="btn sm ok" onclick="collectEntryPayment('${p.id}')">💰 Принять вход ${fmt(calculateEntryForPlayer(p))}</button>`:''}
+        <button class="btn sm" onclick="addPaidRebuy('${p.id}')">+R</button>
+        ${canFreeRebuy?`<button class="btn sm ok" onclick="addFreeRebuy('${p.id}')">🎁R</button>`:''}
+        ${liveDb.addonBreakFixed&&!p.addon?`<button class="btn sm" onclick="addAddon('${p.id}')">+A</button>`:''}
+        ${!liveDb.addonBreakFixed&&!p.addon?`<button class="btn sm" style="opacity:0.4;" onclick="showToast('Сначала зафиксируй аддон-перерыв')">+A</button>`:''}
+        <button class="btn sm danger" onclick="eliminatePlayer('${p.id}')">💀</button>
+      </div>`:''}
+    </div>`;
+  }).join('')||'<div class="empty">Нет активных игроков</div>';
+}
+
+function checkFinalTable(){
+  const playing=getPlaying();
+  const alert=document.getElementById('final-table-alert');
+  if(playing.length===10&&!liveDb.finalTableCreated){
+    alert.style.display='block';
+  } else {
+    alert.style.display='none';
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// ACTIONS
+
+// Единый коммит изменения смены: локально + облако + рендер (P1 files38)
+// opts: {cloud:true, render:true} — по умолчанию всё включено
+function commitLiveChange(opts){
+  const o = opts||{};
+  markLiveDirty(); // это реальное изменение данных (P0 files44)
+  saveLocal();
+  if(o.render!==false) renderAll();
+  if(o.cloud!==false) return queueCloudSave();
+  return Promise.resolve(true);
+}
+
+function addTransaction(type, playerId, amount, note){
+  const tx={id:'tx_'+Date.now()+'_'+Math.random().toString(36).slice(2,5),type,playerId,amount:Number(amount)||0,note:note||'',time:new Date().toISOString(),cancelled:false};
+  if(!liveDb.transactions) liveDb.transactions=[];
+  liveDb.transactions.push(tx);
+  recalcCashierFromTransactions();
+  return tx;
+}
+
+// Единый откат транзакции (без UI-подтверждения) — раздел P0 #2 отчёта
+function rollbackTransaction(tx){
+  if(!tx||tx.cancelled) return false;
+  tx.cancelled=true;
+  const p=liveDb.players.find(x=>x.id===tx.playerId);
+  if(p){
+    if(tx.type==='PAID_REBUY'){p.rebuys=Math.max(0,p.rebuys-1);p.paidRebuys=Math.max(0,p.paidRebuys-1);}
+    if(tx.type==='FREE_REBUY'){p.rebuys=Math.max(0,p.rebuys-1);p.freeRebuyUsed=false;}
+    if(tx.type==='ADDON'){p.addon=false;p.addonPaid=0;}
+    if(tx.type==='ENTRY'){p.entryPaid=0;}
+  }
+  recalcCashierFromTransactions();
+  return true;
+}
+
+function cancelTransaction(txId){
+  if(!liveDb?.transactions) return;
+  const tx=liveDb.transactions.find(x=>x.id===txId);
+  if(!tx||tx.cancelled){showToast('Операция уже отменена');return;}
+  if(!lockOperation('canceltx_'+txId,800)){showToast('⏳ Подожди секунду');return;}
+  if(!confirm('Отменить: '+tx.note+'?')) return;
+  rollbackTransaction(tx);
+  logAction('TX_CANCELLED','','Отменена: '+tx.note);
+  commitLiveChange();
+  showToast('↩ Отменено: '+tx.note);
+}
+
+function recalcCashierFromTransactions(){
+  if(!liveDb?.transactions) return;
+  const c=liveDb.cashier;
+  const active=liveDb.transactions.filter(tx=>!tx.cancelled);
+  c.entriesCount=active.filter(tx=>tx.type==='ENTRY'&&tx.amount>0).length;
+  c.entriesRevenue=active.filter(tx=>tx.type==='ENTRY').reduce((s,tx)=>s+tx.amount,0);
+  c.paidRebuysCount=active.filter(tx=>tx.type==='PAID_REBUY').length;
+  c.rebuysRevenue=active.filter(tx=>tx.type==='PAID_REBUY').reduce((s,tx)=>s+tx.amount,0);
+  c.freeRebuysCount=active.filter(tx=>tx.type==='FREE_REBUY').length;
+  c.addonsCount=active.filter(tx=>tx.type==='ADDON').length;
+  c.addonsRevenue=active.filter(tx=>tx.type==='ADDON').reduce((s,tx)=>s+tx.amount,0);
+  updateCashierTotals();
+}
+
+// ── ЗАЩИТА ОТ ДВОЙНОГО КЛИКА ПО ФИНАНСОВЫМ ОПЕРАЦИЯМ (P0 files41) ──
+// Ребай законно повторяем, поэтому блокируем по времени, а не по состоянию
+const _opLocks={};
+function lockOperation(key, ms){
+  const now=Date.now();
+  if(_opLocks[key] && (now-_opLocks[key]) < (ms||800)) return false; // ещё заблокировано
+  _opLocks[key]=now;
+  return true;
+}
+
+function addPaidRebuy(id){
+  if(liveDb?.status==='closed'){showToast('Смена закрыта');return;}
+  const p=liveDb?.players.find(x=>x.id===id);
+  if(!p||p.status!=='playing'){showToast('Игрок не в игре');return;}
+  if(!lockOperation('rebuy_'+id,800)){showToast('⏳ Подожди секунду перед повторным ребаем');return;}
+  if(!confirm('Платный ребай — '+fmt(liveDb.cashier.rebuyPrice)+'?')) return;
+  p.rebuys++; p.paidRebuys++;
+  // ✅ Транзакция обновляет кассу автоматически
+  addTransaction('PAID_REBUY',id,liveDb.cashier.rebuyPrice,p.name+' · ребай '+fmt(liveDb.cashier.rebuyPrice));
+  logAction('PAID_REBUY',p.name,fmt(liveDb.cashier.rebuyPrice));
+  commitLiveChange(); showToast('💰 Ребай: '+p.name);
+}
+
+function addFreeRebuy(id){
+  if(liveDb?.status==='closed') return;
+  const p=liveDb?.players.find(x=>x.id===id);
+  if(!p||!p.freeRebuyAvailable||p.freeRebuyUsed){showToast('Нет бесплатного ребая');return;}
+  if(!lockOperation('freerebuy_'+id,800)){showToast('⏳ Подожди секунду');return;}
+  if(!confirm('Бесплатный ребай для '+p.name+'?')) return;
+  p.rebuys++; p.freeRebuyUsed=true;
+  // ✅ Транзакция обновляет кассу автоматически
+  addTransaction('FREE_REBUY',id,0,p.name+' · бесплатный ребай');
+  logAction('FREE_REBUY',p.name,'бесплатный');
+  commitLiveChange(); showToast('🎁 Бесплатный ребай: '+p.name);
+}
+
+function addAddon(id){
+  if(liveDb?.status==='closed') return;
+  const p=liveDb?.players.find(x=>x.id===id);
+  if(!p||p.addon){showToast('Аддон уже куплен');return;}
+  if(p.status!=='playing'){showToast('Игрок не в игре');return;}
+  if(!lockOperation('addon_'+id,800)){showToast('⏳ Подожди секунду');return;}
+  if(!confirm('Аддон — '+fmt(liveDb.cashier.addonPrice)+'?')) return;
+  p.addon=true; p.addonPaid=liveDb.cashier.addonPrice;
+  // ✅ Транзакция обновляет кассу автоматически
+  addTransaction('ADDON',id,liveDb.cashier.addonPrice,p.name+' · аддон '+fmt(liveDb.cashier.addonPrice));
+  updateAddonStats();
+  logAction('ADDON',p.name,fmt(liveDb.cashier.addonPrice));
+  commitLiveChange(); showToast('🎰 Аддон: '+p.name);
+}
+
+function fixAddonBreak(){
+  if(liveDb?.addonBreakFixed){showToast('Аддон-перерыв уже зафиксирован');return;}
+  const playing=getPlaying();
+  if(!confirm('Зафиксировать аддон-перерыв? Игроков сейчас: '+playing.length)) return;
+  liveDb.playersReachedAddon=playing.length;
+  liveDb.addonBreakFixed=true;
+  updateAddonStats();
+  logAction('ADDON_BREAK_FIXED','','Дошло до аддона: '+playing.length);
+  commitLiveChange(); showToast('⏸ Аддон-перерыв: '+playing.length+' игроков');
+}
+
+function updateAddonStats(){
+  const reach=liveDb.playersReachedAddon;
+  const cnt=liveDb.cashier.addonsCount;
+  liveDb.addonPercent=reach>0?cnt/reach*100:0;
+  const pct=liveDb.addonPercent;
+  liveDb.teamBonusPerPerson=pct>=70?500:pct>=60?300:0;
+  liveDb.teamBonusTotal=liveDb.teamBonusPerPerson*(liveDb.staffCount||0);
+}
+
+// ══════════════════════════════════════════════════════════
+// СИСТЕМА ТРАНЗАКЦИЙ ДЛЯ КАССЫ
+// ══════════════════════════════════════════════════════════
+
+function recalculateCashierFromTransactions() {
+  // Канонический пересчёт — по флагу cancelled (единый контур)
+  recalcCashierFromTransactions();
+}
+
+function undoLastTransaction() {
+  if(!liveDb || !liveDb.transactions || liveDb.transactions.length === 0) {
+    showToast('Нечего отменять');
+    return;
+  }
+  // Находим последнюю НЕотменённую операцию
+  let lastTx = null;
+  for(let i=liveDb.transactions.length-1;i>=0;i--){
+    if(!liveDb.transactions[i].cancelled){ lastTx=liveDb.transactions[i]; break; }
+  }
+  if(!lastTx){ showToast('Нечего отменять'); return; }
+
+  rollbackTransaction(lastTx);
+  logAction('TX_UNDONE', lastTx.playerId || '', 'Отмена: ' + lastTx.note);
+  markLiveDirty(); saveLocal(); queueCloudSave();
+  showToast('↩ Отменена операция: ' + lastTx.note);
+  renderAll();
+}
+
+function updateCashierTotals(){
+  const c=liveDb.cashier;
+  c.totalTournamentRevenue=c.entriesRevenue+c.rebuysRevenue+c.addonsRevenue;
+}
+
+function eliminatePlayer(id){
+  if(liveDb?.status==='closed') return;
+  const p=liveDb?.players.find(x=>x.id===id);
+  if(!p||p.status!=='playing'){showToast('Игрок не в игре');return;}
+  const waiting=getWaiting();
+  if(waiting.length>0){showToast('Сначала отметь явку всех игроков');return;}
+  if(!lockOperation('elim_'+id,1000)){showToast('⏳ Подожди секунду');return;}
+  if(!confirm('Выбить '+p.name+'?')) return;
+  const playing=getPlaying();
+  const cfg=DAY_CONFIG[liveDb.dayKey];
+  p.status='eliminated';
+  p.place=playing.length; // место = кол-во оставшихся ДО вылета
+  p.points=cfg?calcPoints(cfg.maxPoints,p.place):15;
+  liveDb.eliminatedPlayers.push({...p});
+  logAction('PLAYER_ELIMINATED',p.name,'Место #'+p.place+', '+p.points+' очков');
+
+  // Определяем победителя ДО коммита, чтобы всё ушло в облако одной операцией (P0 files41)
+  const stillPlaying=getPlaying();
+  let winner=null;
+  if(stillPlaying.length===1){
+    winner=stillPlaying[0];
+    winner.place=1;
+    winner.points=cfg?calcPoints(cfg.maxPoints,1):(cfg?.maxPoints||70);
+    liveDb.winnerId=winner.id;
+    logAction('WINNER_DETERMINED',winner.name,'1 место, '+winner.points+' очков');
+  }
+
+  // Единый коммит: вылет + победитель (если есть) → локально + облако + рендер
+  commitLiveChange();
+
+  // Освобождение места в рассадке не блокирует вылет (fire-and-forget с логом)
+  removePlayerFromSeating(p.name).catch(e=>console.warn('[ELIM SEATING SYNC]',e));
+
+  showToast('💀 '+p.name+' — место #'+p.place);
+  if(winner){
+    setTimeout(()=>showToast('🏆 ПОБЕДИТЕЛЬ: '+winner.name),500);
+  }
+}
+
+function undoLastElimination(){
+  if(!liveDb?.eliminatedPlayers?.length){showToast('Нет вылетов для отмены');return;}
+  const last=liveDb.eliminatedPlayers[liveDb.eliminatedPlayers.length-1];
+  if(!confirm('Отменить вылет '+last.name+'?')) return;
+  const p=liveDb.players.find(x=>x.id===last.id);
+  if(p){p.status='playing';p.place=null;p.points=0;}
+  liveDb.eliminatedPlayers.pop();
+  // Если был определён победитель — сбрасываем его (снова >1 игрока в игре) (P0 files41)
+  if(liveDb.winnerId){
+    const w=liveDb.players.find(x=>x.id===liveDb.winnerId);
+    if(w){w.place=null;w.points=0;}
+    liveDb.winnerId=null;
+    logAction('WINNER_RESET','','Отмена вылета вернула игру');
+  }
+  logAction('ELIMINATION_UNDONE',last.name,'');
+  commitLiveChange(); showToast('↩ Вылет отменён: '+last.name);
+}
+
+// Вернуть конкретного ошибочно выбывшего игрока (раздел 7.3 ТЗ)
+function returnPlayerToGame(id){
+  if(liveDb?.status==='closed'){showToast('Смена закрыта');return;}
+  const p=liveDb?.players.find(x=>x.id===id);
+  if(!p||p.status!=='eliminated'){showToast('Игрок не выбывал');return;}
+  if(!confirm('Вернуть в игру: '+p.name+'?\nЕго предварительное место будет отменено.')) return;
+  p.status='playing';
+  p.place=null;
+  p.points=0;
+  // Убираем из списка выбывших
+  const idx=liveDb.eliminatedPlayers.findIndex(x=>x.id===id);
+  if(idx>=0) liveDb.eliminatedPlayers.splice(idx,1);
+  // Возврат игрока сбрасывает ранее определённого победителя (P0 files41)
+  if(liveDb.winnerId && liveDb.winnerId!==id){
+    const w=liveDb.players.find(x=>x.id===liveDb.winnerId);
+    if(w){w.place=null;w.points=0;}
+    liveDb.winnerId=null;
+    logAction('WINNER_RESET','','Возврат игрока вернул игру');
+  }
+  logAction('PLAYER_RETURNED',p.name,'Возврат в игру, место отменено');
+  commitLiveChange();
+  showToast('↩ '+p.name+' вернулся в игру. Посади его через блок опоздавших.');
+}
+
+async function sendPlayersToSeating(){
+  if(!liveDb?.players?.length){showToast('Нет игроков');return;}
+  const arrived=liveDb.players.filter(p=>p.status==='playing'||p.status==='waiting');
+  const names=arrived.length?arrived.map(p=>p.name):liveDb.players.map(p=>p.name);
+  if(!confirm('Отправить '+names.length+' игроков в TV рассадку?')) return;
+  try{
+    // Используем количество столов из смены
+    const tableCount = Math.max(1, Number(liveDb.tablesCount || liveDb.tables || 2));
+    const seatsPerTable = 10;
+    const totalCapacity = tableCount * seatsPerTable;
+    
+    // Проверка на переполнение
+    if(names.length > totalCapacity){
+      showToast(`⚠️ Игроков ${names.length}, мест ${totalCapacity}. Увеличь столы или места.`);
+      return;
+    }
+    
+    // ✅ ЧЕСТНОЕ ПЕРЕМЕШИВАНИЕ: Fisher–Yates (sort(()=>Math.random()-0.5) даёт смещение)
+    const shuffledNames = [...names];
+    for(let i = shuffledNames.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffledNames[i], shuffledNames[j]] = [shuffledNames[j], shuffledNames[i]];
+    }
+    
+    // Создаём таблицы с равномерным распределением игроков
+    const tables = [];
+    for(let i = 0; i < tableCount; i++){
+      tables.push({
+        id: 'table-' + (i + 1),
+        name: 'Стол ' + (i + 1),
+        seats: Array.from({length: seatsPerTable}, (_, j) => ({
+          seat: j + 1,
+          player: null
+        }))
+      });
+    }
+    
+    // Распределяем ПЕРЕМЕШАННЫХ игроков равномерно (round-robin)
+    shuffledNames.forEach((name, idx) => {
+      const tableIndex = idx % tableCount;
+      const table = tables[tableIndex];
+      const freeSeat = table.seats.find(s => !s.player);
+      if(freeSeat){
+        freeSeat.player = name;
+        // Обновляем номер места
+        freeSeat.seat = table.seats.indexOf(freeSeat) + 1;
+      }
+    });
+    
+    const seatState={
+      players:names,
+      tables:tables,
+      finalTable:false,
+      shiftId:liveDb.shiftId,
+      updatedAt:new Date().toISOString(),
+      source:'live-room'
+    };
+    await postToTvCloud(STORAGE_KEYS.SEATING_STATE, seatState);
+    liveDb.playersSentToSeating=true;
+    logAction('PLAYERS_SENT_TO_SEATING','',names.length+' игроков → рассадка на '+tableCount+' столов');
+    saveLocal();
+    showToast('✅ '+names.length+' игроков на '+tableCount+' столов отправлено на TV');
+  } catch(e){
+    liveDb.playersSentToSeating=false;
+    saveLocal();
+    showToast('⚠️ TV cloud недоступен, данные сохранены локально');
+    console.warn('[SEATING SEND FAILED]', e);
+  }
+}
+
+async function createFinalTable(){
+  liveDb.finalTableCreated=true;
+  const finalists=getPlaying();
+  logAction('FINAL_TABLE_CREATED','','Финалисты: '+finalists.map(p=>p.name).join(', '));
+
+  try {
+    const seatState={
+      tables:[{
+        id:'table-final',
+        name:'Финальный стол',
+        seats:Array.from({length:10},(_,i)=>({
+          seat:i+1,
+          player:finalists[i]?finalists[i].name:null
+        }))
+      }],
+      players:finalists.map(p=>p.name),
+      finalTable:true,
+      updatedAt:new Date().toISOString(),
+      source:'live-room'
+    };
+    await postToTvCloud(STORAGE_KEYS.SEATING_STATE, seatState);
+    showToast('🏆 Финальный стол отправлен на TV');
+    console.log('[FINAL TABLE] sent to TV seating:', finalists.length, 'players');
+  } catch(e) {
+    showToast('🏆 Финальный стол создан, TV cloud недоступен');
+    console.warn('[FINAL TABLE] TV error:', e.message);
+  }
+
+  commitLiveChange();
+}
+
+// ══════════════════════════════════════════════════════════
+// CASHIER PAGE
+function renderCashier(){
+  if(!liveDb) return;
+  const c=liveDb.cashier;
+  
+  // ✅ Кнопка отмены последней операции (если есть операции)
+  const hasTransactions = liveDb.transactions && liveDb.transactions.length > 0;
+  const undoBtn = hasTransactions ? '<button class="btn" onclick="undoLastTransaction()" style="margin-bottom:12px;background:rgba(200,100,100,0.2);border-color:rgba(200,100,100,0.4);">↩ ОТМЕНИТЬ ПОСЛЕДНЮЮ ОПЕРАЦИЮ</button>' : '';
+  
+  document.getElementById('cashier-content').innerHTML=`
+    ${undoBtn}
+    <div class="stat-row"><span class="stat-name">ВХОД</span><span class="stat-val">${fmtN(c.entriesCount)} × ${fmt(c.entryPrice)} = ${fmt(c.entriesRevenue)}</span></div>
+    <div class="stat-row"><span class="stat-name">ПЛАТНЫЕ РЕБАИ</span><span class="stat-val">${fmtN(c.paidRebuysCount)} × ${fmt(c.rebuyPrice)} = ${fmt(c.rebuysRevenue)}</span></div>
+    <div class="stat-row"><span class="stat-name">БЕСПЛАТНЫЕ РЕБАИ</span><span class="stat-val">${fmtN(c.freeRebuysCount)} шт</span></div>
+    <div class="stat-row"><span class="stat-name">АДДОНЫ</span><span class="stat-val">${fmtN(c.addonsCount)} × ${fmt(c.addonPrice)} = ${fmt(c.addonsRevenue)}</span></div>
+    <div class="stat-row" style="border-top:1px solid var(--gold3);margin-top:4px;padding-top:8px;"><span class="stat-name" style="color:var(--gold);">ИТОГО ТУРНИР</span><span class="stat-val" style="color:var(--gold);font-size:24px;">${fmt(c.totalTournamentRevenue)}</span></div>
+  `;
+  const reach=liveDb.playersReachedAddon;
+  const cnt=c.addonsCount;
+  const pct=liveDb.addonPercent||0;
+  const bonus=liveDb.teamBonusPerPerson||0;
+  const bonusTotal=liveDb.teamBonusTotal||0;
+  // Необработанные: в игре, аддон-перерыв зафиксирован, но не купил аддон и не отказался
+  const unprocessed=liveDb.addonBreakFixed
+    ? (liveDb.players||[]).filter(p=>p.status==='playing'&&!p.addon&&!p.addonDeclined)
+    : [];
+  document.getElementById('addon-content').innerHTML=`
+    <div class="stat-row"><span class="stat-name">ДОШЛО ДО АДДОНА</span><span class="stat-val">${reach||'не зафиксировано'}</span></div>
+    <div class="stat-row"><span class="stat-name">КУПИЛИ АДДОН</span><span class="stat-val">${cnt}</span></div>
+    <div class="stat-row"><span class="stat-name">% АДДОНОВ</span><span class="stat-val ${pct>=70?'ok':pct>=60?'gold':''}">${fmtPct(pct)}</span></div>
+    <div class="stat-row"><span class="stat-name">БОНУС КОМАНДЫ</span><span class="stat-val">${bonus>0?bonus+' ₽/чел · итого '+fmt(bonusTotal):'нет ('+fmtPct(pct)+')'}</span></div>
+    ${unprocessed.length?`<div style="margin-top:8px;padding:8px 10px;background:rgba(232,160,32,0.12);border:1px solid rgba(232,160,32,0.3);border-radius:4px;font-size:11px;color:var(--warn);">⚠️ Не обработано на аддоне: ${unprocessed.length} — ${esc(unprocessed.map(p=>p.name).join(', '))}</div>`:''}
+    ${!liveDb.addonBreakFixed?'<div style="margin-top:8px;"><button class="btn" onclick="fixAddonBreak()">⏸ ЗАФИКСИРОВАТЬ АДДОН-ПЕРЕРЫВ</button></div>':''}
+  `;
+  // Журнал транзакций
+  const txs=(liveDb.transactions||[]).slice().reverse().slice(0,30);
+  const txHtml=txs.length?txs.map(tx=>{
+    const canCancel=!tx.cancelled&&liveDb.status!=='closed';
+    const div=document.createElement('div');
+    div.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.03);'+(tx.cancelled?'opacity:0.4;text-decoration:line-through;':'');
+    div.innerHTML='<div style="font-size:10px;"><span style="color:var(--text3)">'+tx.time.slice(11,16)+'</span><span style="color:var(--text2);margin-left:8px;">'+esc(tx.note)+'</span></div>'+
+      '<div style="display:flex;align-items:center;gap:6px;"><span style="color:var(--gold);font-size:11px;">'+(tx.amount>0?fmt(tx.amount):'')+'</span></div>';
+    if(canCancel){
+      const btn=document.createElement('button');
+      btn.className='btn sm danger';btn.textContent='↩';
+      btn.onclick=()=>cancelTransaction(tx.id);
+      div.querySelector('div:last-child').appendChild(btn);
+    }
+    return div.outerHTML;
+  }).join(''):'<div style="color:var(--text3);font-size:10px;padding:8px 0;">Нет операций</div>';
+  document.getElementById('addon-content').innerHTML+='<div style="margin-top:16px;border-top:1px solid var(--border);padding-top:12px;"><div class="card-title" style="margin-bottom:8px;">ЖУРНАЛ ОПЕРАЦИЙ</div>'+txHtml+'</div>';
+}
+
+// ══════════════════════════════════════════════════════════
+// RESULTS PAGE
+function renderResults(){
+  if(!liveDb) return;
+  // Сначала скрываем все кнопки — потом показываем по условиям
+  document.getElementById('btn-save-results').disabled=true;
+  document.getElementById('btn-cr-draft').style.display='none';
+  document.getElementById('btn-close-shift').style.display='none';
+  const elim=liveDb.eliminatedPlayers||[];
+  const playing=getPlaying();
+  const allResults=[...playing.map(p=>({...p,place:p.place||1})),...elim].sort((a,b)=>(a.place||99)-(b.place||99));
+  const cfg=DAY_CONFIG[liveDb.dayKey];
+
+  document.getElementById('results-content').innerHTML=allResults.length?`
+    <table><thead><tr><th>МЕСТО</th><th>ИГРОК</th><th>ОЧКИ</th><th>РЕБАИ</th><th>АДДОН</th><th></th></tr></thead>
+    <tbody>${allResults.map(p=>{
+      const isElim=p.status==='eliminated';
+      const canReturn=isElim&&liveDb.status==='running'&&!liveDb.savedToRating;
+      return `<tr>
+      <td>${p.place?'#'+p.place:'—'}</td>
+      <td style="color:var(--text);font-weight:500;">${esc(p.name)}</td>
+      <td style="color:var(--gold);">${p.points||calcPoints(cfg?.maxPoints||70,p.place||99)}</td>
+      <td>${p.paidRebuys||0}${p.freeRebuyUsed?' + 🎁':''}</td>
+      <td>${p.addon?'✅':'—'}</td>
+      <td>${canReturn?`<button class="btn sm" onclick="returnPlayerToGame('${p.id}')" title="Вернуть в игру">↩</button>`:''}</td>
+    </tr>`;}).join('')}</tbody></table>`:'<div class="empty">Нет данных</div>';
+
+  const winner=playing.find(p=>p.place===1)||playing[0];
+  const canSave=playing.length===1&&!liveDb.savedToRating&&!isTestMode&&liveDb.status!=='closed';
+  const btnSave=document.getElementById('btn-save-results');
+  btnSave.disabled=!canSave;
+
+  // Проверка итогов (раздел 12.2 ТЗ)
+  const issues=validateResults(allResults, playing);
+  const issuesEl=document.getElementById('results-issues');
+  if(issuesEl){
+    if(issues.length){
+      issuesEl.style.display='block';
+      issuesEl.innerHTML='<div style="font-weight:600;color:var(--warn);margin-bottom:6px;">⚠️ Нельзя закрыть смену:</div>'+
+        issues.map(i=>`<div style="color:var(--err);font-size:11px;">• ${esc(i)}</div>`).join('');
+    } else {
+      issuesEl.style.display='none';
+    }
+  }
+
+  if(liveDb.savedToRating){
+    document.getElementById('save-results-info').innerHTML='✅ Результаты сохранены в рейтинг';
+    document.getElementById('btn-cr-draft').style.display='inline-flex';
+    document.getElementById('btn-close-shift').style.display=
+      (liveDb.savedToRating&&liveDb.controlRoomDraftCreated)?'inline-flex':'none';
+  } else {
+    document.getElementById('save-results-info').innerHTML=
+      winner?`Победитель: <strong style="color:var(--gold)">${winner.name}</strong><br>Всего: ${allResults.length} игроков · ${liveDb.formatName}`:'Ожидание финала...';
+  }
+}
+
+// Проверка корректности итогов (раздел 12.2 ТЗ)
+function validateResults(allResults, playing){
+  const issues=[];
+  // Дубли призовых мест
+  const placeCounts={};
+  allResults.forEach(p=>{ if(p.place){ placeCounts[p.place]=(placeCounts[p.place]||0)+1; } });
+  Object.entries(placeCounts).forEach(([place,cnt])=>{
+    if(cnt>1) issues.push(`Место #${place} у ${cnt} игроков`);
+  });
+  // Игрок без статуса
+  const noStatus=(liveDb.players||[]).filter(p=>!p.status);
+  if(noStatus.length) issues.push(`${noStatus.length} игрок(ов) без статуса`);
+  // Неопределённый победитель (турнир не завершён)
+  if(playing.length>1) issues.push(`Победитель не определён (в игре ${playing.length})`);
+  return issues;
+}
+
+// ══════════════════════════════════════════════════════════
+// ГЕНЕРАТОР ИТОГОВЫХ ПОСТОВ (раздел 15 ТЗ)
+// ══════════════════════════════════════════════════════════
+
+function getTop3(){
+  const elim=liveDb.eliminatedPlayers||[];
+  const playing=getPlaying();
+  const all=[...playing.map(p=>({...p,place:p.place||1})),...elim].sort((a,b)=>(a.place||99)-(b.place||99));
+  return all.slice(0,3);
+}
+
+function nextGameDate(){
+  // Простой расчёт следующего игрового дня недели
+  const order=['tuesday','wednesday','friday','saturday','sunday'];
+  const names={tuesday:'вторник',wednesday:'среда',friday:'пятница',saturday:'суббота',sunday:'воскресенье'};
+  const cur=liveDb.dayKey;
+  const idx=order.indexOf(cur);
+  const next=idx>=0?order[(idx+1)%order.length]:'вторник';
+  return names[next]||'следующей игре';
+}
+
+function genPost(type){
+  if(!liveDb){showToast('Нет данных смены');return;}
+  const cfg=DAY_CONFIG[liveDb.dayKey]||{};
+  const top3=getTop3();
+  const totalPlayers=(liveDb.players||[]).filter(p=>p.status!=='no_show').length;
+  const fmt3=top3.map((p,i)=>`${['🥇','🥈','🥉'][i]} ${p.name}`).join('\n');
+  const dayName=cfg.dayName||'';
+  const format=liveDb.formatName||'';
+  let text='';
+
+  if(type==='vk'){
+    text=`🎰 Клуб «Общество» — ${dayName}\n${format}\n\n`+
+      `Сегодня за столами собралось ${totalPlayers} игроков!\n\n`+
+      `🏆 Призёры:\n${fmt3}\n\n`+
+      `Поздравляем победителей! Рейтинг обновлён.\n`+
+      `Следующая игра — уже в ${nextGameDate()}. Ждём всех! 🃏`;
+  } else if(type==='tg'){
+    text=`🃏 ${dayName} · ${format}\n`+
+      `Участников: ${totalPlayers}\n\n`+
+      `Топ-3:\n${fmt3}\n\n`+
+      `Ждём на следующей игре в ${nextGameDate()}!`;
+  } else if(type==='stories'){
+    text=`🏆 ${format}\n${totalPlayers} игроков\n\n`+
+      top3.map((p,i)=>`${['1','2','3'][i]}. ${p.name}`).join('\n')+
+      `\n\n➡️ ${nextGameDate()}`;
+  } else if(type==='signup'){
+    text=`📝 Запись на игру!\n\n`+
+      `Следующий турнир в ${nextGameDate()}.\n`+
+      `Клуб «Общество» ждёт вас за столами.\n\n`+
+      `Пишите в личные сообщения, чтобы забронировать место 🃏`;
+  }
+
+  const out=document.getElementById('post-output');
+  if(out) out.value=text;
+  liveDb.postDraftCreated=true;
+  saveLocal();
+}
+
+function copyPost(){
+  const out=document.getElementById('post-output');
+  if(!out||!out.value){showToast('Сначала сгенерируй пост');return;}
+  out.select();
+  try {
+    document.execCommand('copy');
+    showToast('📋 Скопировано');
+  } catch(e){
+    // Fallback для новых браузеров
+    if(navigator.clipboard){
+      navigator.clipboard.writeText(out.value).then(()=>showToast('📋 Скопировано')).catch(()=>showToast('Выдели и скопируй вручную'));
+    } else {
+      showToast('Выдели и скопируй вручную');
+    }
+  }
+}
+
+async function saveResultsToRating(){
+  if(!liveDb||liveDb.savedToRating){showToast('Уже сохранено');return;}
+  if(isTestMode){showToast('Тест — не сохраняется');return;}
+  const playing=getPlaying();
+  if(playing.length!==1){showToast('Должен остаться 1 игрок');return;}
+  if(!lockOperation('save_rating',10000)){showToast('⏳ Сохранение уже выполняется...');return;}
+
+  const elim=liveDb.eliminatedPlayers||[];
+  const cfg=DAY_CONFIG[liveDb.dayKey];
+  const allResults=[...playing.map(p=>({...p,place:1})),...elim]
+    .sort((a,b)=>(a.place||99)-(b.place||99));
+  const confirmText=allResults.slice(0,3).map(p=>'#'+p.place+' '+p.name).join('\n')+'\n\nВсего: '+allResults.length+' игроков\nФормат: '+liveDb.formatName+'\nСохранить?';
+  if(!confirm(confirmText)) return;
+
+  const date=liveDb.date;
+  const monthKey=date.slice(0,7);
+  const dayMax=cfg?.maxPoints||70;
+  const shiftTs=Date.now();
+
+  const entries=allResults.map((p,i)=>({
+    player:p.name,
+    points:p.points||calcPoints(dayMax,p.place||99),
+    date, monthKey,
+    dayKey:liveDb.dayKey,
+    dayName:cfg?.dayName||'',
+    formatName:liveDb.formatName,
+    blindsSystem:liveDb.blindsSystem,
+    dayMax,
+    placeName:p.place?'#'+p.place+' место':'участие',
+    place:p.place||99,
+    type:'tournament',
+    isBonus:false,
+    rulesVersion:'2026-06-live-v2',
+    shiftId:liveDb.shiftId,
+    ts:shiftTs+i
+  }));
+
+  try{
+    showToast('Загружаем рейтинг...');
+    const res=await fetch(LIVE_URL+'?token='+LIVE_TOKEN+'&type=rating&_='+Date.now());
+    if(!res.ok) throw new Error('GET рейтинга: HTTP '+res.status);
+    const ratingDb=await res.json();
+    if(!Array.isArray(ratingDb.results)) throw new Error('Неверный формат рейтинга');
+
+    // UPSERT по shiftId: повторное сохранение обновляет записи, а не плодит дубли (P0 files41)
+    const existing=ratingDb.results.filter(r=>r.shiftId===liveDb.shiftId);
+    const isUpdate=existing.length>0;
+    if(isUpdate){
+      if(!confirm('Результаты этой смены уже есть в рейтинге ('+existing.length+' записей).\nОБНОВИТЬ их новыми данными?\n\nСтарые записи этой смены будут заменены.')) return;
+    }
+
+    const syncId='rating_sync_'+Date.now();
+    // Убираем старые записи этой смены и добавляем актуальные
+    const otherResults=ratingDb.results.filter(r=>r.shiftId!==liveDb.shiftId);
+    const newDb={...ratingDb,results:[...otherResults,...entries],updatedAt:new Date().toISOString(),syncId};
+    delete newDb._token;
+
+    showToast(isUpdate?'Обновляем рейтинг...':'Сохраняем в рейтинг...');
+    // Дожидаемся POST и проверяем HTTP-статус (P0 files41)
+    const postRes=await fetch(LIVE_URL+'?token='+LIVE_TOKEN,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({
+      _token:LIVE_TOKEN,
+      _type:'rating',
+      ratingDb:newDb
+    })});
+    if(!postRes.ok) throw new Error('POST рейтинга: HTTP '+postRes.status);
+
+    // Верификация с несколькими попытками вместо фиксированной задержки (P0 files41)
+    const delays=[300,600,1000,1500,2500,4000];
+    let verified=false;
+    for(const d of delays){
+      await new Promise(r=>setTimeout(r,d));
+      try {
+        const verRes=await fetch(LIVE_URL+'?token='+LIVE_TOKEN+'&type=rating&_='+Date.now());
+        if(!verRes.ok) continue;
+        const verCloud=await verRes.json();
+        if(verCloud.syncId===syncId ||
+           entries.every(e=>(verCloud.results||[]).some(r=>r.shiftId===e.shiftId&&r.player===e.player&&r.ts===e.ts))){
+          verified=true;
+          break;
+        }
+      } catch(verErr){ /* повторяем */ }
+    }
+
+    if(!verified){
+      showToast('❌ Рейтинг не подтвердил сохранение. Данные не потеряны — попробуй ещё раз.');
+      return;
+    }
+
+    liveDb.savedToRating=true;
+    logAction('RESULTS_SAVED','',entries.length+' записей · syncId='+syncId);
+    markLiveDirty(); saveLocal(); queueCloudSave();
+    renderResults(); renderStatusBar(); renderShift();
+    showToast('✅ '+entries.length+' результатов сохранено в рейтинг!');
+  }catch(e){
+    showToast('❌ Ошибка: '+e.message);
+    console.error('[SAVE RESULTS]',e);
+  }
+}
+
+async function createControlRoomDraft(){
+  if(!liveDb){showToast('Нет данных смены');return;}
+  if(!lockOperation('cr_draft',10000)){showToast('⏳ Создание черновика уже выполняется...');return;}
+  const playing=getPlaying();
+  const elim=liveDb.eliminatedPlayers||[];
+  const allP=liveDb.players||[];
+  const came=allP.filter(p=>p.status==='playing'||p.status==='eliminated').length;
+  const noShow=allP.filter(p=>p.status==='no_show').length;
+  const newP=allP.filter(p=>p.isNew&&p.status!=='no_show').length;
+  const ret=came-newP;
+  const c=liveDb.cashier;
+
+  // Считаем длительность через effectiveEndTime
+  const effectiveEndTime=liveDb.endTime||new Date().toTimeString().slice(0,5);
+  let dur=0;
+  if(liveDb.startTime&&effectiveEndTime){
+    const[sh,sm]=liveDb.startTime.split(':').map(Number);
+    const[eh,em]=effectiveEndTime.split(':').map(Number);
+    dur=(eh*60+em)-(sh*60+sm);
+    if(dur<0) dur+=1440;
+  }
+
+  const draft={
+    id:'live_'+liveDb.shiftId,
+    date:liveDb.date,
+    weekday:WEEKDAYS[new Date(liveDb.date+'T12:00:00').getDay()],
+    format:liveDb.formatName,
+    blindsSystem:liveDb.blindsSystem,
+    status:'ok',
+    registered:allP.length,
+    playersCame:came,
+    newPlayers:newP,
+    returningPlayers:ret,
+    noShow,
+    noShowPercent:allP.length>0?noShow/allP.length*100:0,
+    maxCapacity:liveDb.maxCapacity||20,
+    tables:liveDb.tables||2,
+    loadPercent:liveDb.maxCapacity>0?came/liveDb.maxCapacity*100:0,
+    startTime:liveDb.startTime,
+    endTime:effectiveEndTime,
+    durationMinutes:dur,
+    entriesCount:c.entriesCount,
+    entriesRevenue:c.entriesRevenue,
+    rebuysCount:c.paidRebuysCount,
+    rebuysRevenue:c.rebuysRevenue,
+    addonsCount:c.addonsCount,
+    addonsRevenue:c.addonsRevenue,
+    playersReachedAddon:liveDb.playersReachedAddon||0,
+    addonPercent:liveDb.addonPercent||0,
+    barRevenue:0,otherRevenue:0,
+    tournamentRevenue:c.totalTournamentRevenue,
+    totalRevenue:c.totalTournamentRevenue,
+    dealerSalary:0,adminSalary:0,barSalary:0,
+    baseStaffExpenses:0,
+    teamBonusPerPerson:liveDb.teamBonusPerPerson||0,
+    teamBonusTotal:liveDb.teamBonusTotal||0,
+    totalStaffExpenses:liveDb.teamBonusTotal||0,
+    rentExpenses:0,buffetExpenses:0,adsExpenses:0,otherExpenses:0,
+    totalExpenses:liveDb.teamBonusTotal||0,
+    netProfit:c.totalTournamentRevenue-(liveDb.teamBonusTotal||0),
+    revenuePerPlayer:came>0?c.totalTournamentRevenue/came:0,
+    barRevenuePerPlayer:0,
+    tournamentRevenuePerPlayer:came>0?c.totalTournamentRevenue/came:0,
+    staffCount:liveDb.staffCount||0,
+    dealer:liveDb.dealer,adminStaff:liveDb.adminStaff,barStaff:liveDb.barStaff,
+    comment:'Создано из Live Room · shiftId: '+liveDb.shiftId,
+    createdAt:new Date().toISOString(),
+    updatedAt:new Date().toISOString()
+  };
+
+  // Сохраняем в Control Room localStorage
+  try{
+    const crRaw=localStorage.getItem(CR_LS_KEY);
+    const crData=crRaw?JSON.parse(crRaw):{version:2,days:[],updatedAt:''};
+    const existIdx=crData.days.findIndex(d=>d.id===draft.id);
+    if(existIdx>=0){
+      if(!confirm('День уже есть в Control Room. Обновить черновик?')) return;
+      crData.days[existIdx]=draft;
+    } else {
+      crData.days.push(draft);
+      crData.days.sort((a,b)=>b.date.localeCompare(a.date));
+    }
+    crData.updatedAt=new Date().toISOString();
+    const crSyncId='cr_sync_'+Date.now();
+    crData.syncId=crSyncId;
+    localStorage.setItem(CR_LS_KEY,JSON.stringify(crData));
+
+    // Также сохраняем в Control Room облако
+    showToast('Сохраняем черновик в облако...');
+    try {
+      const crPostRes=await fetch(CR_URL+'?token='+CR_TOKEN,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({...crData,_token:CR_TOKEN})});
+      if(!crPostRes.ok) throw new Error('POST HTTP '+crPostRes.status);
+    } catch(crPostErr) {
+      console.warn('[CR] POST не прошёл, черновик локально:', crPostErr.message);
+    }
+    // Верификация CR cloud с повторными попытками (P1 files42)
+    // Проверяем не только id, но и updatedAt — иначе обновление старого
+    // черновика ложно подтвердится по предыдущей версии
+    const crDelays=[300,600,1000,1500,2500,4000];
+    let crVerified=false;
+    for(const d of crDelays){
+      await new Promise(r=>setTimeout(r,d));
+      try{
+        const crVerRes=await fetch(CR_URL+'?token='+CR_TOKEN+'&_='+Date.now());
+        if(!crVerRes.ok) continue;
+        const crCloud=await crVerRes.json();
+        if(crCloud.syncId===crSyncId ||
+           (crCloud.days||[]).some(day=>day.id===draft.id && day.updatedAt===draft.updatedAt)){
+          crVerified=true;
+          console.log('[LIVE] CR cloud verified');
+          break;
+        }
+      }catch(e){ /* следующая попытка */ }
+    }
+
+    if(!crVerified){
+      showToast('⚠️ Черновик сохранён только локально. Control Room cloud не ответил.');
+      liveDb.controlRoomDraftCreated=false; // не считаем завершённым
+      saveLocal();
+      return;
+    }
+
+    liveDb.controlRoomDraftCreated=true;
+    logAction('CONTROL_DRAFT_CREATED','','Черновик создан и подтверждён в CR cloud');
+    markLiveDirty(); saveLocal(); queueCloudSave();
+    renderShift();
+    showToast('✅ Черновик создан в Control Room!');
+  }catch(e){showToast('❌ Ошибка: '+e.message);}
+}
+
+// ══════════════════════════════════════════════════════════
+// LOG
+function renderLog(){
+  const log=[...(liveDb?.actionLog||[])].reverse().slice(0,50);
+  document.getElementById('log-count').textContent=log.length+' ДЕЙСТВИЙ';
+  document.getElementById('log-table').innerHTML=log.length?log.map(a=>`<tr>
+    <td style="white-space:nowrap;">${a.time.slice(11,19)}</td>
+    <td style="color:var(--gold);font-size:9px;letter-spacing:1px;">${a.type}</td>
+    <td>${esc(a.player||'')}</td>
+    <td>${esc(a.details||'')}</td>
+  </tr>`).join(''):'<tr><td colspan="4" class="empty">Нет действий</td></tr>';
+}
+
+// ══════════════════════════════════════════════════════════
+// STATUS BAR
+function renderChecklist(){
+  const bar=document.getElementById('checklist-bar');
+  if(!bar||!liveDb) return;
+  const d=liveDb;
+  const items=[
+    {label: d.status!=='draft'?'✅ Смена открыта':'⏳ Смена закрыта', done: d.status!=='draft'},
+    {label: `✅ Игроков: ${d.players?.length||0}`, done: d.players?.length >= 2},
+    {label: d.playersSentToSeating?'✅ Рассадка':'⏳ Рассадка', done: d.playersSentToSeating, action: d.playersSentToSeating ? null : 'sendPlayersToSeating'},
+    {label: d.status==='running'?'✅ Live':'⏳ Live', done: d.status==='running', action: d.status!=='running' && d.players?.length>=2 ? 'startLive' : null},
+    {label: d.timerStartedFromLive?'✅ Таймер':'⏳ Таймер', done: !!d.timerStartedFromLive, action: d.timerStartedFromLive ? null : 'startTimerFromLiveRoom'},
+    {label: d.savedToRating?'✅ Рейтинг':'⏳ Рейтинг', done: d.savedToRating},
+    {label: d.controlRoomDraftCreated?'✅ CR':'⏳ CR', done: d.controlRoomDraftCreated, action: d.controlRoomDraftCreated ? null : 'createControlRoomDraft'},
+    {label: d.status==='closed'?'✅ Закрыто':'⏳ Открыто', done: d.status==='closed', action: d.status!=='closed' && d.savedToRating ? 'closeShift' : null},
+  ];
+  bar.innerHTML=items.map(item=>{
+    let html=`<span style="color:${item.done?'var(--ok)':'var(--text3)'};white-space:nowrap;">${item.label}</span>`;
+    if(item.action){
+      html+=` <button class="btn xs" onclick="${item.action}()" style="margin-left:4px;padding:2px 6px;font-size:8px;cursor:pointer;background:rgba(201,169,110,0.15);border:1px solid rgba(201,169,110,0.3);color:var(--gold);border-radius:2px;">→</button>`;
+    }
+    return html;
+  }).join('');
+}
+
+// Читаем timer-state из localStorage TV-модуля и предупреждаем если Live идёт а таймер стоит
+const TV_TIMER_LS_KEY = 'obshestvo_timer_state_v1';
+function checkTimerRunning(){
+  if(!liveDb||liveDb.status!=='running') return;
+  try{
+    const raw=localStorage.getItem(TV_TIMER_LS_KEY);
+    if(!raw) return;
+    const ts=JSON.parse(raw);
+    if(ts&&!ts.running){
+      const warn=document.getElementById('timer-warn-bar');
+      if(warn) warn.style.display='block';
+    } else {
+      const warn=document.getElementById('timer-warn-bar');
+      if(warn) warn.style.display='none';
+    }
+  }catch(e){}
+}
+
+// ══════════════════════════════════════════════════════════
+// ПРОВЕРКА СТАТУСА ТАЙМЕРА (TV CLOUD)
+// ══════════════════════════════════════════════════════════
+
+async function checkTimerStatus(){
+  const warn=document.getElementById('timer-warn-bar');
+  
+  let timerState=null;
+  
+  try {
+    timerState=await getFromTvCloud(STORAGE_KEYS.TIMER_STATE);
+  } catch(e) {
+    console.warn('[TIMER STATUS TV CLOUD FAILED]', e);
+  }
+  
+  if(!timerState){
+    try {
+      const raw=localStorage.getItem(STORAGE_KEYS.TIMER_STATE);
+      timerState=raw?JSON.parse(raw):null;
+    } catch(e) {
+      timerState=null;
+    }
+  }
+  
+  if(!warn||!liveDb) return;
+  
+  // Если таймер работает, помечаем это в чеклисте
+  if(timerState && timerState.running && !liveDb.timerStartedFromLive){
+    liveDb.timerStartedFromLive=true;
+    saveLocal();
+    renderChecklist();
+  }
+  
+  if(liveDb.status==='running'&&(!timerState||!timerState.running)){
+    warn.style.display='block';
+    warn.textContent='⚠️ LIVE ЗАПУЩЕН — ТАЙМЕР НЕ ИДЁТ. Запусти таймер в Live Room или admin-timer.html';
+  } else {
+    warn.style.display='none';
+  }
+}
+
+function renderStatusBar(){
+  if(!liveDb) return;
+  const playing=getPlaying();
+  const elim=(liveDb.eliminatedPlayers||[]).length;
+  const noShow=getNoShow().length;
+  const c=liveDb.cashier;
+  document.getElementById('sb-playing').textContent=playing.length;
+  document.getElementById('sb-elim').textContent=elim;
+  document.getElementById('sb-noshow').textContent=noShow;
+  document.getElementById('sb-cash').textContent=fmt(c.totalTournamentRevenue);
+  const reach=liveDb.playersReachedAddon;
+  document.getElementById('sb-addon').textContent=reach>0?c.addonsCount+'/'+reach+' ('+fmtPct(liveDb.addonPercent)+')':(c.addonsCount||'—');
+  const statusMap={draft:'—',opened:'СМЕНА ОТКРЫТА',running:'▶ LIVE',closed:'ЗАКРЫТО'};
+  document.getElementById('sb-status').textContent=statusMap[liveDb.status]||liveDb.status;
+}
+
+// ══════════════════════════════════════════════════════════
+// BACKUP
+function exportLive(){
+  const blob=new Blob([JSON.stringify(liveDb,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='obshestvo-live-'+new Date().toISOString().slice(0,10)+'.json';a.click();
+  URL.revokeObjectURL(url);showToast('✅ Экспортировано');
+}
+function importLive(input){
+  const file=input.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      if(!confirm('Заменить текущие live данные?')) return;
+      liveDb=normalizeLiveDb(data);saveLocal();renderAll();showToast('✅ Импортировано');
+    }catch{showToast('❌ Ошибка файла');}
+  };
+  r.readAsText(file);input.value='';
+}
+function exitTestMode(){
+  isTestMode=false;
+  document.getElementById('test-banner').style.display='none';
+  liveDb=defaultLiveDb();
+  try{localStorage.removeItem(LIVE_TEST_LS_KEY);}catch(e){}
+  stopAutoSave();
+  renderAll();
+  showToast('Тестовый режим выключен');
+}
+
+function clearLiveData(){
+  if(!confirm('Удалить все live данные? Это нельзя отменить.')) return;
+  if(!confirm('Точно? Все данные смены будут удалены.')) return;
+  liveDb=defaultLiveDb();
+  try{localStorage.removeItem(LIVE_LS_KEY);}catch(e){}
+  try{localStorage.removeItem(LIVE_TEST_LS_KEY);}catch(e){}
+  isTestMode=false;
+  document.getElementById('test-banner').style.display='none';
+  stopAutoSave();renderAll();showToast('Данные очищены');
+}
+
+// ══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
+// ПОСАДКА ОПОЗДАВШЕГО
+// ══════════════════════════════════════════════════════════
+
+async function updateLatePlayerSelect(){
+  const select = document.getElementById('late-player-select');
+  if(!select || !liveDb) return;
+  
+  let state = null;
+  try {
+    state = await getFromTvCloud(STORAGE_KEYS.SEATING_STATE);
+  } catch(e) {
+    console.warn('[LATE SELECT TV CLOUD FAILED]', e);
+  }
+  
+  if(!state){
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.SEATING_STATE);
+      state = raw ? JSON.parse(raw) : null;
+    } catch(e) {
+      state = null;
+    }
+  }
+  
+  const seatedNames = new Set();
+  if(state && state.tables){
+    state.tables.forEach(table => {
+      (table.seats || []).forEach(seat => {
+        if(seat.player){
+          const name = typeof seat.player === 'object' ? seat.player.name : seat.player;
+          seatedNames.add(String(name).toLowerCase());
+        }
+      });
+    });
+  }
+  
+  const notSeated = liveDb.players.filter(p => {
+    if(['eliminated', 'no_show'].includes(p.status)) return false;
+    return !seatedNames.has(String(p.name).toLowerCase());
+  });
+  
+  select.innerHTML = '<option value="">Выбери игрока</option>';
+  
+  if(notSeated.length === 0){
+    const opt = document.createElement('option');
+    opt.disabled = true;
+    opt.textContent = 'Все игроки уже посажены';
+    select.appendChild(opt);
+    return;
+  }
+  
+  notSeated.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    opt.textContent = `${p.name} (${p.status})`;
+    select.appendChild(opt);
+  });
+}
+
+function refreshLatePlayerSelect(){
+  updateLatePlayerSelect().catch(e => console.warn('[LATE SELECT FAILED]', e));
+}
+
+// ══════════════════════════════════════════════════════════
+// BULK-ДОБАВЛЕНИЕ ИГРОКОВ
+// ══════════════════════════════════════════════════════════
+
+// Функция проверки похожести имён (расстояние Левенштейна)
+function stringSimilarity(s1, s2) {
+  const l1 = s1.length;
+  const l2 = s2.length;
+  const mat = Array(l1 + 1).fill(null).map(() => Array(l2 + 1).fill(0));
+  
+  for (let i = 0; i <= l1; i++) mat[i][0] = i;
+  for (let j = 0; j <= l2; j++) mat[0][j] = j;
+  
+  for (let i = 1; i <= l1; i++) {
+    for (let j = 1; j <= l2; j++) {
+      const cost = s1[i - 1] === s2[j - 1] ? 0 : 1;
+      mat[i][j] = Math.min(
+        mat[i - 1][j] + 1,
+        mat[i][j - 1] + 1,
+        mat[i - 1][j - 1] + cost
+      );
+    }
+  }
+  
+  const maxLen = Math.max(l1, l2);
+  return maxLen === 0 ? 1 : 1 - mat[l1][l2] / maxLen;
+}
+
+// ══════════════════════════════════════════════════════════
+// ПРОВЕРКА ПОХОЖЕСТИ ИМЁН (с нормализацией)
+// ══════════════════════════════════════════════════════════
+
+function normalizeNameForCompare(name) {
+  return String(name || '')
+    .toLowerCase()
+    .replace(/ё/g, 'е')
+    .replace(/\s+/g, '');
+}
+
+function isSimilarName(a, b) {
+  const na = normalizeNameForCompare(a);
+  const nb = normalizeNameForCompare(b);
+  
+  if (!na || !nb) return false;
+  if (na === nb) return true;
+  if (na.includes(nb) || nb.includes(na)) return true;
+  
+  return stringSimilarity(na, nb) > 0.65;
+}
+
+function bulkAddPlayers(){
+  if(!liveDb || liveDb.status === 'closed'){
+    showToast('Сначала открой смену');
+    return;
+  }
+  
+  const rawList = (document.getElementById('bulk-players-textarea')?.value || '').trim();
+  if(!rawList){showToast('Вставь список игроков');return;}
+  
+  const lines = rawList.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  let added = 0, dupesList = [], warnings = [];
+  
+  for(const rawName of lines){
+    const name = rawName; 
+    if(!name) continue;
+    
+    // Проверка точного дубля
+    if(liveDb.players.find(p => p.name === name)){
+      dupesList.push(name);
+      continue;
+    }
+    
+    // Проверка похожести с существующими именами (улучшенная)
+    const similarMatch = liveDb.players.find(p => isSimilarName(p.name, name));
+    if(similarMatch){
+      warnings.push(`${name} ≈ ${similarMatch.name}`);
+    }
+    
+    // Создаём игрока через makePlayer для консистентности
+    const p = makePlayer(name, false);
+    liveDb.players.push(p);
+    added++;
+  }
+  
+  saveLocal();
+  renderPlayers();
+  renderStatusBar();
+  
+  let reportHtml = `<div style="padding:12px; background:rgba(201,169,110,0.08); border:1px solid rgba(201,169,110,0.2); border-radius:4px; margin-top:8px;">`;
+  reportHtml += `<div style="font-weight:bold; margin-bottom:8px;">✅ Добавлено: ${added}</div>`;
+  
+  if(dupesList.length > 0){
+    reportHtml += `<div style="margin-bottom:8px;"><strong>⚠️ Дубли (${dupesList.length}):</strong><br/>`;
+    dupesList.forEach(name => {
+      reportHtml += `<div style="margin-left:8px; font-size:12px;">— ${name}</div>`;
+    });
+    reportHtml += `</div>`;
+  }
+  
+  if(warnings.length > 0){
+    reportHtml += `<div style="margin-bottom:8px;"><strong>🔍 Похожие имена (${warnings.length}):</strong><br/>`;
+    warnings.forEach(pair => {
+      reportHtml += `<div style="margin-left:8px; font-size:12px;">— ${pair}</div>`;
+    });
+    reportHtml += `</div>`;
+  }
+  
+  reportHtml += `</div>`;
+  
+  const reportEl = document.getElementById('bulk-add-report');
+  if(reportEl){
+    reportEl.innerHTML = reportHtml;
+    reportEl.style.display = 'block';
+  }
+  
+  let msg = `Добавлено: ${added}`;
+  if(dupesList.length > 0) msg += `, дубли: ${dupesList.length}`;
+  if(warnings.length > 0) msg += `, похожие: ${warnings.length}`;
+  
+  showToast(msg);
+  document.getElementById('bulk-players-textarea').value = '';
+}
+
+// ══════════════════════════════════════════════════════════
+// ЗАПУСК ТАЙМЕРА ИЗ LIVE ROOM
+// ══════════════════════════════════════════════════════════
+
+function mapShiftFormatToTimerStructure(blindsSystem, formatName, dayKey) {
+  // Приоритет 1: берём структуру из выбранной системы блайндов (главный источник правды)
+  if(blindsSystem && BLINDS_TO_STRUCTURE[blindsSystem]) {
+    return BLINDS_TO_STRUCTURE[blindsSystem];
+  }
+  
+  // Приоритет 2: fallback по названию формата (для совместимости)
+  if(formatName && dayKey === 'wednesday') return 'action30k';
+  const name = String(formatName || '').toLowerCase();
+  if(name.includes('экшен')) return 'action30k';
+  if(name.includes('динами')) return 'action30k';
+  if(name.includes('охота')) return 'action30k';
+  
+  // Приоритет 3: структура по умолчанию
+  return 'default';
+}
+
+async function startTimerFromLiveRoom(){
+  if(!liveDb?.formatName){
+    showToast('Выбери формат смены');
+    return;
+  }
+  
+  // ✅ ЗАЩИТА: Проверяем, не работает ли уже таймер для этой смены
+  let currentTimer = null;
+  try {
+    currentTimer = await getFromTvCloud(STORAGE_KEYS.TIMER_STATE);
+  } catch(e) {
+    const raw = localStorage.getItem(STORAGE_KEYS.TIMER_STATE);
+    currentTimer = raw ? JSON.parse(raw) : null;
+  }
+  
+  // Если таймер уже работает для этой смены
+  if(currentTimer && currentTimer.running && currentTimer.shiftId === liveDb.shiftId) {
+    showToast('⚠️ Таймер уже работает для этой смены');
+    return;
+  }
+  
+  // Если таймер от другой смены - показать предупреждение
+  if(currentTimer && currentTimer.running && currentTimer.shiftId !== liveDb.shiftId) {
+    if(!confirm('⚠️ Найден таймер от другой смены. Перезапустить для этой смены?')) {
+      return;
+    }
+  }
+  
+  const structureId = mapShiftFormatToTimerStructure(liveDb.blindsSystem, liveDb.formatName, liveDb.dayKey);
+  
+  const timerState = {
+    version: '2026-06-13-timer-v1',
+    shiftId: liveDb.shiftId,
+    running: true,
+    structureId: structureId,
+    phaseIndex: 0,
+    remainingSec: 12 * 60,
+    startedAt: new Date().toISOString(),
+    phaseStartedAt: new Date().toISOString(),
+    finalMode: false,
+    updatedAt: new Date().toISOString(),
+    source: 'admin-live'
+  };
+  
+  try {
+    localStorage.setItem(STORAGE_KEYS.TIMER_STATE, JSON.stringify(timerState));
+    await postToTvCloud(STORAGE_KEYS.TIMER_STATE, timerState);
+    // Сохраняем флаг успешного запуска таймера
+    liveDb.timerStartedFromLive = true;
+    saveLocal();
+    showToast('✅ Таймер запущен: ' + (BLINDS_TO_STRUCTURE[liveDb.blindsSystem] || 'default'));
+    // Полное обновление UI
+    await renderTimerStructureStatus();
+    await checkTimerStatus().catch(e => console.warn('[CHECK TIMER STATUS]', e));
+    renderChecklist();
+  } catch(e) {
+    showToast('⚠️ Таймер сохранён локально (cloud недоступен)');
+    console.warn('[TIMER START FAILED]', e);
+  }
+}
+
+async function renderTimerStructureStatus() {
+  const el = document.getElementById('timer-structure-status');
+  if(!el || !liveDb) return;
+  
+  const expected = mapShiftFormatToTimerStructure(liveDb.blindsSystem, liveDb.formatName, liveDb.dayKey);
+  let timerState;
+  
+  try {
+    timerState = await getFromTvCloud(STORAGE_KEYS.TIMER_STATE);
+  } catch(e) {
+    console.warn('[TV CLOUD GET FAILED]', e);
+  }
+  
+  if(!timerState){
+    const raw = localStorage.getItem(STORAGE_KEYS.TIMER_STATE);
+    timerState = raw ? JSON.parse(raw) : null;
+  }
+  
+  if(!timerState){
+    el.innerHTML = '⚠️ Таймер ещё не создан';
+    return;
+  }
+  
+  const ok = timerState.structureId === expected;
+  
+  el.innerHTML = `
+    <div style="font-size:12px; color:var(--text2); margin-top:4px; line-height:1.6;">
+      <div>Структура смены: <strong>${liveDb.formatName || '—'}</strong></div>
+      <div>Структура таймера: <strong>${timerState.structureId || '—'}</strong></div>
+      <div>${ok ? '✅ Совпадает' : '⚠️ Не совпадает'}</div>
+    </div>
+  `;
+}
+
+// ══════════════════════════════════════════════════════════
+// ПОСАДКА ОПОЗДАВШЕГО БЕЗ ПЕРЕСБОРКИ
+// ══════════════════════════════════════════════════════════
+
+async function seatLatePlayerInSeating(){
+  if(!liveDb?.players){
+    showToast('Сначала открой смену');
+    return;
+  }
+  
+  let state;
+  try {
+    state = await getFromTvCloud(STORAGE_KEYS.SEATING_STATE);
+  } catch(e) {
+    console.warn('[TV CLOUD GET FAILED]', e);
+  }
+  
+  if(!state){
+    const raw = localStorage.getItem(STORAGE_KEYS.SEATING_STATE);
+    state = raw ? JSON.parse(raw) : null;
+  }
+  
+  if(!state){
+    showToast('Сначала создай рассадку');
+    return;
+  }
+  
+  if(!state.tables || state.tables.length === 0){
+    showToast('Нет столов в рассадке');
+    return;
+  }
+  
+  const selectedId = document.getElementById('late-player-select')?.value;
+  if(!selectedId){
+    showToast('Выбери игрока для посадки');
+    return;
+  }
+  
+  const player = liveDb.players.find(p => p.id === selectedId);
+  if(!player){
+    showToast('Игрок не найден');
+    return;
+  }
+  
+  const playerNameLower = String(player.name).toLowerCase();
+  const alreadySeated = state.tables.some(table =>
+    (table.seats || []).some(seat => {
+      if(!seat.player) return false;
+      const name = typeof seat.player === 'object' ? seat.player.name : seat.player;
+      return String(name).toLowerCase() === playerNameLower;
+    })
+  );
+  
+  if(alreadySeated){
+    showToast('Этот игрок уже сидит в рассадке');
+    return;
+  }
+  
+  // Выбираем наименее заполненный стол; при равенстве — случайный (раздел 6.1)
+  const minCount0 = Math.min(...state.tables.map(t => t.seats.filter(s=>s.player).length));
+  const candidateTables = state.tables.filter(t => t.seats.filter(s=>s.player).length === minCount0);
+  const minTable = candidateTables[Math.floor(Math.random()*candidateTables.length)];
+  
+  const freeSeat = minTable.seats.find(s => !s.player);
+  if(!freeSeat){
+    showToast('Нет свободных мест');
+    return;
+  }
+  
+  freeSeat.player = player.name;
+  player.status = 'playing';
+  
+  localStorage.setItem(STORAGE_KEYS.SEATING_STATE, JSON.stringify(state));
+  
+  try {
+    await postToTvCloud(STORAGE_KEYS.SEATING_STATE, state);
+    showToast(`✅ ${player.name} посажен: ${minTable.name}, место ${freeSeat.seat}`);
+  } catch(e) {
+    showToast(`⚠️ ${player.name} добавлен локально (cloud недоступен)`);
+    console.warn('[TV CLOUD POST FAILED]', e);
+  }
+  
+  saveLocal();
+  refreshLatePlayerSelect();
+  renderAll();
+}
+
+// ══════════════════════════════════════════════════════════
+// RENDER ALL
+function renderAll(){
+  renderStatusBar();
+  renderChecklist();
+  checkTimerStatus().catch(e => console.warn('[TIMER STATUS FAILED]', e));
+  refreshLatePlayerSelect();
+  renderShift();
+  renderPlayers();
+  // Перерисовываем активную страницу
+  const activePage=document.querySelector('.page.active')?.id?.replace('page-','');
+  if(activePage==='live') renderLivePage();
+  if(activePage==='cashier') renderCashier();
+  if(activePage==='results') renderResults();
+  if(activePage==='log') renderLog();
+  renderAutopilot();
+}
+
+// ══════════════════════════════════════════════════════════
+// АВТОПИЛОТ СМЕНЫ — ПОМОЩНИК АДМИНИСТРАТОРА
+// Раздел 10 + 22 ТЗ: что происходит, есть ли проблема,
+// что делать дальше, что будет после нажатия
+// ══════════════════════════════════════════════════════════
+
+// Приоритеты: red(блок) > orange(действие) > yellow(предупр) > green(инфо)
+const AP_COLORS = {
+  red:    {bg:'rgba(214,84,84,0.12)',  border:'rgba(214,84,84,0.35)',  text:'var(--err)'},
+  orange: {bg:'rgba(232,160,32,0.12)', border:'rgba(232,160,32,0.35)', text:'var(--warn)'},
+  yellow: {bg:'rgba(232,200,80,0.10)', border:'rgba(232,200,80,0.28)', text:'#e8c850'},
+  green:  {bg:'rgba(120,190,120,0.10)',border:'rgba(120,190,120,0.28)',text:'var(--ok)'}
+};
+
+// ══════════════════════════════════════════════════════════
+// БАЛАНСИРОВКА СТОЛОВ (раздел 6.2 ТЗ)
+// ══════════════════════════════════════════════════════════
+
+async function getSeatingState(){
+  let state = null;
+  try { state = await getFromTvCloud(STORAGE_KEYS.SEATING_STATE); }
+  catch(e){ console.warn('[SEATING GET]', e); }
+  if(!state){
+    const raw = localStorage.getItem(STORAGE_KEYS.SEATING_STATE);
+    state = raw ? JSON.parse(raw) : null;
+  }
+  return state;
+}
+
+async function checkTableBalance(showResult){
+  const card = document.getElementById('balance-card');
+  const info = document.getElementById('balance-info');
+  if(!card || !info) return;
+
+  const state = await getSeatingState();
+  if(!state || !state.tables || state.tables.length < 2){
+    card.style.display = 'none';
+    return;
+  }
+
+  const counts = state.tables.map(t => ({
+    name: t.name,
+    table: t,
+    count: (t.seats||[]).filter(s => s.player).length
+  }));
+  const maxT = counts.reduce((a,b)=> b.count>a.count?b:a);
+  const minT = counts.reduce((a,b)=> b.count<a.count?b:a);
+  const diff = maxT.count - minT.count;
+
+  if(diff <= 1){
+    card.style.display = 'none';
+    if(showResult) showToast('✅ Столы сбалансированы');
+    return;
+  }
+
+  // Есть дисбаланс — предлагаем пересадку
+  const donorSeat = maxT.table.seats.find(s => s.player);
+  const targetSeat = minT.table.seats.find(s => !s.player);
+  const pName = donorSeat ? (typeof donorSeat.player==='object'?donorSeat.player.name:donorSeat.player) : '?';
+
+  card.style.display = 'block';
+  info.innerHTML = `Разница ${diff} игрока. Рекомендуем пересадить <b>${esc(pName)}</b> со стола «${esc(maxT.name)}» на «${esc(minT.name)}».`;
+
+  if(showResult && donorSeat && targetSeat){
+    if(confirm(`Пересадить ${pName}\n${maxT.name} → ${minT.name}?`)){
+      targetSeat.player = donorSeat.player;
+      donorSeat.player = null;
+      state.updatedAt = new Date().toISOString();
+      try {
+        await postToTvCloud(STORAGE_KEYS.SEATING_STATE, state);
+        localStorage.setItem(STORAGE_KEYS.SEATING_STATE, JSON.stringify(state));
+        logAction('PLAYER_MOVED', pName, `${maxT.name} → ${minT.name} (баланс)`);
+        showToast(`✅ ${pName} пересажен на ${minT.name}`);
+        checkTableBalance(false);
+      } catch(e){
+        showToast('⚠️ Не удалось обновить рассадку');
+        console.warn('[BALANCE MOVE]', e);
+      }
+    }
+  }
+}
+
+let _autopilotAction = null; // текущее действие для кнопки
+
+// Авто-определение стадии смены по её данным (раздел 2.2 ТЗ)
+function detectShiftStage(){
+  const d = liveDb;
+  if(!d || !d.status || d.status==='draft') return 'draft';
+  if(d.status==='closed') return 'closed';
+
+  const players = d.players||[];
+  const playing = players.filter(p=>p.status==='playing');
+  const registered = players.filter(p=>p.status!=='no_show');
+
+  if(playing.length === 1 && d.status==='running') return 'finished';
+  if(d.finalTableCreated) return 'final_table';
+  if(d.addonBreakFixed && !d.finalTableCreated) return 'addon';
+  if(d.status==='running') return 'running';
+  if(d.playersSentToSeating) return 'seating_ready';
+  if(registered.length >= 1) return 'registration';
+  return 'registration';
+}
+
+function syncShiftStage(){
+  if(!liveDb) return;
+  const stage = detectShiftStage();
+  if(liveDb.shiftStage !== stage){
+    liveDb.shiftStage = stage;
+    // не спамим saveLocal — сохранится при следующем действии
+  }
+}
+
+function computeAutopilotTask(){
+  const d = liveDb;
+  // Нет смены
+  if(!d || !d.status || d.status==='draft'){
+    return {level:'green', icon:'🎬', text:'Открыть новую смену',
+      sub:'Выбери день и формат, затем «Открыть смену».',
+      btn:'ОТКРЫТЬ', action:()=>showPage('shift', document.querySelector('[data-page="shift"]'))};
+  }
+  // Смена закрыта
+  if(d.status==='closed'){
+    return {level:'green', icon:'✅', text:'Смена закрыта',
+      sub:'Турнир завершён и сохранён. Можно открыть новую смену.', btn:null};
+  }
+
+  const players = d.players||[];
+  const playing = players.filter(p=>p.status==='playing');
+  const waiting = players.filter(p=>p.status==='waiting');
+  const registered = players.filter(p=>p.status!=='no_show');
+
+  // Мало игроков
+  if(registered.length < 2){
+    return {level:'orange', icon:'👥', text:'Добавить игроков',
+      sub:`Зарегистрировано ${registered.length}. Нужно минимум 2 для старта.`,
+      btn:'К ИГРОКАМ', action:()=>showPage('players', document.querySelector('[data-page="players"]'))};
+  }
+
+  // Игроки есть, но рассадка не отправлена
+  if(!d.playersSentToSeating){
+    return {level:'orange', icon:'🪑', text:'Сформировать рассадку',
+      sub:`${registered.length} игроков готовы к рассадке. Отправь их на TV.`,
+      btn:'РАССАДКА', action:()=>{ sendPlayersToSeating(); }};
+  }
+
+  // Рассадка есть, но таймер не запущен
+  if(!d.timerStartedFromLive && d.status!=='running'){
+    return {level:'orange', icon:'⏱️', text:'Запустить турнир',
+      sub:'Рассадка готова. Запусти таймер по системе блайндов смены.',
+      btn:'ЗАПУСТИТЬ', action:()=>{ startTimerFromLiveRoom(); }};
+  }
+
+  // Идёт игра — проверяем непосаженных
+  const unseatedPlaying = playing.filter(p=>!p.table && !p.seat);
+  if(unseatedPlaying.length > 0){
+    return {level:'yellow', icon:'🪑', text:`${unseatedPlaying.length} игрок(ов) не за столом`,
+      sub:'Посади опоздавших через блок «Посадить опоздавшего».',
+      btn:'К LIVE', action:()=>showPage('live', document.querySelector('[data-page="live"]'))};
+  }
+
+  // Явка не отмечена
+  if(waiting.length > 0){
+    return {level:'yellow', icon:'🙋', text:`Отметь явку: ${waiting.length} ожидают`,
+      sub:'Отметь, кто пришёл, а кто no-show.',
+      btn:'К LIVE', action:()=>showPage('live', document.querySelector('[data-page="live"]'))};
+  }
+
+  // Финальный стол
+  const finalSize = Number(d.finalTableSize||9);
+  if(playing.length > 1 && playing.length <= finalSize && !d.finalTableCreated){
+    return {level:'orange', icon:'🏆', text:'Можно собрать финальный стол',
+      sub:`Осталось ${playing.length} игроков (порог ${finalSize}).`,
+      btn:'ФИНАЛ', action:()=>{ if(typeof createFinalTable==='function') createFinalTable(); }};
+  }
+
+  // Остался победитель
+  if(playing.length === 1){
+    return {level:'orange', icon:'👑', text:'Определить победителя',
+      sub:`${playing[0].name} — последний игрок. Заверши турнир и сохрани итоги.`,
+      btn:'ИТОГИ', action:()=>showPage('results', document.querySelector('[data-page="results"]'))};
+  }
+
+  // Игра идёт нормально
+  if(d.status==='running'){
+    return {level:'green', icon:'🎲', text:`Турнир идёт · ${playing.length} в игре`,
+      sub:`Касса: ${fmt(d.cashier.totalTournamentRevenue)}. Веди ребаи, аддоны и вылеты.`,
+      btn:'К LIVE', action:()=>showPage('live', document.querySelector('[data-page="live"]'))};
+  }
+
+  // Смена открыта, всё готово — но не запущена
+  return {level:'green', icon:'✅', text:'Смена готова',
+    sub:'Всё настроено. Можно запускать турнир.', btn:null};
+}
+
+function renderAutopilot(){
+  const bar = document.getElementById('autopilot-bar');
+  if(!bar) return;
+  syncShiftStage();
+  if(liveDb && liveDb.status==='running') checkTableBalance(false).catch(()=>{});
+  const task = computeAutopilotTask();
+  if(!task){ bar.style.display='none'; return; }
+
+  bar.style.display='block';
+  const c = AP_COLORS[task.level] || AP_COLORS.green;
+  bar.style.background = c.bg;
+  bar.style.borderBottom = '1px solid ' + c.border;
+
+  document.getElementById('autopilot-icon').textContent = task.icon;
+  const txt = document.getElementById('autopilot-text');
+  txt.textContent = task.text;
+  txt.style.color = c.text;
+  document.getElementById('autopilot-sub').textContent = task.sub || '';
+
+  const btn = document.getElementById('autopilot-btn');
+  if(task.btn && task.action){
+    btn.style.display='';
+    btn.textContent = task.btn;
+    _autopilotAction = task.action;
+  } else {
+    btn.style.display='none';
+    _autopilotAction = null;
+  }
+}
+
+function runAutopilotAction(){
+  if(typeof _autopilotAction === 'function'){
+    try { _autopilotAction(); }
+    catch(e){ console.warn('[AUTOPILOT ACTION]', e); showToast('Не удалось выполнить действие'); }
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// ESCAPE
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ══════════════════════════════════════════════════════════
+// AUTO LOGIN
+if(sessionStorage.getItem('live_auth')==='1'){
+  document.getElementById('pin-screen').style.display='none';
+  document.getElementById('app').style.display='block';
+  initApp();
+}
+</script>
+</body>
+</html>
