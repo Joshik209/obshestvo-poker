@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Общество · сетевая проверка тестового GAS V5</title>
+<style>
+  :root { --bg:#14100c; --panel:#1f1912; --line:#3a2f22; --text:#eadfcb; --muted:#a8987f; --gold:#c9a96e; --ok:#7ccb8e; --bad:#e06c6c; --warn:#e0a848; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 860px; margin: 0 auto; padding: 24px 16px 60px; }
+  h1 { font-size: 20px; color: var(--gold); margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 18px; }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin-bottom: 14px; }
+  label { display:block; font-size:12px; color:var(--muted); margin: 10px 0 4px; }
+  input { width:100%; background:#0f0c09; color:var(--text); border:1px solid var(--line); border-radius:6px; padding:8px; font: 13px ui-monospace, Menlo, Consolas, monospace; }
+  button { background: var(--gold); color:#1a1209; border:0; border-radius:6px; padding:9px 14px; font-weight:600; cursor:pointer; margin: 12px 8px 0 0; }
+  button:disabled { opacity:.4; cursor:not-allowed; }
+  table { width:100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; font-variant-numeric: tabular-nums; }
+  th, td { border-bottom: 1px solid var(--line); padding: 5px 6px; text-align: left; vertical-align: top; }
+  td.num { text-align: right; white-space: nowrap; }
+  .PASS { color: var(--ok); font-weight: 700; } .FAIL { color: var(--bad); font-weight: 700; } .SKIP { color: var(--warn); font-weight: 700; }
+  .note { font-size: 12px; color: var(--muted); }
+  .verdict { font-weight: 700; font-size: 15px; margin-top: 10px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Сетевая проверка тестового сервера V5</h1>
+  <p class="sub">Проверяет настоящую связь браузера с Google Apps Script: чтение, вход, чтение ответа на POST, операцию, её статус, повтор, конфликт, выход. Записывающие шаги выполняются <b>только</b> если сервер помечен как тестовый (среда <code>test</code>); проверка создаёт и сразу убирает одного игрока «Сеть####». Пароль и сессия в отчёт не попадают.</p>
+  <section>
+    <label for="url">URL тестового развёртывания (…/exec)</label>
+    <input id="url" type="text" autocomplete="off" spellcheck="false" placeholder="https://script.google.com/macros/s/…/exec">
+    <label for="login">Логин администратора тестовой среды</label>
+    <input id="login" type="text" autocomplete="username" autocapitalize="off" spellcheck="false">
+    <label for="password">Пароль</label>
+    <input id="password" type="password" autocomplete="current-password">
+    <button id="btn" onclick="runChecks()">Запустить проверку</button>
+    <button id="btn-report" onclick="downloadReport()" disabled>Скачать отчёт</button>
+    <p class="note">Запускайте с того же адреса, с которого будет открываться сайт (для GitHub Pages — тестовая страница там же), плюс с телефона (Chrome/Android) и при включённой/выключенной сети. Открытие файла с диска проверяет связь с «пустым» источником — это полезно, но не заменяет проверку с адреса сайта.</p>
+  </section>
+  <section>
+    <div id="env" class="note"></div>
+    <table id="tbl"><tr><th>#</th><th>Проверка</th><th>Итог</th><th class="num">мс</th><th>Подробности</th></tr></table>
+    <div id="verdict" class="verdict"></div>
+  </section>
+</main>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+let rows = [], report = null;
+const CLIENT_VERSION = '2026-11-05-v5.1-netcheck';
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function rid(){ const a=new Uint8Array(10); crypto.getRandomValues(a); return 'q_net_'+Date.now().toString(36)+'_'+Array.from(a,b=>(b%36).toString(36)).join(''); }
+function add(name, status, ms, detail){
+  rows.push({ n: rows.length + 1, name, status, ms: Math.round(ms), detail: String(detail||'') });
+  const tr = document.createElement('tr');
+  tr.innerHTML = '<td>'+rows.length+'</td><td>'+esc(name)+'</td><td class="'+status+'">'+status+'</td><td class="num">'+Math.round(ms)+'</td><td>'+esc(detail)+'</td>';
+  $('tbl').appendChild(tr);
+}
+async function timed(fn){ const t0 = performance.now(); try { const v = await fn(); return { v, ms: performance.now() - t0 }; } catch (e) { return { e, ms: performance.now() - t0 }; } }
+async function getJson(url){ const r = await fetch(url, { cache:'no-store' }); if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); }
+async function postJson(url, body){
+  const r = await fetch(url, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(body), redirect:'follow', cache:'no-store' });
+  if(!r.ok) throw new Error('HTTP '+r.status+' (тип ответа: '+r.type+')');
+  const text = await r.text();
+  try { return JSON.parse(text); } catch (e) { throw new Error('ответ не JSON (тип ответа: '+r.type+', длина '+text.length+')'); }
+}
+
+async function runChecks(){
+  const url = $('url').value.trim();
+  rows = []; $('tbl').innerHTML = '<tr><th>#</th><th>Проверка</th><th>Итог</th><th class="num">мс</th><th>Подробности</th></tr>'; $('verdict').textContent = '';
+  $('btn').disabled = true; $('btn-report').disabled = true;
+  const env = { origin: location.origin, protocol: location.protocol, userAgent: navigator.userAgent, online: navigator.onLine, startedAt: new Date().toISOString() };
+  $('env').textContent = 'Источник страницы: '+env.origin+' · сеть: '+(env.online?'есть':'нет')+' · '+env.userAgent;
+  try {
+    if(!/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(url)){ add('Адрес развёртывания', 'FAIL', 0, 'нужен вид https://script.google.com/macros/s/…/exec'); return; }
+    // 1. Холодный старт / чтение
+    let x = await timed(() => getJson(url + '?action=ping&_=' + Date.now()));
+    add('GET ping (холодный старт)', x.e ? 'FAIL' : (x.v.ok ? 'PASS' : 'FAIL'), x.ms, x.e ? x.e.message : ('сервер ' + x.v.serverVersion + ', мин. клиент ' + x.v.minClientVersion));
+    if(x.e) return;
+    x = await timed(() => getJson(url + '?action=state&_=' + Date.now()));
+    const st0 = x.v;
+    add('GET state (чтение рейтинга)', x.e || !st0.ok ? 'FAIL' : 'PASS', x.ms, x.e ? x.e.message : (st0.ok ? ('среда ' + st0.env + ', ревизия ' + st0.revision + ', записей ' + st0.results.length) : (st0.error + ': ' + st0.message)));
+    if(x.e || !st0.ok) return;
+    const integ = st0.integrity && st0.integrity.resultCount === st0.results.length;
+    add('Контрольная сумма ответа', integ ? 'PASS' : 'FAIL', 0, integ ? 'совпадает' : 'не совпадает — ответ мог быть усечён');
+    if(st0.env !== 'test'){ add('Записывающие проверки', 'SKIP', 0, 'сервер НЕ помечен как тестовый (среда ' + st0.env + ') — запись не выполняется'); return; }
+    // 2. Вход: главный вопрос — читается ли ответ на POST
+    x = await timed(() => postJson(url, { action:'login', login: $('login').value.trim().toLowerCase(), password: $('password').value }));
+    $('password').value = '';
+    const session = x.v && x.v.ok ? x.v.session : null;
+    add('POST login — ответ читается браузером', x.e ? 'FAIL' : (session ? 'PASS' : 'FAIL'), x.ms, x.e ? x.e.message : (session ? ('роль ' + x.v.role) : (x.v.error + ': ' + x.v.message)));
+    if(!session) return;
+    x = await timed(() => postJson(url, { action:'whoami', session }));
+    add('POST whoami', x.v && x.v.ok ? 'PASS' : 'FAIL', x.ms, x.e ? x.e.message : (x.v.ok ? x.v.login : x.v.error));
+    // 3. Операция и её подтверждение
+    const st1 = await getJson(url + '?action=state&_=' + Date.now());
+    const name = 'Сеть' + String(Math.floor(1000 + Math.random() * 9000));
+    const req1 = rid();
+    const opAdd = { action:'op', session, clientVersion: CLIENT_VERSION, op:{ type:'addPlayer', requestId: req1, baseRevision: st1.revision, data:{ name } } };
+    x = await timed(() => postJson(url, opAdd));
+    const pid = x.v && x.v.ok && x.v.result ? x.v.result.playerId : null;
+    add('POST операция (addPlayer «' + name + '»)', x.v && x.v.ok && x.v.requestId === req1 && x.v.revision === st1.revision + 1 ? 'PASS' : 'FAIL', x.ms,
+      x.e ? x.e.message : (x.v.ok ? ('ревизия ' + st1.revision + ' → ' + x.v.revision + ', requestId совпал') : (x.v.error + ': ' + x.v.message)));
+    if(!pid) return;
+    x = await timed(() => getJson(url + '?action=opStatus&requestId=' + encodeURIComponent(req1) + '&_=' + Date.now()));
+    add('GET opStatus этой операции', x.v && x.v.committed ? 'PASS' : 'FAIL', x.ms, x.e ? x.e.message : ('committed=' + x.v.committed + ', ревизия ' + x.v.revision));
+    x = await timed(() => postJson(url, opAdd));
+    add('Повтор того же requestId', x.v && x.v.ok && x.v.duplicate === true ? 'PASS' : 'FAIL', x.ms, x.e ? x.e.message : (x.v.duplicate ? 'применено один раз' : JSON.stringify(x.v).slice(0, 120)));
+    x = await timed(() => postJson(url, { action:'op', session, clientVersion: CLIENT_VERSION, op:{ type:'addPlayer', requestId: rid(), baseRevision: st1.revision, data:{ name: name + 'x' } } }));
+    add('Устаревшая ревизия → конфликт', x.v && x.v.error === 'REVISION_CONFLICT' ? 'PASS' : 'FAIL', x.ms, x.e ? x.e.message : (x.v.error || 'принято — ОШИБКА'));
+    // 4. «Потерянный ответ»: отправляем, ответ не читаем, подтверждаем через opStatus
+    const st2 = await getJson(url + '?action=state&_=' + Date.now());
+    const req2 = rid();
+    const t0 = performance.now();
+    fetch(url, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, redirect:'follow', cache:'no-store',
+      body: JSON.stringify({ action:'op', session, clientVersion: CLIENT_VERSION, op:{ type:'removePlayer', requestId: req2, baseRevision: st2.revision, data:{ playerId: pid } } }) }).catch(()=>{});
+    let committed = false;
+    for(let i = 0; i < 20 && !committed; i++){
+      await new Promise(r => setTimeout(r, 1500));
+      try { const s = await getJson(url + '?action=opStatus&requestId=' + encodeURIComponent(req2) + '&_=' + Date.now()); committed = !!s.committed; } catch (e) {}
+    }
+    add('Ответ не прочитан → подтверждение через opStatus (уборка тестового игрока)', committed ? 'PASS' : 'FAIL', performance.now() - t0, committed ? 'операция найдена на сервере' : 'за 30 с не подтвердилась');
+    const st3 = await getJson(url + '?action=state&_=' + Date.now());
+    add('Тестовый игрок убран из списка', st3.players.indexOf(name) < 0 ? 'PASS' : 'FAIL', 0, 'в списке: ' + (st3.players.indexOf(name) >= 0));
+    // 5. Выход
+    x = await timed(() => postJson(url, { action:'logout', session }));
+    add('POST logout', x.v && x.v.ok ? 'PASS' : 'FAIL', x.ms, x.e ? x.e.message : 'ok');
+    x = await timed(() => postJson(url, { action:'whoami', session }));
+    add('Старая сессия после выхода не работает', x.v && !x.v.ok ? 'PASS' : 'FAIL', x.ms, x.e ? x.e.message : (x.v.error || 'сессия ещё действует — ОШИБКА'));
+  } finally {
+    const fails = rows.filter(r => r.status === 'FAIL').length, skips = rows.filter(r => r.status === 'SKIP').length;
+    $('verdict').className = 'verdict ' + (fails ? 'FAIL' : (skips ? 'SKIP' : 'PASS'));
+    $('verdict').textContent = fails ? ('✘ Есть сбои: ' + fails + '. Сайт V5 с этого адреса работать не будет — нужен разбор.') : (skips ? '⚠ Записывающие проверки пропущены' : '✔ Связь браузера с тестовым GAS работает с этого адреса.');
+    report = { tool:'obshestvo-netcheck-v1', env, finishedAt: new Date().toISOString(), deploymentIdSha256: await sha(url), checks: rows };
+    $('btn').disabled = false; $('btn-report').disabled = false;
+  }
+}
+async function sha(t){ const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t)); return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join(''); }
+function downloadReport(){
+  if(!report) return;
+  const blob = new Blob([JSON.stringify(report, null, 2)], { type:'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'obshestvo_netcheck_' + report.finishedAt.slice(0,19).replace(/[:T]/g,'-') + '.json';
+  a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+</script>
+</body>
+</html>
