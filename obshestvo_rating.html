@@ -408,6 +408,8 @@ body { background:var(--dark); font-family:'Montserrat',sans-serif; min-height:1
 .tv-break-timer { font-family:'Cormorant Garamond',serif;font-size:clamp(80px,15vw,180px);color:var(--beige);font-weight:700;line-height:0.9;margin:24px 0; }
 .tv-break-next { font-size:clamp(16px,2.5vw,26px);color:var(--text3);letter-spacing:4px;margin-top:8px; }
 .tv-break-next strong { color:var(--gold3); }
+/* Длинные ники переносятся, а не ломают вёрстку */
+[class*="name"], .hi-detail { overflow-wrap:anywhere; word-break:break-word; }
 </style>
 </head>
 <body>
@@ -442,8 +444,32 @@ body { background:var(--dark); font-family:'Montserrat',sans-serif; min-height:1
 </div>
 
 <!-- RATING -->
+<style>
+.rating-view-switch{display:flex;gap:6px;margin-bottom:10px;}
+.rv-btn{flex:1;background:var(--dark3);color:var(--text2);border:1px solid var(--gold3);padding:8px;border-radius:6px;font-family:'Montserrat',sans-serif;font-size:10px;letter-spacing:1px;cursor:pointer;transition:all .2s;}
+.rv-btn.active{background:linear-gradient(135deg,var(--gold3),rgba(201,169,110,0.15));color:var(--gold);border-color:var(--gold);}
+#season-header{text-align:center;margin-bottom:10px;}
+#season-title{font-family:'Cormorant Garamond',serif;font-size:19px;color:var(--gold);letter-spacing:1.5px;font-weight:600;line-height:1.2;}
+#season-dates{font-size:9px;color:var(--text3);letter-spacing:1px;margin-top:3px;}
+.final-divider td{background:linear-gradient(90deg,transparent,rgba(201,169,110,0.22),transparent)!important;color:var(--gold)!important;font-size:9px;letter-spacing:3px;text-align:center;padding:7px 0!important;font-family:'Montserrat',sans-serif;}
+tr.below-line{opacity:0.7;}
+.heroes-wrap{display:flex;gap:6px;margin:2px 0 14px;flex-wrap:wrap;}
+.hero-card{flex:1;min-width:92px;background:var(--dark3);border:1px solid var(--gold3);border-radius:8px;padding:9px;text-align:center;}
+.hero-card .hc-label{font-size:8px;color:var(--text3);letter-spacing:1px;}
+.hero-card .hc-name{font-size:12px;color:var(--gold);margin-top:3px;font-family:'Cormorant Garamond',serif;font-weight:600;}
+.hero-card .hc-val{font-size:9px;color:var(--text2);margin-top:2px;}
+.finale-strip{text-align:center;background:linear-gradient(135deg,rgba(107,31,42,0.4),rgba(201,169,110,0.08));border:1px solid var(--gold3);border-radius:10px;padding:12px;margin:6px 0 12px;}
+.finale-strip .fs-top{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--gold);letter-spacing:2px;}
+.finale-strip .fs-sub{font-size:9px;color:var(--text2);letter-spacing:2px;margin-top:3px;}
+.race-hint{font-size:8px;color:var(--text3);display:block;margin-top:2px;letter-spacing:.5px;}
+</style>
 <div class="page active" id="page-rating">
-  <div class="month-bar">
+  <div class="rating-view-switch">
+    <button id="view-season-btn" class="rv-btn active" onclick="setRatingView('season')">🏆 СЕЗОН</button>
+    <button id="view-month-btn" class="rv-btn" onclick="setRatingView('month')">🗓 АРХИВ ПО МЕСЯЦАМ</button>
+  </div>
+  <div id="season-header"></div>
+  <div class="month-bar" id="month-bar" style="display:none;">
     <button class="month-nav" onclick="changeMonth(-1)">◀</button>
     <div class="month-label" id="month-label"></div>
     <button class="month-nav" onclick="changeMonth(1)">▶</button>
@@ -475,7 +501,8 @@ body { background:var(--dark); font-family:'Montserrat',sans-serif; min-height:1
 <!-- ALL TIME -->
 <div class="page" id="page-alltime">
   <div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--gold);letter-spacing:3px;font-weight:600;margin-bottom:4px;">ЗАЛ СЛАВЫ</div>
-  <div style="font-size:9px;color:var(--text3);letter-spacing:2px;margin-bottom:16px;">ТОП ИГРОКОВ ЗА ВСЁ ВРЕМЯ</div>
+  <div style="font-size:9px;color:var(--text3);letter-spacing:2px;margin-bottom:6px;">ТОП ИГРОКОВ ЗА ВСЁ ВРЕМЯ</div>
+  <div style="font-size:9px;color:var(--text3);line-height:1.5;margin-bottom:16px;opacity:0.85;">Суммы очков сохранены в исходном виде. В разные сезоны действовали разные правила начисления (например, бонус за участие +15 ранее и +10 с ноября 2026).</div>
   <div id="alltime-content">
     <div class="loading">ЗАГРУЗКА<span class="loading-dot">.</span><span class="loading-dot">.</span><span class="loading-dot">.</span></div>
   </div>
@@ -499,7 +526,7 @@ body { background:var(--dark); font-family:'Montserrat',sans-serif; min-height:1
       <div class="ds-row">
         <span class="ds-day">Среда</span>
         <span class="ds-info">Девушки против мужчин · вход 500₽ · ребай 500₽</span>
-        <span class="ds-pts">110</span>
+        <span class="ds-pts">100</span>
       </div>
 
       <div class="ds-row" style="background:var(--bordeaux);border-color:var(--bordeaux2)">
@@ -517,7 +544,7 @@ body { background:var(--dark); font-family:'Montserrat',sans-serif; min-height:1
       <div class="ds-row">
         <span class="ds-day">Воскресенье</span>
         <span class="ds-info">Баунти-турнир · вход 800₽ · +10 очков за выбивание</span>
-        <span class="ds-pts">130</span>
+        <span class="ds-pts">100</span>
       </div>
     </div>
     <div style="font-size:9px;color:var(--text3);margin-top:8px;letter-spacing:1px;">Понедельник и четверг — выходные дни клуба</div>
@@ -525,18 +552,18 @@ body { background:var(--dark); font-family:'Montserrat',sans-serif; min-height:1
   <div class="about-section">
     <h3>ПРАВИЛА РЕЙТИНГА</h3>
     <ul class="rules-list">
-      <li>За участие в каждом турнире — <strong>+15 очков</strong></li>
+      <li>За участие в каждом турнире — <strong>+10 очков</strong> (текущий сезон)</li>
       <li>TOP-10 дополнительно получают призовые очки от максимума дня:<br>
         1м — 100% · 2м — 70% · 3м — 55% · 4м — 45% · 5м — 38%<br>
         6м — 32% · 7м — 27% · 8м — 22% · 9м — 18% · 10м — 15%</li>
-      <li>11 место и ниже — только +15 за участие</li>
+      <li>11 место и ниже — только +10 за участие</li>
       <li>Ребаи, повторные входы и аддоны не влияют на рейтинг</li>
       <li>Вторник — День новичка: 70 очков</li>
       <li>Среда — Девушки против мужчин: 100 очков</li>
       <li>Пятница — Главный турнир недели: 160 очков</li>
       <li>Суббота — Блэкджек-покер: 50 очков</li>
       <li>Воскресенье — Баунти-турнир: 100 очков (+10 за выбивание)</li>
-      <li>ТОП-10 лучших игроков месяца выходят за финальный стол</li>
+      <li>ТОП-20 игроков сезона выходят в финал года (ноябрь — декабрь 2026)</li>
       <li>Чем выше место в рейтинге — тем больше стартовый стек в финальной игре</li>
     </ul>
   </div>
@@ -547,16 +574,30 @@ body { background:var(--dark); font-family:'Montserrat',sans-serif; min-height:1
   
   <div id="admin-lock-screen" class="admin-section">
     <div class="admin-lock">
-      <div class="pin-title">КОД ДОСТУПА</div>
-      <input type="password" inputmode="numeric" maxlength="6" class="pin-input" id="pin-input" placeholder="••••••">
-      <div class="pin-hint">PIN-код для администратора</div>
+      <div class="pin-title">ВХОД АДМИНИСТРАТОРА</div>
+      <input type="text" class="pin-input" id="admin-login" placeholder="логин" autocomplete="username" autocapitalize="off" spellcheck="false" style="margin-bottom:8px;">
+      <input type="password" class="pin-input" id="pin-input" placeholder="пароль" autocomplete="current-password">
+      <div class="pin-hint">Проверка на сервере. Пароль в странице не хранится.</div>
       <button class="btn-gold" style="margin-top:18px;max-width:200px;margin-left:auto;margin-right:auto;display:block;" onclick="checkPin()">ВОЙТИ</button>
-      <div id="pin-error" style="color:#C0404A;font-size:11px;margin-top:10px;display:none;letter-spacing:1px;">НЕВЕРНЫЙ КОД</div>
+      <div id="pin-error" style="color:#C0404A;font-size:11px;margin-top:10px;display:none;letter-spacing:1px;">НЕВЕРНЫЙ ЛОГИН ИЛИ ПАРОЛЬ</div>
     </div>
   </div>
 
   <div id="admin-content" style="display:none;">
     <div class="sync-bar sync-loading" id="sync-bar">● ПОДКЛЮЧЕНИЕ К ОБЛАКУ</div>
+    <div id="unsynced-banner"></div>
+
+    <!-- УПРАВЛЕНИЕ СЕЗОНАМИ -->
+    <div class="admin-section">
+      <h3>УПРАВЛЕНИЕ СЕЗОНАМИ</h3>
+      <div style="font-size:9px;color:#E0A848;background:rgba(224,168,72,0.1);border:1px solid rgba(224,168,72,0.35);border-radius:6px;padding:8px;margin-bottom:10px;line-height:1.5;">
+        Сезоны хранятся на сервере и одинаковы на всех устройствах. Смена состояния (активировать / завершить / архив / вернуть) — только владелец; итоговый снимок считает сервер. Историю результатов сезоны не меняют.
+      </div>
+      <div id="seasons-list"></div>
+      <button class="btn-dark" onclick="openSeasonForm()" style="margin-top:8px;font-size:10px;">+ НОВЫЙ СЕЗОН</button>
+      <div id="season-form-wrap" style="display:none;margin-top:12px;"></div>
+      <div id="season-preview" style="display:none;margin-top:10px;"></div>
+    </div>
 
     <!-- ОБЪЯВЛЕНИЕ -->
     <div class="admin-section">
@@ -576,10 +617,11 @@ body { background:var(--dark); font-family:'Montserrat',sans-serif; min-height:1
     <div class="admin-section">
       <h3>ИГРОКИ КЛУБА</h3>
       <div style="display:flex;gap:8px;margin-bottom:10px;">
-        <input type="text" id="new-player-input" placeholder="Имя игрока (макс 12 символов)" maxlength="12" style="flex:1;background:var(--dark3);color:var(--text);border:1px solid rgba(201,169,110,0.2);padding:8px;border-radius:4px;font-family:'Montserrat',sans-serif;font-size:11px;" onkeydown="if(event.key==='Enter')addPlayer()">
+        <input type="text" id="new-player-input" placeholder="Имя игрока (до 40 символов)" maxlength="40" style="flex:1;background:var(--dark3);color:var(--text);border:1px solid rgba(201,169,110,0.2);padding:8px;border-radius:4px;font-family:'Montserrat',sans-serif;font-size:11px;" onkeydown="if(event.key==='Enter')addPlayer()">
         <button class="btn-gold" onclick="addPlayer()" style="white-space:nowrap;font-size:10px;padding:8px 14px;">+ ДОБАВИТЬ</button>
       </div>
       <div id="players-list"></div>
+      <div id="rename-log" style="margin-top:12px;"></div>
     </div>
 
     <!-- СОХРАНИТЬ ТУРНИР -->
@@ -640,6 +682,10 @@ body { background:var(--dark); font-family:'Montserrat',sans-serif; min-height:1
           <option value="11">Участие</option>
         </select>
       </div>
+      <div class="form-row" id="q-ko-row" style="display:none;">
+        <label>ВЫБИВАНИЙ (баунти)</label>
+        <input type="number" id="q-knockouts" min="0" step="1" value="0" inputmode="numeric" onchange="updateQuickPreview()" oninput="updateQuickPreview()" style="background:var(--dark3);color:var(--text);border:1px solid rgba(201,169,110,0.2);padding:8px;border-radius:4px;font-family:'Montserrat',sans-serif;font-size:11px;width:100%;box-sizing:border-box;">
+      </div>
       <div id="q-preview" style="display:none;background:var(--dark3);border:1px solid var(--gold3);border-radius:6px;padding:10px;margin-bottom:10px;font-size:11px;text-align:center;">
         Начислить <strong id="q-pts" style="color:var(--gold);font-size:18px;">0</strong> очков
       </div>
@@ -670,14 +716,32 @@ body { background:var(--dark); font-family:'Montserrat',sans-serif; min-height:1
       <div id="history-list"></div>
     </div>
 
+    <!-- КОРРЕКТИРОВКА ИСТОРИИ (только владелец) -->
+    <div class="admin-section" id="correction-section" style="display:none;">
+      <h3>КОРРЕКТИРОВКА ИСТОРИИ</h3>
+      <div style="font-size:9px;color:var(--text3);line-height:1.5;margin-bottom:10px;">Только владелец. Для дат до замка истории (<span id="corr-lock">—</span>) и вне активного сезона. Сначала предпросмотр «до/после» — ничего не записывается; применить можно только этот предпросмотр. Причина и цифры попадают в журнал сервера.</div>
+      <div class="form-row"><label>ДЕЙСТВИЕ</label><select id="corr-action" onchange="renderCorrectionPanel()" style="background:var(--dark3);color:var(--text);border:1px solid rgba(201,169,110,0.2);padding:8px;border-radius:4px;font-family:'Montserrat',sans-serif;font-size:11px;width:100%;box-sizing:border-box;"><option value="add">Добавить очки (+ или −)</option><option value="delete">Удалить запись по ID</option></select></div>
+      <div id="corr-add-fields">
+        <div class="form-row"><label>ИГРОК</label><select id="corr-player" style="background:var(--dark3);color:var(--text);border:1px solid rgba(201,169,110,0.2);padding:8px;border-radius:4px;font-family:'Montserrat',sans-serif;font-size:11px;width:100%;box-sizing:border-box;"></select></div>
+        <div class="form-row"><label>ДАТА</label><input type="date" id="corr-date" style="background:var(--dark3);color:var(--text);border:1px solid rgba(201,169,110,0.2);padding:8px;border-radius:4px;font-family:'Montserrat',sans-serif;font-size:11px;width:100%;box-sizing:border-box;"></div>
+        <div class="form-row"><label>ОЧКИ (+/−)</label><input type="number" id="corr-points" step="1" style="background:var(--dark3);color:var(--text);border:1px solid rgba(201,169,110,0.2);padding:8px;border-radius:4px;font-family:'Montserrat',sans-serif;font-size:11px;width:100%;box-sizing:border-box;"></div>
+      </div>
+      <div id="corr-del-fields" style="display:none;">
+        <div class="form-row"><label>ID ЗАПИСИ</label><input type="text" id="corr-id" autocomplete="off" style="background:var(--dark3);color:var(--text);border:1px solid rgba(201,169,110,0.2);padding:8px;border-radius:4px;font-family:'Montserrat',sans-serif;font-size:11px;width:100%;box-sizing:border-box;"></div>
+      </div>
+      <div class="form-row"><label>ПРИЧИНА (от 10 символов)</label><input type="text" id="corr-reason" maxlength="500" autocomplete="off" style="background:var(--dark3);color:var(--text);border:1px solid rgba(201,169,110,0.2);padding:8px;border-radius:4px;font-family:'Montserrat',sans-serif;font-size:11px;width:100%;box-sizing:border-box;"></div>
+      <button class="btn-gold" onclick="correctionPreview()">ПРЕДПРОСМОТР</button>
+      <div id="corr-preview" style="margin-top:10px;"></div>
+    </div>
+
     <!-- СМЕНА PIN -->
     <div class="admin-section">
-      <h3>СМЕНА PIN-КОДА</h3>
-      <div class="form-row"><label>ТЕКУЩИЙ PIN</label><input type="password" id="pin-current" maxlength="6" inputmode="numeric" style="background:var(--dark3);color:var(--text);border:1px solid rgba(201,169,110,0.2);padding:8px;border-radius:4px;font-family:'Montserrat',sans-serif;font-size:11px;width:100%;box-sizing:border-box;"></div>
-      <div class="form-row"><label>НОВЫЙ PIN</label><input type="password" id="pin-new" maxlength="6" inputmode="numeric" style="background:var(--dark3);color:var(--text);border:1px solid rgba(201,169,110,0.2);padding:8px;border-radius:4px;font-family:'Montserrat',sans-serif;font-size:11px;width:100%;box-sizing:border-box;"></div>
-      <div class="form-row"><label>ПОВТОРИТЬ PIN</label><input type="password" id="pin-confirm" maxlength="6" inputmode="numeric" style="background:var(--dark3);color:var(--text);border:1px solid rgba(201,169,110,0.2);padding:8px;border-radius:4px;font-family:'Montserrat',sans-serif;font-size:11px;width:100%;box-sizing:border-box;"></div>
+      <h3>СМЕНА ПАРОЛЯ</h3>
+      <div class="form-row"><label>ТЕКУЩИЙ ПАРОЛЬ</label><input type="password" id="pin-current" autocomplete="current-password" style="background:var(--dark3);color:var(--text);border:1px solid rgba(201,169,110,0.2);padding:8px;border-radius:4px;font-family:'Montserrat',sans-serif;font-size:11px;width:100%;box-sizing:border-box;"></div>
+      <div class="form-row"><label>НОВЫЙ ПАРОЛЬ (от 12 символов)</label><input type="password" id="pin-new" autocomplete="new-password" style="background:var(--dark3);color:var(--text);border:1px solid rgba(201,169,110,0.2);padding:8px;border-radius:4px;font-family:'Montserrat',sans-serif;font-size:11px;width:100%;box-sizing:border-box;"></div>
+      <div class="form-row"><label>ПОВТОРИТЬ ПАРОЛЬ</label><input type="password" id="pin-confirm" autocomplete="new-password" style="background:var(--dark3);color:var(--text);border:1px solid rgba(201,169,110,0.2);padding:8px;border-radius:4px;font-family:'Montserrat',sans-serif;font-size:11px;width:100%;box-sizing:border-box;"></div>
       <div id="pin-change-error" style="color:#C0404A;font-size:11px;margin-bottom:8px;display:none;letter-spacing:1px;">ОШИБКА</div>
-      <button class="btn-gold" onclick="changePin()">ИЗМЕНИТЬ PIN</button>
+      <button class="btn-gold" onclick="changePin()">ИЗМЕНИТЬ ПАРОЛЬ</button>
     </div>
 
     <button class="btn-dark" onclick="clearLocalCacheOnly()" style="margin-top:8px;border-color:rgba(201,169,110,0.3);color:rgba(201,169,110,0.7);">🗑 ОЧИСТИТЬ КЭШ УСТРОЙСТВА</button>
@@ -718,18 +782,75 @@ body { background:var(--dark); font-family:'Montserrat',sans-serif; min-height:1
   </div>
 </div>
 
+<div class="modal-overlay" id="rename-modal" onclick="if(event.target===this)closeRenameModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>РЕДАКТИРОВАТЬ ИМЯ</h2>
+      <button class="modal-close" onclick="closeRenameModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="rename-old">
+      <div class="form-row"><label>ТЕКУЩЕЕ ИМЯ</label>
+        <input type="text" id="rename-current" disabled style="background:var(--dark2);color:var(--text2);border:1px solid rgba(201,169,110,0.15);padding:8px;border-radius:4px;font-family:'Montserrat',sans-serif;font-size:11px;width:100%;box-sizing:border-box;"></div>
+      <div class="form-row"><label>НОВОЕ ИМЯ / НИК</label>
+        <input type="text" id="rename-new" maxlength="40" placeholder="до 40 символов" style="background:var(--dark3);color:var(--text);border:1px solid rgba(201,169,110,0.2);padding:8px;border-radius:4px;font-family:'Montserrat',sans-serif;font-size:11px;width:100%;box-sizing:border-box;"></div>
+      <div id="rename-warn" style="display:none;font-size:10px;color:#E0A848;background:rgba(224,168,72,0.1);border:1px solid rgba(224,168,72,0.3);border-radius:6px;padding:8px;margin-bottom:8px;"></div>
+      <div style="font-size:9px;color:var(--text3);line-height:1.5;margin-bottom:10px;">Имя изменится во всех результатах, сезонах, профиле и «Зале славы». История и очки сохраняются. Постоянный ID игрока не меняется. Изменение записывается на сервер и видно на всех устройствах; прежнее имя сохраняется в журнале.</div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-gold" style="flex:1;" onclick="confirmRenamePlayer()">СОХРАНИТЬ</button>
+        <button class="btn-dark" style="flex:1;" onclick="closeRenameModal()">ОТМЕНА</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
-const GS_URL = (function(){var a=[104,116,116,112,115,58,47,47,115,99,114,105,112,116,46,103,111,111,103,108,101,46,99,111,109,47,109,97,99,114,111,115,47,115,47,65,75,102,121,99,98,122,113,50,68,75,72,98,80,51,85,56,76,101,98,97,112,105,109,51,115,88,90,71,65,110,97,99,85,50,87,67,80,100,89,110,88,103,108,82,90,53,111,110,84,68,120,49,55,50,111,100,69,86,55,98,72,55,104,86,105,119,107,52,70,87,82,118,119,47,101,120,101,99];return a.map(function(c){return String.fromCharCode(c)}).join('');})();
-const GS_TOKEN = 'obshestvo_secret_2026_v3_final_a9k2m5x8q1w6';
+// ── АДРЕС СЕРВЕРА (Google Apps Script). Секретов в странице нет: запись разрешена только по
+// серверной сессии (логин + пароль администратора), чтение — публичное.
+// Адрес постоянный: обновления сайта = замена этого файла целиком, здесь ничего менять не нужно.
+const GS_URL_PROD = 'https://script.google.com/macros/s/AKfycbxR65MP6NPbHAa3VOhE86lsngltgKbFIeZwtbOAMQNKkT3Wk2gXfTiJrPDFpKEdmnmf/exec';
+// Проверка на тестовом сервере — ТОЛЬКО для файла, открытого с компьютера (file:// или localhost).
+// На опубликованном сайте подмена адреса невозможна (защита от поддельных ссылок).
+const IS_LOCAL_PAGE = location.protocol === 'file:' || /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+const LOCAL_SERVER_KEY = 'obshestvo_v5_local_test_server';
+const GS_URL_RE = /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/;
+const LOCAL_TEST_SERVER = (function(){
+  if(!IS_LOCAL_PAGE) return '';
+  try { const u = localStorage.getItem(LOCAL_SERVER_KEY) || ''; return GS_URL_RE.test(u) ? u : ''; } catch(e){ return ''; }
+})();
+const GS_URL = LOCAL_TEST_SERVER || GS_URL_PROD;
+const GS_URL_IS_SET = GS_URL_RE.test(GS_URL);
+function setLocalTestServer(u){
+  if(!IS_LOCAL_PAGE) return;
+  u = String(u||'').trim();
+  if(u && !GS_URL_RE.test(u)){ alert('Нужен адрес вида https://script.google.com/macros/s/…/exec'); return; }
+  try { if(u) localStorage.setItem(LOCAL_SERVER_KEY, u); else localStorage.removeItem(LOCAL_SERVER_KEY); } catch(e){}
+  location.reload();
+}
+function renderLocalServerBanner(){
+  if(!IS_LOCAL_PAGE || document.getElementById('local-server-banner')) return;
+  const b = document.createElement('div');
+  b.id = 'local-server-banner';
+  b.style.cssText = 'position:sticky;top:0;z-index:9999;padding:8px 12px;font:12px/1.4 system-ui,sans-serif;'+(LOCAL_TEST_SERVER?'background:#7a1f24;color:#fff;':'background:#2a2218;color:#eadfcb;border-bottom:1px solid #3a2f22;');
+  if(LOCAL_TEST_SERVER){
+    b.innerHTML = '⚠ ПРОВЕРКА: страница подключена к <b>тестовому серверу</b>. Это видно только на этом компьютере. <button id="lsb-reset" style="margin-left:8px;">Отключить</button>';
+  } else {
+    b.innerHTML = 'Файл открыт с компьютера. Для проверки можно подключить тестовый сервер: <input id="lsb-url" placeholder="https://script.google.com/macros/s/…/exec" style="width:46%;margin:0 6px;"> <button id="lsb-set">Подключить</button>';
+  }
+  document.body.insertBefore(b, document.body.firstChild);
+  const r = document.getElementById('lsb-reset'); if(r) r.onclick = () => setLocalTestServer('');
+  const st = document.getElementById('lsb-set'); if(st) st.onclick = () => setLocalTestServer(document.getElementById('lsb-url').value);
+}
+document.addEventListener('DOMContentLoaded', renderLocalServerBanner);
 const MONTHS = ['ЯНВАРЬ','ФЕВРАЛЬ','МАРТ','АПРЕЛЬ','МАЙ','ИЮНЬ','ИЮЛЬ','АВГУСТ','СЕНТЯБРЬ','ОКТЯБРЬ','НОЯБРЬ','ДЕКАБРЬ'];
 const MONTHS_SHORT = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
 const MAX_TABLES = 3;
 const MAX_SEATS_PER_TABLE = 10;
 const MAX_PLAYERS = MAX_TABLES * MAX_SEATS_PER_TABLE; // 30
 
-const RATING_RULES_VERSION = '2026-09-01-weekly-points-v3';
+const RATING_RULES_VERSION = '2026-11-03-bimonthly-v4';
 
 const DAY_CONFIG = {
   tuesday: {
@@ -832,19 +953,19 @@ function getDayMax(dayKey){
 }
 const DAY_NAMES = ['Вторник','Среда','Пятница','Суббота','Воскресенье'];
 const SUITS = ['◆','◇','·','•'];
-const MAX_NICK_LEN = 12;
+const MAX_NICK_LEN = 40; // должно совпадать с MAX_NAME_LEN на сервере
 
 let now = new Date();
 let currentMonth = now.getMonth();
 let currentYear = now.getFullYear();
 
 // ── CLOUD-ONLY АРХИТЕКТУРА ────────────────────────────────────
-const APP_VERSION = '2026-06-29-new-rating-rules-v1';
+const APP_VERSION = '2026-11-05-v5.3';
 let isReadOnlyCacheMode = false;
 let _localLoadedAt = null; // когда загрузили данные из облака
 
 let db = null;
-let prevRating = JSON.parse(localStorage.getItem('obshestvo_prevRating')||'{}');
+let prevRating = (function(){ try{ return Object.assign(Object.create(null), JSON.parse(localStorage.getItem('obshestvo_prevRating')||'{}')); }catch(e){ return Object.create(null); } })();
 let gsAlive = true; // fallback flag
 
 // Particles
@@ -875,7 +996,6 @@ function animateCounter(el, target, duration) {
   }, 16);
 }
 
-function getPin() { return localStorage.getItem('obshestvo_pin') || '1234'; }
 function getMonthKey(m,y) { return y+'-'+String(m+1).padStart(2,'0'); }
 
 // Надёжно извлекает monthKey из записи — по полю monthKey или по дате
@@ -900,13 +1020,222 @@ const PLACE_PERCENT = {
   6: 0.32, 7: 0.27, 8: 0.22, 9: 0.18, 10: 0.15
 };
 
-function calcPoints(dayMax, placeVal) {
-  if (placeVal === 'participation') return 15;
-  let place = parseInt(placeVal);
-  if (isNaN(place)) return 15;
-  let pct = PLACE_PERCENT[place];
-  if (pct === undefined) return 15; // 11+ место → только участие
-  return Math.round(dayMax * pct) + 15; // +15 за участие всегда
+function calcPoints(dayMax, placeVal, opts) {
+  // opts: { participation, knockouts, bountyPerKnockout, isBountyDay }
+  // БЕЗ opts — ЛЕГАСИ-режим: +15 за участие (поведение старых версий сохранено в точности).
+  opts = opts || {};
+  const participation = (opts.participation != null) ? Number(opts.participation) : 15;
+  let base = 0;
+  if (placeVal !== 'participation') {
+    const place = parseInt(placeVal);
+    if (!isNaN(place)) {
+      const pct = PLACE_PERCENT[place];
+      if (pct !== undefined) base = Math.round(dayMax * pct); // вне ТОП-10 → base=0
+    }
+  }
+  const ko = (opts.isBountyDay && opts.knockouts)
+    ? Number(opts.knockouts) * Number(opts.bountyPerKnockout || 0) : 0;
+  return base + participation + ko;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   РЕЙТИНГОВЫЕ СЕЗОНЫ 2.0 — V5: конфигурация сезонов хранится НА СЕРВЕРЕ
+   (лист v5_seasons) и одинакова на всех устройствах. Изменения — только
+   операциями saveSeason / seasonAction; итоговый снимок считает сервер по
+   неизменяемым playerId. Историю результатов сезоны не меняют.
+   ══════════════════════════════════════════════════════════════════ */
+const SEASONS_LS_KEY = 'obshestvo_seasons_v1';
+const SEASON_RULES_VERSION_DEFAULT = RATING_RULES_VERSION;
+
+// Встроенный сезон по умолчанию (стартовая конфигурация, редактируется в админке).
+// Длительность НЕ зашита в логику — движок читает даты из объекта; владелец
+// может создать сезон любой длины через раздел «Управление сезонами».
+const DEFAULT_SEASONS = [{
+  id: 'season_2026_11_12',
+  name: 'ФИНАЛ ГОДА · НОЯБРЬ — ДЕКАБРЬ 2026',
+  startDate: '2026-11-03',
+  endDate: '2026-12-31',
+  finalDate: '',               // январский финал задаётся отдельно, в рейтинг не входит
+  finalistCount: 20,
+  state: 'active',             // draft|active|completed|archived
+  rulesVersion: '2026-11-03-bimonthly-v4',
+  points: { tuesday:70, wednesday:100, friday:160, saturday:50, sunday:100,
+            participation:10, bountyPerKnockout:10 },
+  createdAt: '2026-11-03T00:00:00+03:00',
+  activatedAt: '2026-11-03T00:00:00+03:00'
+}];
+
+function getSeasons(){
+  // Источник — только сервер. Локальной копии/резерва нет, чтобы устройства не расходились.
+  return (db && Array.isArray(db.seasons)) ? JSON.parse(JSON.stringify(db.seasons)) : [];
+}
+function getSeasonById(id){ return getSeasons().find(s=>s.id===id) || null; }
+function getActiveSeason(){
+  const all = getSeasons();
+  return all.find(s=>s.state==='active') || all.find(s=>s.state==='completed') || all[0] || null;
+}
+let selectedSeasonId = null; // выбранный для просмотра сезон (по умолчанию — активный)
+function getViewSeason(){
+  if(selectedSeasonId){ const s=getSeasonById(selectedSeasonId); if(s) return s; }
+  return getActiveSeason();
+}
+
+// Дата YYYY-MM-DD в диапазоне сезона включительно (ISO-сравнение строк корректно)
+function dateInSeason(dateStr, season){
+  if(!season || !dateStr) return false;
+  const d = String(dateStr).slice(0,10);
+  if(season.startDate && d < season.startDate) return false;
+  if(season.endDate && d > season.endDate) return false;
+  return true;
+}
+// Дата записи → YYYY-MM-DD (поддержка DD.MM.YYYY)
+function resultDateISO(r){
+  if(!r || !r.date) return '';
+  const s = String(r.date);
+  let m = s.match(/^(\d{4})-(\d{2})-(\d{2})/); if(m) return m[1]+'-'+m[2]+'-'+m[3];
+  let m2 = s.match(/^(\d{2})\.(\d{2})\.(\d{4})/); if(m2) return m2[3]+'-'+m2[2]+'-'+m2[1];
+  return '';
+}
+// Сезон, которому принадлежит дата (не-черновик в приоритете)
+function seasonForDate(dateStr){
+  // Для НАЧИСЛЕНИЙ берём только НЕ-черновик. Черновик никогда не влияет на
+  // реальные очки/правила — если дату покрывает только черновик, вернём null
+  // (начисление пойдёт по дефолтным правилам, не по черновику).
+  const d = String(dateStr||'').slice(0,10);
+  const match = getSeasons().filter(s=>dateInSeason(d,s) && s.state!=='draft');
+  if(!match.length) return null;
+  return match.find(s=>s.state==='active') || match.find(s=>s.state==='completed') || match[0];
+}
+// Снимок правил начисления для НОВОЙ записи по её дате и дню недели
+// Самая ранняя дата начала среди не-черновиков (граница «эпохи v4»)
+function earliestSeasonStart(){
+  const ds=getSeasons().filter(s=>s.state!=='draft'&&s.startDate).map(s=>String(s.startDate).slice(0,10)).sort();
+  return ds.length?ds[0]:null;
+}
+function resolveRules(dateStr, dayKey){
+  const s = seasonForDate(dateStr);
+  const dcMax = (DAY_CONFIG[dayKey] && DAY_CONFIG[dayKey].maxPoints) || getDayMax(dayKey);
+  if(s && s.points){
+    return {
+      dayMax: (s.points[dayKey] != null) ? Number(s.points[dayKey]) : dcMax,
+      participation: (s.points.participation != null) ? Number(s.points.participation) : 10,
+      bountyPerKnockout: (s.points.bountyPerKnockout != null) ? Number(s.points.bountyPerKnockout) : 10,
+      rulesVersion: s.rulesVersion || SEASON_RULES_VERSION_DEFAULT,
+      seasonId: s.id
+    };
+  }
+  // Вне настроенных сезонов:
+  const d = String(dateStr||'').slice(0,10);
+  const earliest = earliestSeasonStart();
+  if(earliest && d && d < earliest){
+    // Исторический период ДО сезонов 2.0 — действовало СТАРОЕ правило +15.
+    // getDayMax даёт исторический максимум дня по имени/ключу.
+    return { dayMax: getDayMax(dayKey), participation: 15, bountyPerKnockout: 0,
+             rulesVersion: 'pre-2026-11-legacy', seasonId: '', historical:true };
+  }
+  // Дата вне известного периода (будущее/разрыв между сезонами) — требует подтверждения
+  return { dayMax: dcMax, participation: 10, bountyPerKnockout: 10,
+           rulesVersion: SEASON_RULES_VERSION_DEFAULT, seasonId: '', outsideSeason:true };
+}
+function isBountyDayKey(dayKey){ return !!(DAY_CONFIG[dayKey] && DAY_CONFIG[dayKey].bounty); }
+// Завершённый/архивный сезон, покрывающий дату (для запрета начислений без корректировки)
+function frozenSeasonForDate(dateStr){
+  const d=String(dateStr||'').slice(0,10);
+  return getSeasons().find(s=>(s.state==='completed'||s.state==='archived') && dateInSeason(d,s)) || null;
+}
+// Корректное число выбиваний: целое ≥0, разумный предел
+function sanitizeKnockouts(v){ let k=parseInt(v); if(isNaN(k)||k<0) return 0; return Math.min(k,50); }
+// Явная валидация ввода выбиваний: пусто или целое ≥0 (без «тихого» приведения «3x»→3)
+function koInputValid(v){ v=String(v==null?'':v).trim(); return v==='' || /^\d+$/.test(v); }
+
+// Агрегат рейтинга сезона (вычисляемый; НЕ меняет записи).
+// asOfISO (опц.) — учитывать только результаты с датой ≤ asOfISO (для динамики).
+function getSeasonRating(season, asOfISO){
+  if(!db || !season) return [];
+  const map = Object.create(null);
+  (db.results||[]).forEach(r=>{
+    if(!r || !r.player) return;
+    const d = resultDateISO(r);
+    if(!dateInSeason(d, season)) return;
+    if(asOfISO && d > asOfISO) return;
+    const nm = toDisplay(r.player); // отображаемое имя (оверлей переименования)
+    if(!map[nm]) map[nm] = {points:0, games:0, wins:0, top3:0, top5:0, bonus:0};
+    const m = map[nm];
+    m.points += Number(r.points||0);
+    if(r.isBonus){ m.bonus += Number(r.points||0); }
+    else {
+      m.games += 1;
+      const p = normalizePlace(r);
+      if(p===1) m.wins++;
+      if(p>=1 && p<=3) m.top3++;
+      if(p>=1 && p<=5) m.top5++;
+    }
+  });
+  return Object.entries(map).sort((a,b)=>{
+    const A=a[1], B=b[1];
+    if(B.points!==A.points) return B.points-A.points;
+    if(B.wins!==A.wins)     return B.wins-A.wins;
+    if(B.top3!==A.top3)     return B.top3-A.top3;
+    if(B.top5!==A.top5)     return B.top5-A.top5;
+    if(B.games!==A.games)   return B.games-A.games;
+    return a[0].localeCompare(b[0],'ru');
+  });
+}
+
+// Агрегат сезона по КАНОНИЧЕСКИМ именам (для замороженного снимка).
+// Снимок хранит canonical → при отображении прогоняем через toDisplay,
+// поэтому переименование отражается и в завершённых сезонах, а очки/позиции
+// остаются замороженными.
+function seasonAggregateCanonical(season){
+  if(!db||!season) return [];
+  const map=Object.create(null);
+  (db.results||[]).forEach(r=>{
+    if(!r||!r.player) return;
+    const d=resultDateISO(r); if(!dateInSeason(d,season)) return;
+    const nm=r.player; // КАНОНИЧЕСКОЕ имя
+    if(!map[nm]) map[nm]={points:0,games:0,wins:0,top3:0,top5:0,bonus:0};
+    const m=map[nm]; m.points+=Number(r.points||0);
+    if(r.isBonus){ m.bonus+=Number(r.points||0); }
+    else { m.games+=1; const p=normalizePlace(r); if(p===1)m.wins++; if(p>=1&&p<=3)m.top3++; if(p>=1&&p<=5)m.top5++; }
+  });
+  return Object.entries(map).sort((a,b)=>{const A=a[1],B=b[1];
+    if(B.points!==A.points)return B.points-A.points; if(B.wins!==A.wins)return B.wins-A.wins;
+    if(B.top3!==A.top3)return B.top3-A.top3; if(B.top5!==A.top5)return B.top5-A.top5;
+    if(B.games!==A.games)return B.games-A.games; return a[0].localeCompare(b[0],'ru');});
+}
+
+// Рейтинг для ОТОБРАЖЕНИЯ: завершённый/архивный сезон — из замороженного
+// снимка (неизменность очков/позиций), активный/черновик — живой агрегат.
+function isFrozenSeason(season){ return season && (season.state==='completed'||season.state==='archived') && Array.isArray(season.finalSnapshot); }
+function seasonRatingForView(season){
+  if(isFrozenSeason(season)){
+    // имя в снимке — каноническое; прогоняем через alias-оверлей для отображения
+    return season.finalSnapshot.map(e=>[(e.playerId && nameByPid(e.playerId)) || toDisplay(e.player), {points:e.points||0, games:e.games||0, wins:e.wins||0, top3:e.top3||0, top5:e.top5||0, bonus:e.bonus||0}]);
+  }
+  return getSeasonRating(season);
+}
+
+function mskTodayISO(){
+  const now = new Date();
+  const msk = new Date(now.toLocaleString('en-US',{timeZone:'Europe/Moscow'}));
+  return msk.getFullYear()+'-'+String(msk.getMonth()+1).padStart(2,'0')+'-'+String(msk.getDate()).padStart(2,'0');
+}
+function isoMinusDays(iso, days){
+  const d = new Date(iso+'T12:00:00');
+  d.setDate(d.getDate()-days);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function ratingPosMap(rating){ const m=Object.create(null); rating.forEach(([n],i)=>{m[n]=i+1;}); return m; }
+
+// Изменение позиций за 7 дней из реальной истории (prev=null если данных мало)
+function weeklyDelta(season){
+  const today = mskTodayISO();
+  const weekAgo = isoMinusDays(today, 7);
+  const cutoff = (season.startDate && weekAgo < season.startDate) ? null : weekAgo;
+  return {
+    now: ratingPosMap(getSeasonRating(season)),
+    prev: cutoff ? ratingPosMap(getSeasonRating(season, cutoff)) : null
+  };
 }
 function formatDate(s) {
   if (!s || typeof s !== 'string') return '';
@@ -922,7 +1251,8 @@ function todayStr() {
 }
 
 function getPlayerTitle(name, results) {
-  let allTime = results.filter(r => r.player===name && !r.isBonus);
+  // name — отображаемое имя; сопоставляем через alias-оверлей
+  let allTime = results.filter(r => toDisplay(r.player)===name && !r.isBonus);
   if (!allTime.length) return '';
   let wins = allTime.filter(r => {
     const p = normalizePlace(r);
@@ -939,15 +1269,15 @@ function getPlayerTitle(name, results) {
 function getMonthRating(month, year) {
   if (!db) return [];
   let key = getMonthKey(month,year);
+  // getResultMonthKey сам выводит месяц из даты — запись НЕ мутируем (read-only).
   let results = db.results.filter(r => getResultMonthKey(r)===key);
-  // Нормализуем monthKey на лету если отсутствует
-  results.forEach(r=>{ if(!r.monthKey||r.monthKey!==key) r.monthKey=key; });
-  let map = {};
+  let map = Object.create(null);
   results.forEach(r => {
-    if (!map[r.player]) map[r.player]={points:0,games:0};
-    map[r.player].points += Number(r.points||0);
+    const nm = toDisplay(r.player); // отображаемое имя (оверлей переименования)
+    if (!map[nm]) map[nm]={points:0,games:0};
+    map[nm].points += Number(r.points||0);
     // isBonus=true — бонусные очки без счётчика игр
-    if(!r.isBonus) map[r.player].games += 1;
+    if(!r.isBonus) map[nm].games += 1;
   });
   return Object.entries(map).sort((a,b)=>b[1].points-a[1].points);
 }
@@ -973,132 +1303,270 @@ function mergeTournamentState(local, cloud){
 // ── НОРМАЛИЗАЦИЯ данных из облака ─────────────────────────────
 function normalizeCloudData(data) {
   return {
-    players: Array.isArray(data.players) ? data.players : [],
+    players: Array.isArray(data.players) ? data.players.slice() : [],
+    playersDetailed: Array.isArray(data.playersDetailed) ? data.playersDetailed : [],
     results: Array.isArray(data.results) ? data.results : [],
     deletedResults: Array.isArray(data.deletedResults) ? data.deletedResults : [],
     deletedResultIds: Array.isArray(data.deletedResultIds) ? data.deletedResultIds : [],
-    announcement: data.announcement || ''
+    announcement: data.announcement || '',
+    seasons: Array.isArray(data.seasons) ? data.seasons : [],
+    historyLockBefore: data.historyLockBefore || '',
+    revision: data.revision,
+    lastAppliedRequestId: data.lastAppliedRequestId || '',
+    integrity: data.integrity || null,
+    env: data.env || '',
+    serverVersion: data.serverVersion || ''
   };
 }
 
-// ── MERGE results по уникальному ts ──────────────────────────
-// mergeResultsByTs — УДАЛЕНА (cloud-only архитектура)
+// Индекс игроков: имя ↔ неизменяемый playerId (имена уникальны — это гарантирует сервер)
+let _playerIdByName = Object.create(null), _playerNameById = Object.create(null);
+function rebuildPlayerIndex(){
+  _playerIdByName = Object.create(null); _playerNameById = Object.create(null);
+  ((db && db.playersDetailed) || []).forEach(p=>{ _playerIdByName[p.name]=p.id; _playerNameById[p.id]=p.name; });
+}
+function pidByName(name){ return _playerIdByName[name] || null; }
+function nameByPid(pid){ return _playerNameById[pid] || null; }
 
+let _lastLoadError = '';
+function validateServerState(raw){
+  if(!raw || typeof raw!=='object' || Array.isArray(raw)) throw new Error('ответ сервера не объект');
+  if(raw.ok!==true) throw new Error('сервер: '+(raw.error||'ошибка')+(raw.message?(' — '+raw.message):''));
+  if(raw.schemaVersion!==5) throw new Error('неожиданная схема данных: '+raw.schemaVersion);
+  if(!Number.isInteger(raw.revision) || raw.revision<1) throw new Error('в ответе нет ревизии');
+  if(!Array.isArray(raw.results) || !Array.isArray(raw.players) || !Array.isArray(raw.playersDetailed))
+    throw new Error('в ответе нет массивов results/players');
+  const total = raw.results.reduce((a,r)=>a+Number(r.points||0),0);
+  if(!raw.integrity || raw.integrity.resultCount!==raw.results.length || raw.integrity.pointsTotal!==total)
+    throw new Error('контрольная сумма ответа не сошлась (усечённый ответ?)');
+  return raw;
+}
+async function fetchServerState(){
+  if(!GS_URL_IS_SET) throw new Error('не задан адрес сервера');
+  const res = await fetchWithTimeout(GS_URL+'?action=state&_='+Date.now(), {method:'GET', cache:'no-store'}, 15000);
+  if(!res.ok) throw new Error('HTTP '+res.status);
+  let raw;
+  try { raw = await res.json(); } catch(e){ throw new Error('некорректный JSON от сервера'); }
+  return validateServerState(raw);
+}
+// Применяет состояние сервера целиком. НЕТ слияния с локальным кэшем: неподтверждённые
+// операции живут отдельно (outbox) и в рейтинг не подмешиваются.
+function applyServerState(raw){
+  validateServerState(raw);
+  if(db && Number.isInteger(db.revision) && raw.revision < db.revision){
+    console.warn('[STATE] пропущен устаревший ответ: ревизия '+raw.revision+' < '+db.revision);
+    return false;
+  }
+  db = normalizeCloudData(raw);
+  db.seating = null;
+  db.tournament = null; // таймер вынесен в отдельный модуль
+  rebuildPlayerIndex();
+  return true;
+}
 async function loadFromCloud() {
   try {
-    let res = await fetchWithTimeout(GS_URL+'?token='+GS_TOKEN+'&_='+Date.now(), {method:'GET', cache:'no-store'}, 7000);
-    if (!res.ok) throw new Error('HTTP '+res.status);
-    let raw = await res.json();
-
-    // Только нужные поля — без seating/tournament/liveState/clubAnalytics
-    let data = normalizeCloudData(raw);
-
-    // ── MERGE TOURNAMENT ──────────────────────────────────────
-    const localTournament = db && db.tournament ? db.tournament : null;
-    data.tournament = mergeTournamentState(localTournament, null);
-    // ─────────────────────────────────────────────────────────
-
-    // ── CLOUD-ONLY: облако единственный источник правды ──────────
-    // Tombstones из текущей сессии (до перезагрузки)
-    const _sessionDeleted = (db && Array.isArray(db.deletedResultIds)) ? db.deletedResultIds : [];
-    const _sessionDeletedTs = (db && Array.isArray(db.deletedResults)) ? db.deletedResults : [];
-    const _cloudDeletedIds = Array.isArray(data.deletedResultIds) ? data.deletedResultIds : [];
-    const _cloudDeletedTs = Array.isArray(data.deletedResults) ? data.deletedResults : [];
-
-    // Объединяем tombstones из сессии и облака
-    data.deletedResultIds = [...new Set([..._sessionDeleted, ..._cloudDeletedIds])];
-    data.deletedResults = [...new Set([..._sessionDeletedTs, ..._cloudDeletedTs].map(String))];
-
-    const deletedIdSet = new Set(data.deletedResultIds);
-    const deletedTsSet = new Set(data.deletedResults);
-
-    // Фильтруем удалённые — по ID и по ts (совместимость)
-    const originalLen = Array.isArray(data.results) ? data.results.length : 0;
-    data.results = (data.results || []).filter(r => {
-      const id = getResultId(r);
-      const ts = String(r.ts||'');
-      return !deletedIdSet.has(id) && !deletedTsSet.has(ts);
-    });
-    console.log('[CLOUD LOAD] count:'+data.results.length+(originalLen!==data.results.length?' (filtered '+(originalLen-data.results.length)+'deleted)':''));
-    // НЕТ merge с локальными results — только облако
-    // НЕТ auto-resave после загрузки
-    // ─────────────────────────────────────────────────────────
-
-    db = data;
-    if (!db.players) db.players=[];
-    if (!db.results) db.results=[];
-    if (!db.announcement) db.announcement='';
-    if (!db.seating) db.seating=null;
-    db.tournament = null; // таймер вынесен в отдельный модуль
-
-    // Нормализуем monthKey
-    db.results.forEach(function(r){
-      let mk=getResultMonthKey(r);
-      if(mk && r.monthKey!==mk) r.monthKey=mk;
-    });
-
+    const raw = await fetchServerState();
+    applyServerState(raw);
+    console.log('[CLOUD LOAD] revision '+db.revision+' · results '+db.results.length);
     gsAlive = true;
+    _lastLoadError = '';
     return true;
   } catch(e) {
     console.error('[LOAD CLOUD ERROR]', e.message);
+    _lastLoadError = e.message;
     gsAlive = false;
     return false;
   }
 }
-
-// ── SAVE QUEUE ─────────────────────────────────────────────
-// Гарантирует что одновременно идёт не более одного saveToCloud
-// При параллельных вызовах — последний wins, промежуточные отбрасываются
-let _saveInProgress = false;
-let _savePending = false;
-let _pendingSaveSource = '';
-
-// ── ЕДИНАЯ SAVE-ОЧЕРЕДЬ ──────────────────────────────────────────────────
-// Все POST идут через одну очередь. Не бывает двух параллельных POST.
-// saveTournamentToCloudDebounced тоже использует эту очередь.
-
-// ── PAYLOAD: только нужные поля для рейтинга ──────────────────
-function getCloudPayload() {
-  // Минимальный набор полей для хранения в GAS
-  // Полный контекст (formatName, blindsSystem и т.д.) хранится локально в db
-  const slimResults = (db.results||[]).map(function(r) {
-    const rec = {
-      id: getResultId(r),
-      player: r.player,
-      points: r.points,
-      date: r.date,
-      monthKey: r.monthKey,
-      dayKey: r.dayKey,
-      ts: r.ts,
-      type: r.type
-    };
-    // Нормализуем place из placeName если нужно
-    const p = normalizePlace(r);
-    if(p !== null) rec.place = p;
-    if(r.isBonus) rec.isBonus = true;
-    if(r.shiftId) rec.shiftId = r.shiftId;
-    if(r.comment) rec.comment = r.comment;
-    return rec;
-  });
-  return {
-    players: Array.isArray(db.players) ? db.players : [],
-    results: slimResults,
-    deletedResults: Array.isArray(db.deletedResults) ? db.deletedResults.slice(-500) : [],
-    deletedResultIds: Array.isArray(db.deletedResultIds) ? db.deletedResultIds.slice(-500) : [],
-    announcement: db.announcement || '',
-    updatedAt: new Date().toISOString(),
-    schemaVersion: 2,
-    appVersion: APP_VERSION,
-    _token: 'obshestvo_secret_2026_v3_final_a9k2m5x8q1w6'
-  };
+async function refreshState(){
+  try { const raw = await fetchServerState(); applyServerState(raw); gsAlive = true; return true; }
+  catch(e){ console.warn('[REFRESH]', e.message); return false; }
 }
 
-// Отключены чанки - GAS пока не поддерживает их правильно
-// Всегда отправляем один полный payload
-function splitPayloadChunks(payload) {
-  return [payload];
+// ── V5: ОПЕРАЦИИ ЗАПИСИ ─────────────────────────────────────────────
+// Каждое изменение — отдельная операция с уникальным requestId и baseRevision.
+// Успех — только по ответу сервера с этим requestId (или по opStatus, если ответ потерян).
+// Неподтверждённые операции хранятся в отдельной очереди (outbox), а не в кэше рейтинга.
+const SESSION_KEY = 'obshestvo_v5_session';
+const OUTBOX_KEY  = 'obshestvo_v5_outbox';
+// При конфликте ревизий эти операции можно безопасно повторить: сервер заново проверит их
+// по актуальным данным (дубли, коллизии имён, состояние сезона). Объявление и правка сезона
+// НЕ повторяются автоматически — это перезаписало бы чужую правку.
+const AUTO_RETRY_ON_CONFLICT = {addResults:1, deleteResults:1, addPlayer:1, renamePlayer:1, removePlayer:1, seasonAction:1};
+// Отказы по существу: операция неприменима, повтор бессмыслен — убираем из очереди.
+const FINAL_ERRORS = {INVALID_RESULT:1, DUPLICATE_ID:1, DUPLICATE_RESULT:1, UNKNOWN_PLAYER:1, PLAYER_INACTIVE:1,
+  SEASON_FROZEN:1, POINTS_MISMATCH:1, NAME_TAKEN:1, INVALID_NAME:1, NO_CHANGE:1, NOT_FOUND:1, ALREADY_DELETED:1,
+  INVALID_SEASON:1, SEASON_OVERLAP:1, BAD_STATE:1, FORBIDDEN:1, BAD_REQUEST:1, REQUEST_VOIDED:1, PAYLOAD_TOO_LARGE:1,
+  HISTORY_LOCKED:1, NO_ACTIVE_SEASON:1, FUTURE_DATE:1, PREVIEW_STALE:1, USE_REGULAR_OPERATION:1};
+
+// Б1: обычная запись — только в активный сезон и не раньше замка истории (сервер проверяет то же самое)
+function regularWriteBlock(date){
+  const d = String(date||'').slice(0,10);
+  const lock = (db && db.historyLockBefore) || '';
+  if(!d || (lock && d < lock)) return 'Дата '+(d?formatDate(d):'—')+' относится к истории'+(lock?' (до '+formatDate(lock)+')':'')+'. Изменить её может только владелец через «Корректировку истории».';
+  const fz = frozenSeasonForDate(d);
+  if(fz) return 'Дата в завершённом сезоне «'+fz.name+'» — нужна процедура корректировки.';
+  const act = getSeasons().find(s=>s.state==='active' && dateInSeason(d, s));
+  if(!act) return 'Дата '+formatDate(d)+' вне активного сезона. Обычные начисления — только в активный сезон.';
+  return '';
+}
+function clientWriteCheck(type, data){
+  if(type==='addResults') for(const r of (data.results||[])){ const w = regularWriteBlock(r.date); if(w) return w; }
+  if(type==='deleteResults') for(const id of (data.ids||[])){
+    const r = (db.results||[]).find(x=>x.id===id); if(r){ const w = regularWriteBlock(resultDateISO(r)); if(w) return w; }
+  }
+  return '';
 }
 
+function randId(n){
+  const a = new Uint8Array(n);
+  (window.crypto||crypto).getRandomValues(a);
+  return Array.from(a, b=>(b%36).toString(36)).join('');
+}
+function genRequestId(){ return 'q_'+Date.now().toString(36)+'_'+randId(12); }
+function genResultId(){ return 'r_'+Date.now().toString(36)+'_'+randId(10); }
+
+function getSession(){
+  try{
+    const s = JSON.parse(sessionStorage.getItem(SESSION_KEY)||'null');
+    if(s && s.token && new Date(s.expiresAt).getTime() > Date.now()) return s;
+  }catch(e){}
+  return null;
+}
+function setSession(s){ try{ if(s) sessionStorage.setItem(SESSION_KEY, JSON.stringify(s)); else sessionStorage.removeItem(SESSION_KEY); }catch(e){} }
+
+function getOutbox(){ try{ const a = JSON.parse(localStorage.getItem(OUTBOX_KEY)||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+function saveOutbox(a){ try{ localStorage.setItem(OUTBOX_KEY, JSON.stringify(a)); return true; }catch(e){ return false; } }
+function outboxUpsert(entry){ const a = getOutbox().filter(x=>x.requestId!==entry.requestId); a.push(entry); return saveOutbox(a); }
+function outboxRemove(requestId){ saveOutbox(getOutbox().filter(x=>x.requestId!==requestId)); }
+
+async function postToServer(body, timeoutMs){
+  // text/plain — «простой» запрос без preflight; ответ GAS читается (CORS разрешён сервером Google)
+  const res = await fetchWithTimeout(GS_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify(body), redirect:'follow', cache:'no-store'}, timeoutMs||30000);
+  if(!res.ok) throw new Error('HTTP '+res.status);
+  let j;
+  try { j = await res.json(); } catch(e){ throw new Error('некорректный JSON в ответе'); }
+  if(!j || typeof j!=='object') throw new Error('пустой ответ');
+  return j;
+}
+async function getOpStatus(requestId){
+  try{
+    const res = await fetchWithTimeout(GS_URL+'?action=opStatus&requestId='+encodeURIComponent(requestId)+'&_='+Date.now(), {cache:'no-store'}, 15000);
+    const j = await res.json();
+    return (j && j.ok) ? j : null;
+  }catch(e){ return null; }
+}
+
+// Строго последовательная очередь: одна операция за раз, в порядке вызова
+let _opQueue = Promise.resolve();
+function enqueue(fn){ const run = _opQueue.then(fn, fn); _opQueue = run.catch(()=>{}); return run; }
+
+async function sendOp(type, data, label){
+  if(!canWriteNow()) return {ok:false, error:'BLOCKED', message:'Запись сейчас недоступна'};
+  const why = clientWriteCheck(type, data);
+  if(why){ showToast('⛔ '+why); return {ok:false, error:'BLOCKED', message:why}; }
+  const entry = {requestId:genRequestId(), type, data, label:label||type, createdAt:new Date().toISOString(), status:'pending'};
+  // До отправки операция ОБЯЗАНА быть записана в очередь: иначе при обрыве связи она бы пропала.
+  if(!outboxUpsert(entry) || !getOutbox().some(x=>x.requestId===entry.requestId)){
+    showToast('⛔ Браузер не даёт сохранить очередь операций (нет места или приватный режим). Операция НЕ отправлена. Освободите место или откройте сайт в обычном окне.');
+    return {ok:false, error:'OUTBOX_UNAVAILABLE', message:'очередь операций недоступна'};
+  }
+  renderUnsyncedBanner();
+  return enqueue(()=>deliverOp(entry, 0));
+}
+
+async function deliverOp(entry, attempt){
+  const s = getSession();
+  if(!s){
+    entry.status='failed'; entry.lastError='Сессия истекла — войдите снова'; outboxUpsert(entry); afterOp();
+    requireRelogin(); return {ok:false, error:'UNAUTHORIZED', message:entry.lastError};
+  }
+  if(!db || !Number.isInteger(db.revision)){ await refreshState(); }
+  if(!db || !Number.isInteger(db.revision)){
+    entry.status='failed'; entry.lastError='Нет актуального состояния сервера'; outboxUpsert(entry); afterOp();
+    return {ok:false, error:'NETWORK', message:entry.lastError};
+  }
+  setSyncBar('loading');
+  const body = {action:'op', session:s.token, clientVersion:APP_VERSION,
+    op:{type:entry.type, requestId:entry.requestId, baseRevision:db.revision, data:entry.data}};
+  let resp;
+  try { resp = await postToServer(body, 45000); }
+  catch(netErr){
+    // Ответ потерян: спрашиваем сервер, применена ли именно ЭТА операция
+    const st = await getOpStatus(entry.requestId);
+    if(st && st.committed && !st.voided){ await refreshState(); return confirmOp(entry, {revision:st.revision, recovered:true}); }
+    entry.status='failed'; entry.lastError='Нет ответа сервера ('+netErr.message+')'; outboxUpsert(entry); afterOp();
+    return {ok:false, error:'NETWORK', message:entry.lastError};
+  }
+  if(resp.ok===true && resp.requestId===entry.requestId && Number.isInteger(resp.revision)){
+    if(resp.state){ try{ applyServerState(resp.state); }catch(e){ await refreshState(); } } else await refreshState();
+    return confirmOp(entry, resp);
+  }
+  if(resp.ok===true){
+    // «ok» без подтверждения именно этой операции — не верим, спрашиваем сервер по requestId
+    const st = await getOpStatus(entry.requestId);
+    await refreshState();
+    if(st && st.committed && !st.voided) return confirmOp(entry, {revision:st.revision, recovered:true});
+    entry.status='failed'; entry.lastError='Сервер не подтвердил эту операцию'; outboxUpsert(entry); afterOp();
+    return {ok:false, error:'NOT_CONFIRMED', message:entry.lastError};
+  }
+  if(resp.error==='COMMIT_UNCERTAIN' || resp.error==='COMMIT_VERIFY_FAILED'){
+    const st = await getOpStatus(entry.requestId);
+    await refreshState();
+    if(st && st.committed && !st.voided) return confirmOp(entry, {revision:st.revision, recovered:true});
+  }
+  if(resp.error==='REVISION_CONFLICT'){
+    await refreshState();
+    if(AUTO_RETRY_ON_CONFLICT[entry.type] && attempt<2) return deliverOp(entry, attempt+1);
+    entry.status='conflict'; entry.lastError=resp.message||'Данные изменились на другом устройстве'; outboxUpsert(entry); afterOp();
+    return resp;
+  }
+  if(resp.error==='SESSION_EXPIRED' || resp.error==='UNAUTHORIZED'){
+    setSession(null);
+    entry.status='failed'; entry.lastError=resp.message||'Нужно войти снова'; outboxUpsert(entry); afterOp();
+    requireRelogin(); return resp;
+  }
+  if(FINAL_ERRORS[resp.error]){
+    outboxRemove(entry.requestId); afterOp();
+    return resp;
+  }
+  entry.status='failed'; entry.lastError=(resp.error||'ERROR')+': '+(resp.message||''); outboxUpsert(entry); afterOp();
+  return resp;
+}
+function confirmOp(entry, resp){
+  outboxRemove(entry.requestId);
+  afterOp();
+  console.log('[OP OK]', entry.type, entry.requestId, 'revision', resp.revision);
+  return Object.assign({}, resp, {ok:true});
+}
+function afterOp(){
+  const left = getOutbox().length;
+  markUnsynced(left>0);
+  setSyncBar(left>0 ? 'err' : 'ok');
+  renderUnsyncedBanner();
+}
+async function flushOutbox(){
+  const list = getOutbox();
+  let ok=0, bad=0;
+  for(const e of list){
+    const r = await enqueue(()=>deliverOp(e, 0));
+    if(r && r.ok) ok++; else bad++;
+  }
+  renderAllViews();
+  return {ok, bad};
+}
+function renderAllViews(){
+  renderRating(); renderHistory(); renderStats(); renderPlayers(); renderSeasonsAdmin(); renderUnsyncedBanner(); renderCorrectionPanel();
+}
+// Честное сообщение об итоге операции
+function opFailToast(what, r){
+  r = r || {};
+  if(r.error==='BLOCKED' || r.error==='OUTBOX_UNAVAILABLE') return; // сообщение уже показано
+  const queued = !FINAL_ERRORS[r.error]; // не отказ по существу → операция осталась в очереди
+  if(queued) showToast('⚠️ '+what+': НЕ подтверждено сервером ('+(r.message||r.error||'нет ответа')+'). Операция в очереди — «Повторить отправку».');
+  else showToast('⛔ '+what+': '+(r.message||r.error||'отклонено сервером'));
+}
 
 // ── DISPLAY HELPERS — восстанавливаем текст из компактных полей ──
 function normalizePlace(r){
@@ -1142,151 +1610,8 @@ function getResultId(r) {
   return r.id || makeLegacyResultId(r);
 }
 
-function markResultDeleted(result) {
-  if (!Array.isArray(db.deletedResultIds)) db.deletedResultIds = [];
-  const id = getResultId(result);
-  if (!db.deletedResultIds.includes(id)) db.deletedResultIds.push(id);
-  // Также добавляем ts в старый tombstone для совместимости
-  if (!Array.isArray(db.deletedResults)) db.deletedResults = [];
-  const ts = String(result.ts||'');
-  if (ts && !db.deletedResults.includes(ts)) db.deletedResults.push(ts);
-  db.results = db.results.filter(r => getResultId(r) !== id);
-}
-
-// ── ВЕРИФИКАЦИЯ: GET после POST ────────────────────────────────
-async function verifyCloudSaved(expectedLength, expectedLastTs) {
-  try {
-    const res = await fetch(GS_URL+'?token='+GS_TOKEN+'&_='+Date.now(), {
-      method: 'GET',
-      cache: 'no-store'
-    });
-    if(!res.ok) {
-      // GAS вернул HTTP ошибку — не можем верифицировать
-      console.warn('[VERIFY] HTTP '+res.status+' — cannot verify');
-      return null;
-    }
-    const cloud = await res.json();
-    const cloudResults = Array.isArray(cloud.results) ? cloud.results : [];
-    // Верификация мягкая: если cloud вернул хоть что-то разумное — OK
-    if(cloudResults.length > 0) {
-      if(cloudResults.length !== expectedLength) {
-        throw new Error('[VERIFY FAILED] cloud='+cloudResults.length+' expected='+expectedLength);
-      }
-      console.log('[SAVE VERIFIED] cloud='+cloudResults.length);
-      return cloud;
-    }
-    // Пустой ответ из-за CORS — не можем верифицировать, но не блокируем
-    console.warn('[VERIFY] cloud=0 — CORS, cannot verify');
-    return null;
-  } catch(e) {
-    if(e.message.includes('VERIFY FAILED')) throw e; // пробрасываем реальные ошибки
-    // CORS или сеть — не можем верифицировать
-    console.warn('[VERIFY] GET failed —', e.message);
-    return null;
-  }
-}
-
-async function _doSaveToCloud(source){
-  if(!db) return;
-  if(!Array.isArray(db.players)||!Array.isArray(db.results)){
-    throw new Error('Invalid db structure');
-  }
-
-  const payload = getCloudPayload();
-  const expectedLength = payload.results.length;
-  const lastResult = payload.results[expectedLength-1];
-  const expectedLastTs = lastResult && lastResult.ts;
-  const payloadSize = JSON.stringify(payload).length;
-  console.log('[SAVE START]',source||'unknown',new Date().toISOString(),'payload size:'+payloadSize,'results:'+expectedLength);
-
-  setSyncBar('loading');
-
-  // Разбиваем на чанки если payload слишком большой
-  const chunks = splitPayloadChunks(payload);
-  console.log('[SAVE] chunks:', chunks.length);
-
-  // Отправляем чанки СТРОГО ПОСЛЕДОВАТЕЛЬНО — параллельная отправка ломает порядок
-  for(let i=0; i<chunks.length; i++){
-    const chunk = chunks[i];
-    chunk._token = GS_TOKEN;
-    try {
-      // mode:'no-cors' — браузер не читает ответ но POST доходит до GAS
-      await fetch(GS_URL+'?token='+GS_TOKEN+'&chunk='+i+'&chunks='+chunks.length, {
-        method: 'POST',
-        mode: 'no-cors',
-        body: JSON.stringify(chunk)
-      });
-      console.log('[POST chunk '+i+'] sent (no-cors)');
-    } catch(err) {
-      console.warn('[POST CORS chunk '+i+']', err.message);
-    }
-    // Пауза между чанками чтобы GAS успел записать
-    if(i < chunks.length-1) {
-      await new Promise(r=>setTimeout(r,800));
-    }
-  }
-
-  // Ждём финальной записи
-  await new Promise(r=>setTimeout(r,2000));
-
-  // Верифицируем через GET с retry
-  let cloud = null;
-  for(let attempt=0; attempt<3; attempt++){
-    try {
-      cloud = await verifyCloudSaved(expectedLength, expectedLastTs);
-      if(cloud) break;
-    } catch(e) {
-      console.warn('[VERIFY attempt '+attempt+']', e.message);
-      if(attempt === 2) throw e;
-    }
-    if(attempt<2) await new Promise(r=>setTimeout(r,1500));
-  }
-  if(!cloud) {
-    throw new Error('Cloud verification failed: no confirmed GET after POST');
-  }
-  return cloud;
-}
-
-async function saveToCloud(source) {
-  // Блокируем сохранение в кэш-режиме или из старой вкладки
-  if (isReadOnlyCacheMode) {
-    console.warn('[SAVE BLOCKED] cache-only mode, source:', source);
-    showToast('⚠️ Сохранение запрещено — нет связи с облаком. Обнови страницу.');
-    return false;
-  }
-  if (sessionStorage.getItem('obshestvo_app_version') !== APP_VERSION) {
-    console.warn('[SAVE BLOCKED] old tab version, source:', source);
-    showToast('⚠️ Старая вкладка. Обнови страницу перед сохранением.');
-    return false;
-  }
-  if(!db) return;
-
-  // Задача 1: жёсткий фильтр — только рейтинг/игроки/объявления/аналитика
-  if(!source) {
-    console.warn('[SAVE BLOCKED] empty source — no cloud write');
-    return;
-  }
-  const _allowedPrefixes = ['rating:','players:','announcement:'];
-  const _allowed = _allowedPrefixes.some(p => source.startsWith(p));
-  if(!_allowed) {
-    console.warn('[SAVE BLOCKED]', source, '— only rating/players/announcement/analytics allowed');
-    return;
-  }
-
-  console.log('[SAVE CHECK]', source, 'players:', db.players.length, 'results:', db.results.length);
-
-  if(_saveInProgress){ _savePending=true; _pendingSaveSource=source; return; }
-  _saveInProgress=true;
-  _savePending=false;
-  try{ await _doSaveToCloud(source); }
-  finally{
-    _saveInProgress=false;
-    if(_savePending){
-      const s=_pendingSaveSource; _savePending=false; _pendingSaveSource='';
-      if(s && _allowedPrefixes.some(p=>s.startsWith(p))) saveToCloud(s);
-    }
-  }
-}
+// markResultDeleted / verifyCloudSaved / _doSaveToCloud / saveToCloud — УДАЛЕНЫ в V5:
+// клиент больше не отправляет полный снимок базы. Удаление — операция deleteResults по id.
 
 function setSyncBar(state) {
   let el = document.getElementById('sync-bar');
@@ -1296,73 +1621,206 @@ function setSyncBar(state) {
     el.className='sync-bar sync-err';
     return;
   }
-  if (state==='ok'){el.textContent='● ДАННЫЕ СОХРАНЕНЫ В ОБЛАКЕ';el.className='sync-bar sync-ok';}
+  const envTag = (db && db.env==='test') ? ' · ТЕСТОВАЯ СРЕДА' : '';
+  if (state==='ok'){el.textContent='● ДАННЫЕ НА СЕРВЕРЕ · РЕВИЗИЯ '+((db&&db.revision)||'?')+envTag;el.className='sync-bar sync-ok';}
   else if (state==='local'){el.textContent='● ТАЙМЕР РАБОТАЕТ ЛОКАЛЬНО · ОБЛАКО ДОГОНЯЕТ';el.className='sync-bar sync-loading';}
   else if (state==='err'){
-    el.innerHTML='● ОШИБКА ОБЛАКА — НЕ ЗАКРЫВАЙ ВКЛАДКУ &nbsp;<button onclick="retrySave()" style="background:rgba(192,64,74,0.3);color:#fff;border:1px solid rgba(255,255,255,0.3);padding:2px 8px;border-radius:3px;font-family:Montserrat,sans-serif;font-size:9px;cursor:pointer;letter-spacing:1px;">ПОВТОРИТЬ</button>';
+    el.innerHTML='● ЕСТЬ НЕПОДТВЕРЖДЁННЫЕ ОПЕРАЦИИ — НЕ ЗАКРЫВАЙ ВКЛАДКУ &nbsp;<button onclick="retrySave()" style="background:rgba(192,64,74,0.3);color:#fff;border:1px solid rgba(255,255,255,0.3);padding:2px 8px;border-radius:3px;font-family:Montserrat,sans-serif;font-size:9px;cursor:pointer;letter-spacing:1px;">ПОВТОРИТЬ</button>';
     el.className='sync-bar sync-err';
   }
   else {el.textContent='● СОХРАНЕНИЕ…';el.className='sync-bar sync-loading';}
 }
 
+let ratingView = 'season'; // 'season' | 'month'
+function setRatingView(v){
+  ratingView = (v==='month') ? 'month' : 'season';
+  document.getElementById('view-season-btn').classList.toggle('active', ratingView==='season');
+  document.getElementById('view-month-btn').classList.toggle('active', ratingView==='month');
+  document.getElementById('month-bar').style.display = ratingView==='month' ? '' : 'none';
+  document.getElementById('season-header').style.display = ratingView==='season' ? '' : 'none';
+  renderRating();
+}
+
+function seasonDateLabel(s){
+  function f(d){ if(!d) return ''; let p=String(d).slice(0,10).split('-'); if(p.length<3) return d; return parseInt(p[2])+' '+MONTHS_SHORT[parseInt(p[1])-1]+' '+p[0]; }
+  return f(s.startDate)+' — '+f(s.endDate);
+}
+// Выбор сезона для просмотра на публичной странице (любой не-черновик)
+function selectSeason(id){ selectedSeasonId = id || null; renderRating(); }
+
 function renderRating() {
-  if(db) console.log('[RATING DEBUG]',{
-    currentMonthKey: getMonthKey(currentMonth,currentYear),
-    totalResults: db.results.length,
-    visibleMonthResults: db.results.filter(r=>getResultMonthKey(r)===getMonthKey(currentMonth,currentYear)).length,
-    lastResult: db.results[db.results.length-1]
-  });
-  document.getElementById('month-label').textContent = MONTHS[currentMonth]+' '+currentYear;
   let el = document.getElementById('rating-content');
   let upd = document.getElementById('last-updated');
   let ann = document.getElementById('announce-box');
-  let banner = document.getElementById('top10-banner');
 
   if (!db){
     el.innerHTML='<div class="loading">ЗАГРУЗКА<span class="loading-dot">.</span><span class="loading-dot">.</span><span class="loading-dot">.</span></div>';
     return;
   }
-
   if (db.lastUpdated){
     let d=new Date(db.lastUpdated);
     let msk=new Date(d.toLocaleString('en-US',{timeZone:'Europe/Moscow'}));
     upd.textContent='Обновлено: '+msk.getDate()+' '+MONTHS_SHORT[msk.getMonth()]+' в '+String(msk.getHours()).padStart(2,'0')+':'+String(msk.getMinutes()).padStart(2,'0')+' (мск)';
   }
-
   if (db.announcement && db.announcement.trim()){
     document.getElementById('announce-text').textContent=db.announcement;
     ann.style.display='block';
   } else { ann.style.display='none'; }
 
+  if (ratingView==='season') renderSeasonRating();
+  else renderMonthRating();
+}
+
+// ── ВИД: СЕЗОН (ГОНКА ЗА ФИНАЛ) ──────────────────────────────
+function renderSeasonRating(){
+  let el = document.getElementById('rating-content');
+  let banner = document.getElementById('top10-banner');
+  if(banner) banner.style.display='none';
+  let season = getViewSeason();
+  let hdr = document.getElementById('season-header');
+  if(!season){ hdr.innerHTML=''; el.innerHTML='<div class="empty-state"><div class="big">🗓</div><p>Сезон не настроен.</p></div>'; return; }
+
+  let N = Math.max(1, parseInt(season.finalistCount)||20);
+  let frozen = isFrozenSeason(season);
+  let stLabel = frozen ? ((season.state==='archived'?'АРХИВ':'ЗАВЕРШЁН')+' · итоговый снимок') : ('ТОП-'+N+' в финал');
+  // Селектор сезона: просмотр любого не-черновика (активный/завершён/архив)
+  let nonDraft = getSeasons().filter(s=>s.state!=='draft');
+  let pickerHtml = (nonDraft.length>1)
+    ? `<select id="season-picker" onchange="selectSeason(this.value)" style="margin-top:6px;background:var(--dark3);color:var(--gold);border:1px solid var(--gold3);border-radius:6px;padding:5px 8px;font-family:'Montserrat',sans-serif;font-size:10px;max-width:92%;">`
+      + nonDraft.map(s=>`<option value="${escHtml(s.id)}" ${s.id===season.id?'selected':''}>${escHtml(s.name)} · ${SEASON_STATE_LABEL[s.state]||s.state}</option>`).join('')
+      + `</select>` : '';
+  hdr.innerHTML = `<div id="season-title">${escHtml(season.name)}</div>
+    <div id="season-dates">${seasonDateLabel(season)} · ${stLabel}</div>${pickerHtml}`;
+
   let search = document.getElementById('search-input').value.toLowerCase().trim();
-  let rating = getMonthRating(currentMonth,currentYear);
-  banner.style.display = rating.length>=10 && !search ? 'block':'none';
+  let rating = seasonRatingForView(season); // завершённый сезон → замороженный снимок
 
   if (rating.length===0){
-    el.innerHTML='<div class="empty-state"><div class="big">🃏</div><p>Результатов за этот месяц пока нет.<br>Они появятся после первого турнира.</p></div>';
+    el.innerHTML='<div class="empty-state"><div class="big">🃏</div><p>В этом сезоне результатов пока нет.<br>Они появятся после первого турнира сезона.</p></div>';
     return;
   }
 
-  let posMap={};
-  rating.forEach(([name],i)=>{posMap[name]=i+1;});
+  let posMap = ratingPosMap(rating);
+  // Динамика и «Герои недели» — только для активного сезона (у замороженного нет «недели»)
+  let wd = frozen ? {now:posMap, prev:null} : weeklyDelta(season);
+  let finalThreshold = rating[N-1] ? rating[N-1][1].points : null; // очки N-го места
+
+  let heroesHtml = frozen ? '' : renderHeroesHtml(season, rating, wd);
+
+  // Финальная «шапка»
+  let fsTop = frozen ? ('ИТОГ · ТОП-'+N) : ('ТОП-'+N+' → ФИНАЛ');
+  let fsSub = frozen ? ('СЕЗОН ЗАВЕРШЁН · '+escHtml(season.name)) : ('ГОНКА ЗА ФИНАЛ · '+escHtml(season.name));
+  let finaleStrip = `<div class="finale-strip"><div class="fs-top">${fsTop}</div><div class="fs-sub">${fsSub}</div></div>`;
+
   let filtered = search ? rating.filter(([name])=>name.toLowerCase().includes(search)) : rating;
-  let medals=['🥇','🥈','🥉'];
-
   if(filtered.length===0){
-    el.innerHTML='<div class="empty-state"><div class="big">🔍</div><p>Игрок не найден.<br>Проверь правильность написания.</p></div>';
+    el.innerHTML = finaleStrip + heroesHtml + '<div class="empty-state"><div class="big">🔍</div><p>Игрок не найден.</p></div>';
     return;
   }
 
-  let rows = filtered.map(([name,d])=>{
-    let i = posMap[name]-1;
+  let medals=['🥇','🥈','🥉'];
+  let rowsHtml='';
+  let dividerInserted=false;
+  filtered.forEach(([name,d])=>{
+    let pos = posMap[name];       // реальная позиция в полном рейтинге
+    let i = pos-1;
+    // divider «ГРАНИЦА ФИНАЛА» перед первым игроком за чертой (только без поиска)
+    if(!search && !dividerInserted && pos===N+1){
+      rowsHtml += `<tr class="final-divider"><td colspan="3">— ГРАНИЦА ФИНАЛА · ТОП-${N} —</td></tr>`;
+      dividerInserted=true;
+    }
     let cls = i<3?'place-'+(i+1):'';
-    let medal = i<3?'<span class="medal">'+medals[i]+'</span>':(i+1)+'.';
-    let badge = i<10 && rating.length>=10?'<span class="top10-badge">ТОП-10</span>':'';
+    if(pos>N) cls += ' below-line';
+    let medal = i<3?'<span class="medal">'+medals[i]+'</span>':pos+'.';
     let title = getPlayerTitle(name,db.results);
     let titleHtml = title?'<span class="title-badge">'+title+'</span>':'';
     let nameClass = i===0?'player-name gold-glow':'player-name';
     let crownHtml = i===0?'<span style="font-size:11px;margin-left:4px;animation:goldGlow 2s ease-in-out infinite;vertical-align:middle;">👑</span>':'';
 
+    // Динамика за 7 дней (из истории)
+    let delta='';
+    if(wd.prev){
+      let was = wd.prev[name];
+      if(was===undefined) delta=' <span class="delta-up" title="новый в рейтинге за неделю">★</span>';
+      else{ let diff=was-pos; if(diff>0)delta=' <span class="delta-up">▲'+diff+'</span>'; else if(diff<0)delta=' <span class="delta-down">▼'+Math.abs(diff)+'</span>'; else delta=' <span class="delta-same">—</span>'; }
+    }
+    // Подсказка «до финала» для зоны борьбы (позиции N+1..N+6)
+    let raceHint='';
+    if(pos>N && pos<=N+6 && finalThreshold!=null){
+      let need = finalThreshold - d.points;
+      if(need>0) raceHint = `<span class="race-hint">+${need} очк. до ТОП-${N}</span>`;
+    }
+    rowsHtml += `<tr class="${cls}" style="animation-delay:${Math.min(i,20)*0.04}s">
+      <td>${medal}</td>
+      <td><span class="${nameClass}" onclick="openProfile(this.dataset.name)" data-name="${escHtml(name)}">${escHtml(name)}</span>${crownHtml}${delta}${titleHtml}<br><span class="player-games">${d.games} игр${d.bonus?' · бонус +'+d.bonus:''}</span>${raceHint}</td>
+      <td><span class="points-big" data-target="${d.points}">0</span></td>
+    </tr>`;
+  });
+
+  el.innerHTML = finaleStrip + heroesHtml + `<table class="rating-table">
+    <thead><tr><th style="width:36px;">#</th><th style="text-align:left;padding-left:14px;">ИГРОК</th><th>ОЧКИ</th></tr></thead>
+    <tbody>${rowsHtml}</tbody></table>`;
+
+  setTimeout(()=>{ el.querySelectorAll('.points-big[data-target]').forEach(span=>{ animateCounter(span, parseInt(span.dataset.target), 800); }); }, 250);
+}
+
+// «Герои недели» — только на реальных результатах последних 7 дней
+function renderHeroesHtml(season, rating, wd){
+  let today = mskTodayISO();
+  let weekAgo = isoMinusDays(today, 6); // окно из 7 календарных дней включительно
+  let inWindow = r => { let d=resultDateISO(r); return dateInSeason(d,season) && d>=weekAgo && d<=today; };
+  // Игрок недели + лучшая игра
+  let wkPts={}, bestGame=null;
+  (db.results||[]).forEach(r=>{
+    if(r.isBonus || !r.player || !inWindow(r)) return;
+    const nm=toDisplay(r.player);
+    wkPts[nm]=(wkPts[nm]||0)+Number(r.points||0);
+    if(!bestGame || Number(r.points||0)>bestGame.pts) bestGame={name:nm, pts:Number(r.points||0)};
+  });
+  let playerWeek=null;
+  Object.entries(wkPts).forEach(([n,p])=>{ if(!playerWeek||p>playerWeek.pts) playerWeek={name:n,pts:p}; });
+  // Прорыв недели (по динамике позиций)
+  let breakout=null;
+  if(wd.prev){
+    rating.forEach(([n],idx)=>{ let now=idx+1, was=wd.prev[n]; if(was!==undefined){ let diff=was-now; if(diff>0 && (!breakout||diff>breakout.diff)) breakout={name:n,diff}; } });
+  }
+  let card=(label,name,val)=> `<div class="hero-card"><div class="hc-label">${label}</div><div class="hc-name">${name?escHtml(name):'—'}</div><div class="hc-val">${val}</div></div>`;
+  let c1 = breakout ? card('🚀 ПРОРЫВ НЕДЕЛИ', breakout.name, '▲'+breakout.diff+' позиц.') : card('🚀 ПРОРЫВ НЕДЕЛИ','—','недостаточно данных');
+  let c2 = playerWeek ? card('🔥 ИГРОК НЕДЕЛИ', playerWeek.name, playerWeek.pts+' очк. за 7 дней') : card('🔥 ИГРОК НЕДЕЛИ','—','недостаточно данных');
+  let c3 = bestGame ? card('⭐ ЛУЧШАЯ ИГРА', bestGame.name, '+'+bestGame.pts+' за вечер') : card('⭐ ЛУЧШАЯ ИГРА','—','недостаточно данных');
+  return `<div class="heroes-wrap">${c1}${c2}${c3}</div>`;
+}
+
+// ── ВИД: АРХИВ ПО МЕСЯЦАМ (прежнее поведение, история неизменна) ──
+function renderMonthRating(){
+  document.getElementById('month-label').textContent = MONTHS[currentMonth]+' '+currentYear;
+  let el = document.getElementById('rating-content');
+  let banner = document.getElementById('top10-banner');
+  let search = document.getElementById('search-input').value.toLowerCase().trim();
+  let rating = getMonthRating(currentMonth,currentYear);
+  // В4: баннер «ФИНАЛ МЕСЯЦА · 10» в архиве вводит в заблуждение (финал сезона — ТОП-20). Скрыт.
+  if(banner) banner.style.display = 'none';
+
+  if (rating.length===0){
+    el.innerHTML='<div class="empty-state"><div class="big">🃏</div><p>Результатов за этот месяц пока нет.<br>Они появятся после первого турнира.</p></div>';
+    return;
+  }
+  let posMap=Object.create(null);
+  rating.forEach(([name],i)=>{posMap[name]=i+1;});
+  let filtered = search ? rating.filter(([name])=>name.toLowerCase().includes(search)) : rating;
+  let medals=['🥇','🥈','🥉'];
+  if(filtered.length===0){
+    el.innerHTML='<div class="empty-state"><div class="big">🔍</div><p>Игрок не найден.<br>Проверь правильность написания.</p></div>';
+    return;
+  }
+  let rows = filtered.map(([name,d])=>{
+    let i = posMap[name]-1;
+    let cls = i<3?'place-'+(i+1):'';
+    let medal = i<3?'<span class="medal">'+medals[i]+'</span>':(i+1)+'.';
+    let title = getPlayerTitle(name,db.results);
+    let titleHtml = title?'<span class="title-badge">'+title+'</span>':'';
+    let nameClass = i===0?'player-name gold-glow':'player-name';
+    let crownHtml = i===0?'<span style="font-size:11px;margin-left:4px;animation:goldGlow 2s ease-in-out infinite;vertical-align:middle;">👑</span>':'';
     let delta='';
     if (prevRating[name]!==undefined){
       let diff=prevRating[name]-(i+1);
@@ -1370,36 +1828,194 @@ function renderRating() {
       else if(diff<0) delta=' <span class="delta-down">▼'+Math.abs(diff)+'</span>';
       else delta=' <span class="delta-same">—</span>';
     }
-
     return `<tr class="${cls}" style="animation-delay:${i*0.06}s">
       <td>${medal}</td>
-      <td><span class="${nameClass}" onclick="openProfile(this.dataset.name)" data-name="${escHtml(name)}">${escHtml(name)}</span>${crownHtml}${badge}${delta}${titleHtml}<br><span class="player-games">${d.games} игр</span></td>
+      <td><span class="${nameClass}" onclick="openProfile(this.dataset.name)" data-name="${escHtml(name)}">${escHtml(name)}</span>${crownHtml}${delta}${titleHtml}<br><span class="player-games">${d.games} игр</span></td>
       <td><span class="points-big" data-target="${d.points}">0</span></td>
     </tr>`;
   }).join('');
-
   el.innerHTML=`<table class="rating-table">
-    <thead><tr>
-      <th style="width:36px;">#</th>
-      <th style="text-align:left;padding-left:14px;">ИГРОК</th>
-      <th>ОЧКИ</th>
-    </tr></thead>
+    <thead><tr><th style="width:36px;">#</th><th style="text-align:left;padding-left:14px;">ИГРОК</th><th>ОЧКИ</th></tr></thead>
     <tbody>${rows}</tbody>
   </table>`;
+  setTimeout(()=>{ el.querySelectorAll('.points-big[data-target]').forEach(span=>{ animateCounter(span, parseInt(span.dataset.target), 800); }); }, 300);
+}
 
-  // Animate counters
-  setTimeout(()=>{
-    el.querySelectorAll('.points-big[data-target]').forEach(span=>{
-      animateCounter(span, parseInt(span.dataset.target), 800);
-    });
-  }, 300);
+/* ══════════ АДМИН: УПРАВЛЕНИЕ СЕЗОНАМИ (на сервере) ══════════ */
+const SEASON_STATE_LABEL = {draft:'ЧЕРНОВИК', active:'АКТИВНЫЙ', completed:'ЗАВЕРШЁН', archived:'АРХИВ'};
+const SEASON_AUDIT_KEY = 'obshestvo_seasons_audit';
+
+function logSeasonAudit(action, detail){
+  try{
+    let log = JSON.parse(localStorage.getItem(SEASON_AUDIT_KEY)||'[]');
+    log.push({at:new Date().toISOString(), action, detail});
+    localStorage.setItem(SEASON_AUDIT_KEY, JSON.stringify(log.slice(-300)));
+  }catch(e){ console.warn('[SEASON AUDIT]', e.message); }
+}
+function seasonsOverlap(a,b){
+  if(!a.startDate||!a.endDate||!b.startDate||!b.endDate) return false;
+  return a.startDate <= b.endDate && b.startDate <= a.endDate;
+}
+function genSeasonId(){
+  return 'season_'+mskTodayISO().replace(/-/g,'_')+'_'+Math.random().toString(36).slice(2,6);
+}
+
+function isOwnerSession(){ const s=getSession(); return !!(s && s.role==='owner'); }
+function renderSeasonsAdmin(){
+  let host = document.getElementById('seasons-list');
+  if(!host) return;
+  let all = getSeasons();
+  if(!all.length){ host.innerHTML='<div style="font-size:12px;color:var(--text3);padding:8px;">Сезонов нет</div>'; return; }
+  host.innerHTML = all.map(s=>{
+    let st = s.state||'draft';
+    let color = st==='active'?'#7CCB8E':(st==='draft'?'#E0A848':'var(--text3)');
+    let btns = '<button class="btn-sm" onclick="openSeasonForm(\''+s.id+'\')">изменить</button>';
+    if(!isOwnerSession()) btns += ' <span style="font-size:8px;color:var(--text3);">смена состояния — владелец</span>';
+    else if(st==='draft') btns += ' <button class="btn-sm" onclick="activateSeason(\''+s.id+'\')">активировать</button> <button class="btn-sm" onclick="deleteSeason(\''+s.id+'\')">удалить</button>';
+    if(isOwnerSession() && st==='active') btns += ' <button class="btn-sm" onclick="completeSeason(\''+s.id+'\')">завершить</button>';
+    if(isOwnerSession() && st==='completed') btns += ' <button class="btn-sm" onclick="archiveSeason(\''+s.id+'\')">в архив</button>';
+    if(isOwnerSession() && (st==='completed'||st==='archived')) btns += ' <button class="btn-sm" onclick="reopenSeason(\''+s.id+'\')">вернуть в активные</button>';
+    return `<div style="border:1px solid var(--gold3);border-radius:8px;padding:9px;margin-bottom:6px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+        <span style="font-family:'Cormorant Garamond',serif;color:var(--gold);font-size:13px;">${escHtml(s.name)}</span>
+        <span style="font-size:8px;letter-spacing:1px;color:${color};border:1px solid ${color};border-radius:10px;padding:2px 7px;white-space:nowrap;">${SEASON_STATE_LABEL[st]||st}</span>
+      </div>
+      <div style="font-size:9px;color:var(--text3);margin-top:4px;">${seasonDateLabel(s)} · ТОП-${s.finalistCount} · участие +${(s.points&&s.points.participation!=null)?s.points.participation:'—'}</div>
+      <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;">${btns}</div>
+    </div>`;
+  }).join('');
+}
+
+function openSeasonForm(id){
+  let editing = !!id;
+  let s = editing ? getSeasonById(id) : {
+    id:'', name:'', startDate:'', endDate:'', finalDate:'', finalistCount:20, state:'draft',
+    rulesVersion:SEASON_RULES_VERSION_DEFAULT,
+    points:{tuesday:70,wednesday:100,friday:160,saturday:50,sunday:100,participation:10,bountyPerKnockout:10}
+  };
+  if(!s){ showToast('Сезон не найден'); return; }
+  let p=s.points||{};
+  let lockWarn = (s.state==='active'||s.state==='completed'||s.state==='archived')
+    ? `<div style="font-size:9px;color:#E0A848;margin-bottom:8px;">Сезон в состоянии «${SEASON_STATE_LABEL[s.state]}». Изменение дат/очков меняет только вычисляемое отображение — результаты в базе не затрагиваются. Перед сохранением покажу предпросмотр влияния.</div>`
+    : '';
+  let inp = (lbl,id2,type,val,extra)=>`<div class="form-row"><label>${lbl}</label><input id="${id2}" type="${type}" ${extra||''} value="${val!=null?String(val).replace(/"/g,'&quot;'):''}" style="background:var(--dark3);color:var(--text);border:1px solid rgba(201,169,110,0.2);padding:8px;border-radius:4px;font-family:'Montserrat',sans-serif;font-size:11px;width:100%;box-sizing:border-box;"></div>`;
+  let wrap = document.getElementById('season-form-wrap');
+  wrap.style.display='block';
+  wrap.innerHTML = `
+    <input type="hidden" id="sf-id" value="${escHtml(s.id)}">
+    ${lockWarn}
+    ${inp('НАЗВАНИЕ СЕЗОНА','sf-name','text',s.name)}
+    ${inp('ДАТА НАЧАЛА','sf-start','date',s.startDate)}
+    ${inp('ДАТА ОКОНЧАНИЯ (включительно)','sf-end','date',s.endDate)}
+    ${inp('ДАТА ФИНАЛА (необязательно)','sf-final','date',s.finalDate)}
+    ${inp('КОЛИЧЕСТВО ФИНАЛИСТОВ (ТОП-N)','sf-count','number',s.finalistCount,'min="1" step="1"')}
+    <div style="font-size:9px;color:var(--gold3);letter-spacing:1px;margin:10px 0 6px;">ОЧКИ ЗА 1 МЕСТО ПО ДНЯМ</div>
+    ${inp('Вторник','sf-p-tuesday','number',p.tuesday,'min="0" step="1"')}
+    ${inp('Среда','sf-p-wednesday','number',p.wednesday,'min="0" step="1"')}
+    ${inp('Пятница','sf-p-friday','number',p.friday,'min="0" step="1"')}
+    ${inp('Суббота','sf-p-saturday','number',p.saturday,'min="0" step="1"')}
+    ${inp('Воскресенье','sf-p-sunday','number',p.sunday,'min="0" step="1"')}
+    ${inp('За участие','sf-p-participation','number',p.participation,'min="0" step="1"')}
+    ${inp('За выбивание (баунти)','sf-p-ko','number',p.bountyPerKnockout,'min="0" step="1"')}
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;">
+      <button class="btn-dark" style="font-size:10px;" onclick="previewSeasonFromForm()">ПРЕДПРОСМОТР</button>
+      <button class="btn-gold" style="font-size:10px;" onclick="saveSeasonDraft()">СОХРАНИТЬ ЧЕРНОВИК</button>
+      <button class="btn-dark" style="font-size:10px;" onclick="closeSeasonForm()">ОТМЕНА</button>
+    </div>`;
+  document.getElementById('season-preview').style.display='none';
+}
+function closeSeasonForm(){ document.getElementById('season-form-wrap').style.display='none'; document.getElementById('season-preview').style.display='none'; }
+
+function collectSeasonForm(){
+  let num=id=>{ let v=parseInt(document.getElementById(id).value); return isNaN(v)?null:v; };
+  return {
+    id: document.getElementById('sf-id').value || genSeasonId(),
+    name: document.getElementById('sf-name').value.trim(),
+    startDate: document.getElementById('sf-start').value,
+    endDate: document.getElementById('sf-end').value,
+    finalDate: document.getElementById('sf-final').value,
+    finalistCount: num('sf-count'),
+    rulesVersion: SEASON_RULES_VERSION_DEFAULT,
+    points:{
+      tuesday:num('sf-p-tuesday'), wednesday:num('sf-p-wednesday'), friday:num('sf-p-friday'),
+      saturday:num('sf-p-saturday'), sunday:num('sf-p-sunday'),
+      participation:num('sf-p-participation'), bountyPerKnockout:num('sf-p-ko')
+    }
+  };
+}
+function validateSeasonObj(s, forActivate){
+  if(!s.name) return {ok:false,msg:'Укажите название сезона'};
+  if(!s.startDate||!s.endDate) return {ok:false,msg:'Укажите даты начала и окончания'};
+  if(s.startDate>s.endDate) return {ok:false,msg:'Дата начала позже даты окончания'};
+  if(!s.finalistCount||s.finalistCount<1) return {ok:false,msg:'Количество финалистов должно быть ≥ 1'};
+  let others = getSeasons().filter(x=>x.id!==s.id);
+  // Пересечение с любым активным/завершённым сезоном — блок
+  let hard = others.find(x=>(x.state==='active'||x.state==='completed')&&seasonsOverlap(s,x));
+  if(hard) return {ok:false,msg:'Даты пересекаются с сезоном «'+hard.name+'» ('+SEASON_STATE_LABEL[hard.state]+'). Измените период.'};
+  if(forActivate){
+    let soft = others.find(x=>x.state!=='archived'&&seasonsOverlap(s,x));
+    if(soft) return {ok:false,msg:'Нельзя активировать: период пересекается с «'+soft.name+'». Урегулируйте даты перед активацией.'};
+  }
+  return {ok:true};
+}
+async function saveSeasonDraft(){
+  if(!canWriteNow()) return;
+  let s = collectSeasonForm();
+  let v = validateSeasonObj(s, false);
+  if(!v.ok){ showToast('⚠ '+v.msg); return; }
+  let existing = getSeasonById(s.id);
+  if(existing && (existing.state==='completed'||existing.state==='archived')){
+    showToast('⛔ Сезон «'+existing.name+'» завершён. Для правок сначала «вернуть в активные» (процедура корректировки).');
+    return;
+  }
+  if(existing && existing.state==='active'){
+    if(!confirm('Сезон «'+existing.name+'» активен.\nИзменения затронут только отображение рейтинга (результаты в базе не меняются).\nСохранить на сервере?')) return;
+  }
+  const r = await sendOp('saveSeason', {season:s}, 'Сезон «'+s.name+'»');
+  if(r.ok){ showToast('✅ Сезон сохранён на сервере'); closeSeasonForm(); renderAllViews(); }
+  else opFailToast('Сезон', r);
+}
+async function seasonActionOp(id, action, question, okMsg){
+  if(!canWriteNow()) return;
+  let s = getSeasonById(id);
+  if(!s){ showToast('Сезон не найден'); return; }
+  if(action==='activate'){ let v = validateSeasonObj(s, true); if(!v.ok){ showToast('⚠ '+v.msg); return; } }
+  if(!confirm(question.replace('%s', s.name))) return;
+  const r = await sendOp('seasonAction', {seasonId:id, action}, 'Сезон «'+s.name+'»: '+action);
+  if(r.ok){ selectedSeasonId=null; showToast(okMsg); renderAllViews(); }
+  else opFailToast('Сезон', r);
+}
+function activateSeason(id){ return seasonActionOp(id, 'activate', 'Активировать сезон «%s»?\nДругой активный сезон будет завершён, сервер сохранит его итоговый снимок.', '✅ Сезон активирован'); }
+function completeSeason(id){ return seasonActionOp(id, 'complete', 'Завершить сезон «%s»? Сервер сохранит итоговый снимок таблицы.', '✅ Сезон завершён, снимок сохранён на сервере'); }
+function archiveSeason(id){ return seasonActionOp(id, 'archive', 'Отправить сезон «%s» в архив?', '✅ В архиве'); }
+function reopenSeason(id){ return seasonActionOp(id, 'reopen', 'ПРОЦЕДУРА КОРРЕКТИРОВКИ\nВернуть сезон «%s» в активные для исправления результатов?\nПосле правок снова завершите сезон — снимок пересчитается.', '🔧 Сезон открыт для корректировки'); }
+function deleteSeason(id){ return seasonActionOp(id, 'deleteDraft', 'Удалить черновик сезона «%s»? Результаты игроков НЕ удаляются.', 'Черновик удалён'); }
+function previewSeasonFromForm(){
+  let s = collectSeasonForm();
+  let v = validateSeasonObj(s, false);
+  let box = document.getElementById('season-preview');
+  box.style.display='block';
+  if(!v.ok){ box.innerHTML='<div style="font-size:11px;color:#E0A848;">⚠ '+escHtml(v.msg)+'</div>'; return; }
+  let rating = getSeasonRating(s);
+  let inSeason = (db&&db.results?db.results:[]).filter(r=>dateInSeason(resultDateISO(r),s));
+  let games = inSeason.filter(r=>!r.isBonus).length;
+  let N = Math.max(1,s.finalistCount||20);
+  let top = rating.slice(0,5).map(([n,d],i)=>`${i+1}. ${escHtml(n)} — ${d.points}`).join('<br>') || '—';
+  box.innerHTML = `<div style="border:1px dashed var(--gold3);border-radius:8px;padding:10px;font-size:10px;color:var(--text2);line-height:1.6;">
+    <b style="color:var(--gold);">ПРЕДПРОСМОТР</b><br>
+    Период: ${seasonDateLabel(s)}<br>
+    Попадает результатов: <b>${inSeason.length}</b> (из них игр: ${games})<br>
+    Игроков в рейтинге: <b>${rating.length}</b> · граница финала: ТОП-${N}<br>
+    <span style="color:var(--gold3);">Текущий ТОП-5:</span><br>${top}<br>
+    <span style="color:var(--text3);">Это предпросмотр на реальных данных. Ничего не сохранено и в облако не отправлено.</span>
+  </div>`;
 }
 
 function changeMonth(dir){
   currentMonth+=dir;
   if(currentMonth>11){currentMonth=0;currentYear++;}
   if(currentMonth<0){currentMonth=11;currentYear--;}
-  prevRating={};
+  prevRating=Object.create(null);
   document.getElementById('rating-content').innerHTML='<div class="loading">ЗАГРУЗКА<span class="loading-dot">.</span><span class="loading-dot">.</span><span class="loading-dot">.</span></div>';
   // Устанавливаем версию приложения в сессии
 sessionStorage.setItem('obshestvo_app_version', APP_VERSION);
@@ -1416,17 +2032,95 @@ function escHtml(s){ if(!s) return ''; return String(s).replace(/&/g,'&amp;').re
 function openProfile(el){
   let name = typeof el === 'string' ? el : el.dataset.name;
   if(!db) return;
+  document.getElementById('profile-name').textContent=name;
+  document.getElementById('profile-body').innerHTML = (ratingView==='season')
+    ? renderSeasonProfile(name)
+    : renderMonthProfile(name);
+  document.getElementById('profile-modal').style.display='block';
+}
+
+// Профиль игрока в контексте сезона: позиция, отрыв/расстояние до финала, соседи, динамика, история сезона
+function renderSeasonProfile(name){
+  let season = getViewSeason();
+  if(!season) return renderMonthProfile(name);
+  let rating = seasonRatingForView(season);
+  let posMap = ratingPosMap(rating);
+  let N = Math.max(1, parseInt(season.finalistCount)||20);
+  let idx = rating.findIndex(([n])=>n===name);
+  let title=getPlayerTitle(name,db.results);
+
+  if(idx===-1){
+    return `<div class="profile-stat"><span class="ps-label">Сезон</span><span class="ps-val">${escHtml(season.name)}</span></div>
+      <div style="font-size:12px;color:var(--text3);padding:10px;">В этом сезоне у игрока пока нет результатов.</div>`;
+  }
+  let d = rating[idx][1];
+  let pos = idx+1;
+  let inFinal = pos<=N;
+
+  // Расстояние до финала / отрыв
+  let gapHtml='';
+  let threshold = rating[N-1] ? rating[N-1][1].points : null;
+  if(!inFinal && threshold!=null){
+    let need = threshold - d.points;
+    gapHtml = `<div class="profile-stat"><span class="ps-label">До ТОП-${N} (финала)</span><span class="ps-val" style="color:var(--gold);">+${Math.max(0,need)} очк.</span></div>`;
+  } else if(inFinal && rating[N]){
+    let lead = d.points - rating[N][1].points;
+    gapHtml = `<div class="profile-stat"><span class="ps-label">Отрыв от ${N+1}-го места</span><span class="ps-val" style="color:#7CCB8E;">${lead} очк.</span></div>`;
+  }
+  // До предыдущей позиции
+  let prevGapHtml='';
+  if(idx>0){
+    let need = rating[idx-1][1].points - d.points;
+    prevGapHtml = `<div class="profile-stat"><span class="ps-label">До ${pos-1}-го места</span><span class="ps-val">+${Math.max(0,need)} очк.</span></div>`;
+  }
+  // Динамика за 7 дней (только для активного сезона; у завершённого нет «недели»)
+  let wd = isFrozenSeason(season) ? {now:posMap, prev:null} : weeklyDelta(season);
+  let dynHtml='';
+  if(wd.prev){
+    let was = wd.prev[name];
+    if(was===undefined) dynHtml = `<div class="profile-stat"><span class="ps-label">Динамика за 7 дней</span><span class="ps-val delta-up">★ новый</span></div>`;
+    else { let diff=was-pos; let v = diff>0?('<span class="delta-up">▲'+diff+'</span>'):(diff<0?('<span class="delta-down">▼'+Math.abs(diff)+'</span>'):'<span class="delta-same">без изменений</span>'); dynHtml = `<div class="profile-stat"><span class="ps-label">Динамика за 7 дней</span><span class="ps-val">${v}</span></div>`; }
+  }
+  // Ближайшие соперники (2 выше / 2 ниже) — реальные ники
+  function rival(j,dir){ if(j<0||j>=rating.length) return ''; let [n,dd]=rating[j]; return `<div class="ph-item"><span class="phi-day">${dir} ${j+1}. ${escHtml(n)}</span><span class="phi-pts">${dd.points}</span></div>`; }
+  let rivalsHtml = `<div style="font-size:9px;color:var(--gold3);letter-spacing:2px;margin:14px 0 8px;">БЛИЖАЙШИЕ СОПЕРНИКИ</div>`
+    + rival(idx-2,'▲')+rival(idx-1,'▲')
+    + `<div class="ph-item" style="border:1px solid var(--gold3);border-radius:6px;"><span class="phi-day" style="color:var(--gold);">● ${pos}. ${escHtml(name)}</span><span class="phi-pts" style="color:var(--gold);">${d.points}</span></div>`
+    + rival(idx+1,'▼')+rival(idx+2,'▼');
+
+  let statsHtml=`
+    <div class="profile-stat"><span class="ps-label">Сезон</span><span class="ps-val" style="font-size:12px;">${escHtml(season.name)}</span></div>
+    <div class="profile-stat"><span class="ps-label">Позиция</span><span class="ps-val" style="color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:20px;">${pos}${inFinal?' · ФИНАЛ':''}</span></div>
+    <div class="profile-stat"><span class="ps-label">Очков за сезон</span><span class="ps-val" style="color:var(--gold);">${d.points}</span></div>
+    <div class="profile-stat"><span class="ps-label">Игр / Побед / ТОП-3</span><span class="ps-val">${d.games} / ${d.wins} / ${d.top3}</span></div>
+    ${gapHtml}${prevGapHtml}${dynHtml}
+    ${title?'<div class="profile-stat"><span class="ps-label">Титул</span><span class="ps-val">'+escHtml(title)+'</span></div>':''}
+  `;
+
+  // История сезона (все начисления игрока в пределах дат сезона)
+  let sres = db.results.filter(r=>toDisplay(r.player)===name && dateInSeason(resultDateISO(r), season));
+  let histHtml='<div style="font-size:9px;color:var(--gold3);letter-spacing:2px;margin:14px 0 8px;">НАЧИСЛЕНИЯ СЕЗОНА</div>';
+  if(!sres.length) histHtml+='<div style="font-size:12px;color:var(--text3);padding:8px;">Нет результатов за сезон</div>';
+  else histHtml += [...sres].sort((a,b)=>(resultDateISO(a)<resultDateISO(b)?1:-1)).map(r=>{
+    let dayInfo = r.isBonus ? `🎁 Бонусные очки${r.comment?' · '+escHtml(r.comment):''}`
+      : `${escHtml(getDisplayDayName(r))}${getDisplayFormatName(r)?' — '+escHtml(getDisplayFormatName(r)):''}${r.date?' · '+formatDate(r.date):''}`;
+    let placeInfo = r.isBonus ? '' : `<span class="phi-place">${escHtml(getDisplayPlaceName(r))}${(r.knockouts&&r.knockouts>0)?' · KO '+r.knockouts:''}</span>`;
+    return `<div class="ph-item"><span class="phi-day">${dayInfo}</span>${placeInfo}<span class="phi-pts">+${r.points}</span></div>`;
+  }).join('');
+
+  return statsHtml + rivalsHtml + histHtml;
+}
+
+// Профиль в контексте архивного месяца (прежнее поведение)
+function renderMonthProfile(name){
   let key=getMonthKey(currentMonth,currentYear);
-  let allResults=db.results.filter(r=>r.player===name);
+  let allResults=db.results.filter(r=>toDisplay(r.player)===name);
   let monthResults=allResults.filter(r=>getResultMonthKey(r)===key);
   let totalPts=monthResults.reduce((s,r)=>s+Number(r.points||0),0);
-  let wins=allResults.filter(r=>{ const p=normalizePlace(r); return p===1||(normalizePlace(r)===1||(r.placeName&&r.placeName.includes('1 место'))); }).length;
+  let wins=allResults.filter(r=>{ const p=normalizePlace(r); return p===1||(r.placeName&&r.placeName.includes('1 место')); }).length;
   let title=getPlayerTitle(name,db.results);
-  // isBonus не считается как игра
   let monthGames=monthResults.filter(r=>!r.isBonus).length;
   let allGames=allResults.filter(r=>!r.isBonus).length;
-
-  document.getElementById('profile-name').textContent=name;
   let statsHtml=`
     <div class="profile-stat"><span class="ps-label">Очков в этом месяце</span><span class="ps-val" style="color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:20px;">${totalPts}</span></div>
     <div class="profile-stat"><span class="ps-label">Игр в этом месяце</span><span class="ps-val">${monthGames}</span></div>
@@ -1441,15 +2135,9 @@ function openProfile(el){
       ? `🎁 Бонусные очки${r.comment?' · '+escHtml(r.comment):''}`
       : `${escHtml(getDisplayDayName(r))}${getDisplayFormatName(r)?' — '+escHtml(getDisplayFormatName(r)):''}${r.date?' · '+formatDate(r.date):''}`;
     let placeInfo = r.isBonus ? '' : `<span class="phi-place">${escHtml(getDisplayPlaceName(r))}</span>`;
-    return `<div class="ph-item">
-      <span class="phi-day">${dayInfo}</span>
-      ${placeInfo}
-      <span class="phi-pts">+${r.points}</span>
-    </div>`;
+    return `<div class="ph-item"><span class="phi-day">${dayInfo}</span>${placeInfo}<span class="phi-pts">+${r.points}</span></div>`;
   }).join('');}
-
-  document.getElementById('profile-body').innerHTML=statsHtml+histHtml;
-  document.getElementById('profile-modal').style.display='block';
+  return statsHtml+histHtml;
 }
 
 function closeProfile(e){
@@ -1459,18 +2147,20 @@ function closeProfile(e){
 
 function renderPlayers(){
   if(!db) return;
-  let sorted=[...db.players].sort((a,b)=>a.localeCompare(b,'ru'));
+  // value = каноническое имя (как в db), label = отображаемое (оверлей переименования)
+  let sorted=[...db.players].sort((a,b)=>toDisplay(a).localeCompare(toDisplay(b),'ru'));
   ['sel-player','q-player','mystery-player'].forEach(id=>{
     let sel=document.getElementById(id);
     if(!sel) return;
     sel.innerHTML='<option value="">— выберите игрока —</option>';
-    sorted.forEach(p=>{sel.innerHTML+=`<option value="${escHtml(p)}">${escHtml(p)}</option>`;});
+    sorted.forEach(p=>{sel.innerHTML+=`<option value="${escHtml(p)}">${escHtml(toDisplay(p))}</option>`;});
   });
   renderTournamentRows();
   let list=document.getElementById('players-list');
   list.innerHTML=db.players.length===0
     ?'<div style="color:var(--text3);font-size:12px;padding:8px;">Игроков пока нет</div>'
-    :sorted.map(p=>`<div class="player-item"><span class="player-item-name">${escHtml(p)}</span><button class="btn-remove" onclick="removePlayer(this.dataset.name)" data-name="${escHtml(p)}">удалить</button></div>`).join('');
+    :sorted.map(p=>`<div class="player-item"><span class="player-item-name">${escHtml(toDisplay(p))}</span><span style="display:flex;gap:6px;"><button class="btn-sm" title="Редактировать имя" onclick="openRenamePlayer(this.dataset.name)" data-name="${escHtml(toDisplay(p))}">✏️</button><button class="btn-remove" onclick="removePlayer(this.dataset.name)" data-name="${escHtml(p)}">удалить</button></span></div>`).join('');
+  renderRenameLog();
 }
 
 function renderHistory(){
@@ -1480,15 +2170,13 @@ function renderHistory(){
   let el=document.getElementById('history-list');
   if(!recent.length){el.innerHTML='<div style="text-align:center;color:var(--text3);font-size:12px;padding:20px;">Записей пока нет</div>';return;}
   el.innerHTML=recent.map((r)=>{
-    let undoBtn = r.ts
-      ? `<button class="btn-undo" onclick="undoByTs(${r.ts})">отмена</button>`
-      : `<button class="btn-undo" onclick="undoByPlayer(this)" data-player="${escHtml(r.player)}" data-points="${r.points||0}">отмена</button>`;
+    let undoBtn = `<button class="btn-undo" onclick="undoById(this.dataset.id)" data-id="${escHtml(r.id)}">отмена</button>`;
     let detail = r.isBonus
       ? `🎁 Бонусные очки${r.comment?' · '+r.comment:''}`
       : `${escHtml(getDisplayDayName(r))}${getDisplayFormatName(r)?' — '+escHtml(getDisplayFormatName(r)):''} · ${escHtml(getDisplayPlaceName(r))}`;
     return `<div class="history-item">
       <div>
-        <div class="hi-name">${escHtml(r.player)}</div>
+        <div class="hi-name">${escHtml(toDisplay(r.player))}</div>
         <div class="hi-detail">${detail}</div>
         <div class="hi-date">${r.date?formatDate(r.date):''}</div>
       </div>
@@ -1505,7 +2193,7 @@ function renderStats(){
   let key=getMonthKey(currentMonth,currentYear);
   let monthResults=db.results.filter(r=>getResultMonthKey(r)===key);
   let uniquePlayers=new Set(monthResults.map(r=>r.player)).size;
-  let map={};
+  let map=Object.create(null);
   let topPlayer='',topPts=0;
   monthResults.forEach(r=>{
     map[r.player]=(map[r.player]||0)+r.points;
@@ -1533,7 +2221,7 @@ function renderTournamentRows(){
   let cont=document.getElementById('tournament-players');
   if(!cont) return;
   let sorted=db?[...db.players].sort((a,b)=>a.localeCompare(b,'ru')):[];
-  let opts='<option value="">— игрок —</option>'+sorted.map(p=>`<option value="${escHtml(p)}">${escHtml(p)}</option>`).join('');
+  let opts='<option value="">— игрок —</option>'+sorted.map(p=>`<option value="${escHtml(p)}">${escHtml(toDisplay(p))}</option>`).join('');
   Array.from(cont.querySelectorAll('select')).forEach(sel=>{let v=sel.value;sel.innerHTML=opts;sel.value=v;});
 }
 
@@ -1542,11 +2230,13 @@ function addTournamentRow(){
   tournamentRowCount++;
   let cont=document.getElementById('tournament-players');
   let sorted=[...db.players].sort((a,b)=>a.localeCompare(b,'ru'));
-  let opts='<option value="">— игрок —</option>'+sorted.map(p=>`<option value="${escHtml(p)}">${escHtml(p)}</option>`).join('');
+  let opts='<option value="">— игрок —</option>'+sorted.map(p=>`<option value="${escHtml(p)}">${escHtml(toDisplay(p))}</option>`).join('');
   let div=document.createElement('div');
   div.className='tp-row';
+  let koDay=isBountyDayKey(document.getElementById('sel-day').value);
   div.innerHTML=`<span class="tp-num">${cont.children.length+1}</span>
     <select class="tp-select">${opts}</select>
+    <input type="number" class="tp-ko" min="0" step="1" value="0" title="Выбиваний (баунти)" placeholder="KO" style="display:${koDay?'inline-block':'none'};width:46px;background:var(--dark3);color:var(--text);border:1px solid rgba(201,169,110,0.2);padding:6px;border-radius:4px;font-family:'Montserrat',sans-serif;font-size:11px;box-sizing:border-box;">
     <button class="btn-sm" onclick="removeTournamentRow(this)">✕</button>`;
   cont.appendChild(div);
   updateRowNumbers();
@@ -1565,11 +2255,19 @@ async function saveTournament(){
   let date=document.getElementById('sel-date').value;
   let dayEl=document.getElementById('sel-day');
   if(!date||!dayEl.value){showToast('Выбери дату и день');btn.disabled=false;btn.textContent='СОХРАНИТЬ ТУРНИР';return;}
+  // ⛔ Запрет начисления в завершённый сезон (нужна процедура корректировки)
+  let _fz=frozenSeasonForDate(date);
+  if(_fz){ showToast('⛔ Дата '+date+' в завершённом сезоне «'+_fz.name+'». Добавление запрещено. Для корректировки: Управление сезонами → «вернуть в активные».'); btn.disabled=false; btn.textContent='СОХРАНИТЬ ТУРНИР'; return; }
   let dayKey=dayEl.value;
   let cfg=DAY_CONFIG[dayKey];
   let dayName=cfg?cfg.dayName:dayEl.options[dayEl.selectedIndex].text.split(' (')[0];
   let formatName=cfg?cfg.formatName:'';
-  let dayMax=cfg?cfg.maxPoints:getDayMax(dayKey);
+  // Правила начисления берём из сезона, которому принадлежит ДАТА турнира
+  let rules=resolveRules(date, dayKey);
+  if(rules.outsideSeason){ if(!confirm('Дата '+date+' не входит ни в один настроенный сезон.\nНачислить по правилам по умолчанию (+10 за участие)?\nДля точных правил сначала создайте сезон на этот период.')){ btn.disabled=false; btn.textContent='СОХРАНИТЬ ТУРНИР'; return; } }
+  let dayMax=rules.dayMax;
+  let bounty=isBountyDayKey(dayKey);
+  if(bounty){ let badKo=Array.from(document.querySelectorAll('#tournament-players .tp-ko')).some(inp=>!koInputValid(inp.value)); if(badKo){ showToast('⚠ Число выбиваний должно быть целым ≥ 0'); btn.disabled=false; btn.textContent='СОХРАНИТЬ ТУРНИР'; return; } }
   let rows=document.querySelectorAll('#tournament-players .tp-row');
   let entries=[];let seen=new Set();
   rows.forEach((row)=>{
@@ -1578,40 +2276,62 @@ async function saveTournament(){
     seen.add(player);
     let place = entries.length + 1; // место по числу уже добавленных, не по индексу строки
     let inTop=PLACE_PERCENT[place]!==undefined;
-    let pts=inTop?calcPoints(dayMax,place):15;
+    let koInput=row.querySelector('.tp-ko');
+    let knockouts=bounty?sanitizeKnockouts(koInput?koInput.value:0):0;
+    let pts=calcPoints(dayMax, inTop?place:'participation', {participation:rules.participation, isBountyDay:bounty, knockouts:knockouts, bountyPerKnockout:rules.bountyPerKnockout});
     let placeName=inTop?place+' место':'Участие';
     let dateParts=date.split('-');
     let entryMonthKey=dateParts.length===3?getMonthKey(parseInt(dateParts[1])-1,parseInt(dateParts[0])):getMonthKey(currentMonth,currentYear);
-    entries.push({player,points:pts,dayName,formatName,dayKey,dayMax,place:inTop?place:0,placeName,date,monthKey:entryMonthKey,ts:Date.now()*100+entries.length,type:'tournament_result',isBonus:false,rulesVersion:RATING_RULES_VERSION});
+    entries.push({player,points:pts,dayName,formatName,dayKey,dayMax,place:inTop?place:0,placeName,date,monthKey:entryMonthKey,ts:Date.now()*100+entries.length,type:'tournament_result',isBonus:false,rulesVersion:rules.rulesVersion,seasonId:rules.seasonId,knockouts:knockouts});
   });
   if(!entries.length){showToast('Добавь хотя бы одного игрока');btn.disabled=false;btn.textContent='СОХРАНИТЬ ТУРНИР';return;}
-  prevRating={};
+  // ── Защита от повторного сохранения одного турнира ──────────────
+  const _sig = date+'|'+dayKey+'|'+entries.map(e=>e.player).slice().sort().join(',');
+  const _dupCount = (db.results||[]).filter(r=>!r.isBonus && r.date===date && r.dayKey===dayKey && seen.has(r.player)).length;
+  const _looksDup = (window._savedTournamentSigs && window._savedTournamentSigs.has(_sig)) || _dupCount>=entries.length;
+  if(_looksDup){
+    // Б7: обычное повторное сохранение НЕ создаёт дубль — блокируем.
+    showToast('⛔ Турнир за '+date+' ('+dayName+') с этими игроками уже сохранён. Дубль не создаётся. Для исправления удалите прежние записи (кнопка «отмена» в истории) и внесите заново.');
+    btn.disabled=false; btn.textContent='СОХРАНИТЬ ТУРНИР'; return;
+  }
+  // Стабильный id записи и неизменяемый playerId; сервер перепроверит всё (очки, дубли, сезон)
+  for(const e of entries){
+    e.id = genResultId();
+    e.playerId = pidByName(e.player);
+    if(!e.playerId){ showToast('⚠ Игрок «'+e.player+'» не найден на сервере. Обновите страницу.'); btn.disabled=false; btn.textContent='СОХРАНИТЬ ТУРНИР'; return; }
+  }
+  prevRating=Object.create(null);
   getMonthRating(currentMonth,currentYear).forEach(([name],i)=>{prevRating[name]=i+1;});
   localStorage.setItem('obshestvo_prevRating',JSON.stringify(prevRating));
-  entries.forEach(e=>{db.results.push(e);});
-  saveCache(db); // local-first сразу
-  // Переключаем на месяц записей
-  if(date){let _mk=getMonthKey(new Date(date+'T12:00:00').getMonth(),new Date(date+'T12:00:00').getFullYear());let _p=_mk.split('-');if(_p.length===2){currentYear=parseInt(_p[0]);currentMonth=parseInt(_p[1])-1;}}
-  console.log('[saveTournament] entries added:', entries.length, 'total results:', db.results.length);
-  document.getElementById('tournament-players').innerHTML='';
-  document.getElementById('sel-day').value='';
-  tournamentRowCount=0;
-  renderRating();renderHistory();renderStats();
-  btn.textContent='СОХРАНЯЕМ В ОБЛАКО...';
-  const ok = await saveRatingCritical('rating:tournament_manual');
+  btn.textContent='СОХРАНЯЕМ НА СЕРВЕРЕ...';
+  const r = await sendOp('addResults', {results:entries}, 'Турнир '+date+' · '+entries.length+' игроков');
   btn.disabled=false;
   btn.textContent='СОХРАНИТЬ ТУРНИР';
-  if(ok) showToast('✅ Турнир сохранён в рейтинг и облако · '+entries.length+' игроков');
-  else showToast('⚠️ Турнир сохранён локально. Облако не ответило — попробуй ПОВТОРИТЬ.');
+  if(r.ok){
+    if(!window._savedTournamentSigs) window._savedTournamentSigs=new Set();
+    window._savedTournamentSigs.add(_sig);
+    if(date){let _mk=getMonthKey(new Date(date+'T12:00:00').getMonth(),new Date(date+'T12:00:00').getFullYear());let _p=_mk.split('-');if(_p.length===2){currentYear=parseInt(_p[0]);currentMonth=parseInt(_p[1])-1;}}
+    document.getElementById('tournament-players').innerHTML='';
+    document.getElementById('sel-day').value='';
+    tournamentRowCount=0;
+    renderAllViews();
+    showToast('✅ Турнир сохранён на сервере · '+entries.length+' игроков');
+  } else { renderAllViews(); opFailToast('Турнир', r); }
 }
 
 function updateQuickPreview(){
   let dayKey=document.getElementById('q-day').value;
   let place=document.getElementById('q-place').value;
   let preview=document.getElementById('q-preview');
+  let koRow=document.getElementById('q-ko-row');
+  let bounty=isBountyDayKey(dayKey);
+  if(koRow) koRow.style.display = bounty ? '' : 'none';
   if(dayKey&&place){
-    let dayMax=getDayMax(dayKey);
-    document.getElementById('q-pts').textContent=calcPoints(dayMax,place);
+    let rules=resolveRules(todayStr(), dayKey);
+    let koEl=document.getElementById('q-knockouts');
+    let ko=bounty?sanitizeKnockouts(koEl?koEl.value:0):0;
+    let pts=calcPoints(rules.dayMax, place, {participation:rules.participation, isBountyDay:bounty, knockouts:ko, bountyPerKnockout:rules.bountyPerKnockout});
+    document.getElementById('q-pts').textContent=pts;
     preview.style.display='block';
   } else { preview.style.display='none'; }
 }
@@ -1631,34 +2351,52 @@ async function quickAdd(){
     if(btn){btn.disabled=false;btn.textContent='НАЧИСЛИТЬ';}
     return;
   }
+  // ⛔ Запрет начисления в завершённый сезон (нужна процедура корректировки)
+  let _fz=frozenSeasonForDate(date);
+  if(_fz){ showToast('⛔ Дата '+date+' в завершённом сезоне «'+_fz.name+'». Начисление запрещено (нужна корректировка через Управление сезонами).'); if(btn){btn.disabled=false;btn.textContent='НАЧИСЛИТЬ';} return; }
   let dayKey=dayEl.value;
   let cfg=DAY_CONFIG[dayKey];
-  let dayMax=getDayMax(dayKey);
-  let pts=calcPoints(dayMax,placeEl.value);
+  let rules=resolveRules(date, dayKey);
+  if(rules.outsideSeason){ if(!confirm('Сегодняшняя дата не входит ни в один настроенный сезон.\nНачислить по правилам по умолчанию (+10)?')){ if(btn){btn.disabled=false;btn.textContent='НАЧИСЛИТЬ';} return; } }
+  let bounty=isBountyDayKey(dayKey);
+  let koEl=document.getElementById('q-knockouts');
+  if(bounty && koEl && !koInputValid(koEl.value)){ showToast('⚠ Число выбиваний должно быть целым ≥ 0'); if(btn){btn.disabled=false;btn.textContent='НАЧИСЛИТЬ';} return; }
+  let knockouts=bounty?sanitizeKnockouts(koEl?koEl.value:0):0; // валидное число выбиваний
+  let dayMax=rules.dayMax;
+  let pts=calcPoints(dayMax, placeEl.value, {participation:rules.participation, isBountyDay:bounty, knockouts:knockouts, bountyPerKnockout:rules.bountyPerKnockout});
   let dayName=cfg?cfg.dayName:dayEl.options[dayEl.selectedIndex].text.split(' (')[0];
   let formatName=cfg?cfg.formatName:'';
   let placeName=placeEl.options[placeEl.selectedIndex].text;
-  prevRating={};
+  // Защита от повторного начисления тому же игроку в тот же день/место
+  const _dupExists=(db.results||[]).some(r=>!r.isBonus && r.player===player && r.date===date && r.dayKey===dayKey && String(r.placeName||'')===String(placeName));
+  if(_dupExists){
+    // Б7: повторное начисление тому же игроку за тот же день/место — блок, без дубля.
+    showToast('⛔ «'+toDisplay(player)+'» уже получил начисление за '+date+' ('+dayName+', '+placeName+'). Дубль не создаётся. Для исправления удалите прежнюю запись (отмена) и внесите заново.');
+    if(btn){btn.disabled=false;btn.textContent='НАЧИСЛИТЬ';} return;
+  }
+  const pid = pidByName(player);
+  if(!pid){ showToast('⚠ Игрок не найден на сервере. Обновите страницу.'); if(btn){btn.disabled=false;btn.textContent='НАЧИСЛИТЬ';} return; }
+  prevRating=Object.create(null);
   getMonthRating(currentMonth,currentYear).forEach(([name],i)=>{prevRating[name]=i+1;});
   localStorage.setItem('obshestvo_prevRating',JSON.stringify(prevRating));
   let ts=Date.now();
   let dateParts=date.split('-');
   let monthKey=dateParts.length===3?getMonthKey(parseInt(dateParts[1])-1,parseInt(dateParts[0])):getMonthKey(currentMonth,currentYear);
-  db.results.push({player,points:pts,dayName,formatName,dayKey,dayMax,place:normalizePlace({placeName}),placeName,date,monthKey,ts,type:'tournament_result',isBonus:false,rulesVersion:RATING_RULES_VERSION});
-  saveCache(db);
-  console.log('[POINTS ADDED]', player, pts, 'results:', db.results.length);
-  // Переключаем текущий месяц на месяц начисления
-  if(monthKey){let _p=monthKey.split('-');if(_p.length===2){currentYear=parseInt(_p[0]);currentMonth=parseInt(_p[1])-1;}}
-  document.getElementById('q-player').value='';
-  document.getElementById('q-day').value='';
-  document.getElementById('q-place').value='';
-  document.getElementById('q-preview').style.display='none';
-  renderRating();renderHistory();renderStats();
+  const rec = {id:genResultId(), playerId:pid, player,points:pts,dayName,formatName,dayKey,dayMax,place:normalizePlace({placeName}),placeName,date,monthKey,ts,type:'tournament_result',isBonus:false,rulesVersion:rules.rulesVersion,seasonId:rules.seasonId,knockouts:knockouts};
   if(btn){btn.textContent='СОХРАНЯЕМ...';}
-  const ok = await saveRatingCritical('rating:quick_add');
+  const r = await sendOp('addResults', {results:[rec]}, player+' +'+pts);
   if(btn){btn.disabled=false;btn.textContent='НАЧИСЛИТЬ';}
-  if(ok) showToast('✅ '+player+' — +'+pts+' очков сохранены');
-  else showToast('⚠️ '+player+' — +'+pts+' очков. Облако не ответило — попробуй ПОВТОРИТЬ.');
+  if(r.ok){
+    if(monthKey){let _p=monthKey.split('-');if(_p.length===2){currentYear=parseInt(_p[0]);currentMonth=parseInt(_p[1])-1;}}
+    document.getElementById('q-player').value='';
+    document.getElementById('q-day').value='';
+    document.getElementById('q-place').value='';
+    if(koEl) koEl.value='0';
+    document.getElementById('q-ko-row').style.display='none';
+    document.getElementById('q-preview').style.display='none';
+    renderAllViews();
+    showToast('✅ '+player+' — +'+pts+' очков сохранены на сервере');
+  } else { renderAllViews(); opFailToast(player+' — +'+pts+' очков', r); }
 }
 
 async function awardMysteryBonus() {
@@ -1669,9 +2407,14 @@ async function awardMysteryBonus() {
   let comment=document.getElementById('mystery-comment').value.trim();
   if(!player||pts<=0){showToast('Заполни игрока и количество очков');return;}
   let date=todayStr();
+  let _fz=frozenSeasonForDate(date);
+  if(_fz){ showToast('⛔ Дата в завершённом сезоне «'+_fz.name+'» — бонус запрещён (нужна процедура корректировки).'); return; }
   let dateParts=date.split('-');
   let monthKey=dateParts.length===3?getMonthKey(parseInt(dateParts[1])-1,parseInt(dateParts[0])):getMonthKey(currentMonth,currentYear);
-  db.results.push({
+  const pid = pidByName(player);
+  if(!pid){ showToast('⚠ Игрок не найден на сервере. Обновите страницу.'); return; }
+  const rec = {
+    id:genResultId(), playerId:pid,
     player, points:pts,
     dayName:'Бонус', formatName:'Бонусные очки',
     dayKey:'bonus', dayMax:0,
@@ -1680,50 +2423,141 @@ async function awardMysteryBonus() {
     date, monthKey, ts:Date.now(),
     type:'bonus_points', isBonus:true,
     comment, rulesVersion:RATING_RULES_VERSION
-  });
-  saveCache(db);
-  renderRating(); renderHistory(); renderStats();
-  document.getElementById('mystery-points').value='10';
-  document.getElementById('mystery-comment').value='';
-  const ok = await saveRatingCritical('rating:bonus_points');
-  if(ok) showToast('🎁 '+player+' получил бонусные очки +'+pts);
-  else showToast('⚠️ Бонусные очки сохранены локально. Облако не ответило — попробуй ПОВТОРИТЬ.');
+  };
+  const r = await sendOp('addResults', {results:[rec]}, 'Бонус '+player+' +'+pts);
+  renderAllViews();
+  if(r.ok){
+    document.getElementById('mystery-points').value='10';
+    document.getElementById('mystery-comment').value='';
+    showToast('🎁 '+player+' получил бонусные очки +'+pts);
+  } else opFailToast('Бонусные очки', r);
 }
 
-async function undoByTs(ts){
+async function undoById(id){
   if(!canWriteNow()) return;
-  if(!db) return;
-  let idx=db.results.findIndex(r=>r.ts===ts);
-  if(idx===-1){showToast('Запись не найдена');return;}
-  // Используем markResultDeleted — stable ID + tombstone
-  const result = db.results[idx];
-  markResultDeleted(result);
-  saveCache(db);
-  prevRating={};
-  renderRating();renderHistory();renderStats();
-  const ok = await saveRatingCritical('rating:undo_ts');
-  if(ok) showToast('Запись удалена');
-  else showToast('⚠️ Запись удалена локально. Облако не ответило — попробуй ПОВТОРИТЬ.');
-}
-
-async function undoByPlayer(el){
-  if(!canWriteNow()) return;
-  if(!db) return;
-  let player = el.dataset.player;
-  let points = parseInt(el.dataset.points)||0;
-  let idx=db.results.findIndex(r=>r.player===player&&r.points===points&&!r.ts);
-  if(idx===-1){
-    let allMatches=db.results.reduce((acc,r,i)=>{if(r.player===player&&r.points===points)acc.push(i);return acc;},[]);
-    idx=allMatches.length?allMatches[allMatches.length-1]:-1;
+  const result = (db.results||[]).find(r=>r.id===id);
+  if(!result){ showToast('Запись не найдена'); return; }
+  const _blk = regularWriteBlock(resultDateISO(result));
+  if(_blk){
+    if(isOwnerSession() && !frozenSeasonForDate(resultDateISO(result))){ prefillCorrectionDelete(result); showToast('Запись историческая — открыта «Корректировка истории»: укажите причину и сделайте предпросмотр.'); }
+    else showToast('⛔ '+_blk);
+    return;
   }
-  if(idx===-1){showToast('Запись не найдена');return;}
-  markResultDeleted(db.results[idx]);
-  saveCache(db);
-  prevRating={};
-  renderRating();renderHistory();renderStats();
-  const ok = await saveRatingCritical('rating:undo_player');
-  if(ok) showToast('Запись удалена');
-  else showToast('⚠️ Запись удалена локально. Облако не ответило — попробуй ПОВТОРИТЬ.');
+  if(!confirm('Удалить запись?\n'+result.player+' · +'+result.points+' · '+(result.date?formatDate(result.date):''))) return;
+  prevRating=Object.create(null);
+  const r = await sendOp('deleteResults', {ids:[id]}, 'Удаление: '+result.player+' +'+result.points);
+  renderAllViews();
+  if(r.ok) showToast('Запись удалена (метка удаления сохранена на сервере)');
+  else opFailToast('Удаление записи', r);
+}
+// Совместимость со старыми вызовами
+async function undoByTs(ts){ const r=(db&&db.results||[]).find(x=>x.ts===ts); if(r) return undoById(r.id); showToast('Запись не найдена'); }
+async function undoByPlayer(el){
+  if(!db) return;
+  let player=el.dataset.player, points=parseInt(el.dataset.points)||0;
+  let m=(db.results||[]).filter(r=>r.player===player&&r.points===points);
+  if(!m.length){ showToast('Запись не найдена'); return; }
+  return undoById(m[m.length-1].id);
+}
+
+/* ══════════ ИГРОКИ И ПЕРЕИМЕНОВАНИЕ (V5 — НА СЕРВЕРЕ, ПО НЕИЗМЕНЯЕМОМУ playerId) ══════════
+   Каждый игрок имеет постоянный playerId. Переименование меняет только имя игрока на
+   сервере; все результаты, сезоны и снимки остаются за тем же playerId. Сервер проверяет
+   коллизии имён и ведёт историю прежних имён. Локальных оверлеев больше нет. */
+function toDisplay(name){ return name; }      // сервер уже отдаёт текущее имя по playerId
+function toCanonical(name){ return name; }
+function nameKey(s){ return String(s||'').replace(/\s+/g,' ').trim().toLowerCase().replace(/ё/g,'е'); }
+function allDisplayNames(){
+  let s=new Set();
+  ((db&&db.playersDetailed)?db.playersDetailed:[]).forEach(p=>s.add(p.name));
+  (db&&db.results?db.results:[]).forEach(r=>{ if(r&&r.player) s.add(r.player); });
+  return s;
+}
+
+function openRenamePlayer(name){
+  if(!canWriteNow()) return;
+  document.getElementById('rename-old').value=name;
+  document.getElementById('rename-current').value=name;
+  document.getElementById('rename-new').value=name;
+  let w=document.getElementById('rename-warn'); w.style.display='none'; w.textContent='';
+  document.getElementById('rename-modal').style.display='block';
+  setTimeout(()=>{ let i=document.getElementById('rename-new'); if(i){i.focus(); i.select();} },50);
+}
+function closeRenameModal(){ document.getElementById('rename-modal').style.display='none'; }
+
+function validateRename(displayOld, newName){
+  if(!newName) return {ok:false,msg:'Введите новое имя.'};
+  if(newName.length>MAX_NICK_LEN) return {ok:false,msg:'Имя не должно превышать '+MAX_NICK_LEN+' символов.'};
+  if(newName===displayOld) return {ok:false,msg:'same'};
+  const pidOld = pidByName(displayOld);
+  const clash = ((db&&db.playersDetailed)||[]).find(p=>p.id!==pidOld && nameKey(p.name)===nameKey(newName));
+  if(clash) return {ok:false,msg:'Имя «'+clash.name+'» уже существует. Переименование объединило бы истории двух игроков — это отдельная операция. Выберите другое имя.'};
+  return {ok:true};
+}
+async function confirmRenamePlayer(){
+  if(!canWriteNow()) return;
+  if(!db){ showToast('Нет данных'); return; }
+  let displayOld=document.getElementById('rename-old').value;
+  let newName=document.getElementById('rename-new').value.trim();
+  let w=document.getElementById('rename-warn');
+  let v=validateRename(displayOld,newName);
+  if(!v.ok){ if(v.msg==='same'){ closeRenameModal(); return; } w.style.display='block'; w.textContent=v.msg; return; }
+  const pid = pidByName(displayOld);
+  if(!pid){ w.style.display='block'; w.textContent='Игрок не найден на сервере. Обновите страницу.'; return; }
+  const changed = (db.results||[]).filter(r=>r.playerId===pid).length;
+  const r = await sendOp('renamePlayer', {playerId:pid, expectedName:displayOld, newName}, 'Переименование «'+displayOld+'» → «'+newName+'»');
+  if(r.ok){
+    closeRenameModal(); renderAllViews();
+    showToast('✅ «'+displayOld+'» → «'+newName+'» · записей за игроком: '+changed+' (история сохранена)');
+  } else { w.style.display='block'; w.textContent=(r.message||r.error||'Не удалось'); }
+}
+
+function renderUnsyncedBanner(){
+  let host=document.getElementById('unsynced-banner'); if(!host) return;
+  const list = getOutbox();
+  if(!list.length){ host.innerHTML=''; return; }
+  const items = list.map(e=>{
+    let when=''; try{ when=new Date(e.createdAt).toLocaleString('ru-RU',{timeZone:'Europe/Moscow'}); }catch(_){ when=e.createdAt; }
+    const st = e.status==='conflict' ? 'конфликт' : (e.status==='pending' ? 'ожидает подтверждения' : 'не подтверждена');
+    return '<li>'+escHtml(e.label||e.type)+' · '+escHtml(when)+' · <b>'+st+'</b>'+(e.lastError?(' — '+escHtml(e.lastError)):'')+'</li>';
+  }).join('');
+  host.innerHTML=`<div style="font-size:10px;color:#E0A848;background:rgba(224,168,72,0.12);border:1px solid rgba(224,168,72,0.4);border-radius:6px;padding:8px;margin-bottom:10px;line-height:1.5;">
+    ⚠ Операции, НЕ подтверждённые сервером (${list.length}). В рейтинге они не учтены.
+    <ul style="margin:6px 0 0 16px;padding:0;">${items}</ul>
+    <div style="margin-top:6px;display:flex;gap:6px;"><button class="btn-sm" onclick="resendUnsynced()">Повторить отправку</button><button class="btn-sm" onclick="discardUnsynced()">Отменить операции</button></div></div>`;
+}
+async function resendUnsynced(){
+  if(!canWriteNow()) return;
+  const r = await flushOutbox();
+  showToast(r.bad ? ('⚠ Подтверждено: '+r.ok+', не подтверждено: '+r.bad) : ('✅ Подтверждено сервером: '+r.ok));
+}
+function discardUnsynced(){
+  const n = getOutbox().length;
+  if(!n) return;
+  if(!confirm('Отменить '+n+' неподтверждённых операций? Они НЕ будут отправлены на сервер.')) return;
+  saveOutbox([]); markUnsynced(false); renderUnsyncedBanner(); setSyncBar('ok');
+}
+
+function renderRenameLog(){
+  let host=document.getElementById('rename-log'); if(!host) return;
+  const renamed = ((db&&db.playersDetailed)||[]).filter(p=>p.previousNames && p.previousNames.length);
+  if(!renamed.length){ host.innerHTML=''; return; }
+  host.innerHTML='<div style="font-size:9px;color:var(--gold3);letter-spacing:2px;margin-bottom:6px;">ПЕРЕИМЕНОВАНИЯ (журнал на сервере)</div>'+
+    renamed.map(p=>{
+      const prev = p.previousNames[p.previousNames.length-1];
+      const taken = ((db&&db.playersDetailed)||[]).some(x=>x.id!==p.id && nameKey(x.name)===nameKey(prev));
+      const btn = !taken ? `<button class="btn-sm" onclick="revertRename(this.dataset.c,this.dataset.t)" data-c="${escHtml(p.name)}" data-t="${escHtml(prev)}">вернуть «${escHtml(prev)}»</button>` : '';
+      return `<div class="history-item"><div><div class="hi-detail">${p.previousNames.map(escHtml).join(' → ')} → ${escHtml(p.name)}</div><div class="hi-date">записей: ${(db.results||[]).filter(r=>r.playerId===p.id).length}</div></div>${btn}</div>`;
+    }).join('');
+}
+async function revertRename(curDisplay, toName){
+  if(!canWriteNow()) return;
+  const v = validateRename(curDisplay, toName);
+  if(!v.ok){ showToast('⚠ '+(v.msg==='same'?'Имя не изменилось':v.msg)); return; }
+  if(!confirm('Вернуть прежнее имя: «'+curDisplay+'» → «'+toName+'»?')) return;
+  const r = await sendOp('renamePlayer', {playerId:pidByName(curDisplay), expectedName:curDisplay, newName:toName}, 'Откат имени «'+curDisplay+'» → «'+toName+'»');
+  renderAllViews();
+  if(r.ok) showToast('↩ «'+curDisplay+'» → «'+toName+'»'); else opFailToast('Откат имени', r);
 }
 
 async function addPlayer(){
@@ -1731,14 +2565,15 @@ async function addPlayer(){
   let input=document.getElementById('new-player-input');
   let name=input.value.trim();
   if(!name) return;
-  if(name.length>12){showToast('Имя не должно превышать 12 символов');return;}
-  if(!db){ showToast('Нет соединения с облаком'); return; }
-  if(db.players.includes(name)){showToast('Игрок уже есть');return;}
-  db.players.push(name);
-  input.value='';
-  renderPlayers();
-  showToast('✅ «'+name+'» добавлен в базу игроков.');
-  await saveToCloud('players:add');
+  if(name.length>MAX_NICK_LEN){showToast('Имя не должно превышать '+MAX_NICK_LEN+' символов');return;}
+  if(!db){ showToast('Нет соединения с сервером'); return; }
+  if((db.players||[]).some(p=>nameKey(p)===nameKey(name))){showToast('Игрок уже есть');return;}
+  const r = await sendOp('addPlayer', {name}, 'Новый игрок «'+name+'»');
+  if(r.ok){
+    input.value='';
+    renderAllViews();
+    showToast(r.result && r.result.reactivated ? ('✅ «'+name+'» возвращён в список — прежняя история сохранена') : ('✅ «'+name+'» добавлен на сервер'));
+  } else opFailToast('Игрок «'+name+'»', r);
 }
 
 async function removePlayer(el){
@@ -1746,21 +2581,88 @@ async function removePlayer(el){
   if(!db) return;
   let name=(el&&el.dataset)?el.dataset.name:String(el);
   if(!name) return;
-  if(!confirm('Удалить игрока «'+name+'»?\nЭто не удалит его результаты из рейтинга.')) return;
-  db.players=db.players.filter(p=>p!==name);
-  renderPlayers();
-  const ok=await saveRatingCritical('players:remove');
-  if(ok) showToast('Игрок удалён');
-  else showToast('⚠️ Игрок удалён локально. Облако не ответило — попробуй ПОВТОРИТЬ.');
+  const pid = pidByName(name);
+  if(!pid){ showToast('Игрок не найден на сервере. Обновите страницу.'); return; }
+  if(!confirm('Убрать игрока «'+name+'» из списка?\nЕго результаты в рейтинге сохранятся; при повторном добавлении история восстановится.')) return;
+  const r = await sendOp('removePlayer', {playerId:pid}, 'Удаление игрока «'+name+'»');
+  renderAllViews();
+  if(r.ok) showToast('Игрок убран из списка'); else opFailToast('Удаление игрока', r);
 }
 
 async function saveAnnouncement(){
   if(!canWriteNow()) return;
-  if(!db){showToast('Нет связи с облаком');return;}
-  db.announcement=document.getElementById('ann-input').value.trim();
-  await saveToCloud('announcement:save');
+  if(!db){showToast('Нет связи с сервером');return;}
+  const text = document.getElementById('ann-input').value.trim();
+  const r = await sendOp('setAnnouncement', {text}, 'Объявление');
   renderRating();
-  showToast('✓ Объявление сохранено');
+  if(r.ok) showToast('✓ Объявление сохранено на сервере');
+  else opFailToast('Объявление', r);
+}
+
+let _corrPending = null;
+function renderCorrectionPanel(){
+  const sec = document.getElementById('correction-section'); if(!sec) return;
+  const own = isOwnerSession();
+  sec.style.display = own ? 'block' : 'none';
+  if(!own || !db) return;
+  document.getElementById('corr-lock').textContent = db.historyLockBefore ? formatDate(db.historyLockBefore) : 'не задан';
+  const del = document.getElementById('corr-action').value === 'delete';
+  document.getElementById('corr-add-fields').style.display = del ? 'none' : 'block';
+  document.getElementById('corr-del-fields').style.display = del ? 'block' : 'none';
+  const sel = document.getElementById('corr-player'); const cur = sel.value;
+  sel.innerHTML = '<option value="">— игрок —</option>' + (db.playersDetailed||[]).map(p=>'<option value="'+escHtml(p.id)+'">'+escHtml(p.name)+(p.active?'':' (не в списке)')+'</option>').join('');
+  sel.value = cur;
+}
+function prefillCorrectionDelete(result){
+  document.getElementById('corr-action').value = 'delete';
+  document.getElementById('corr-id').value = result.id;
+  document.getElementById('corr-preview').innerHTML = '';
+  _corrPending = null;
+  renderCorrectionPanel();
+  const sec = document.getElementById('correction-section'); if(sec && sec.scrollIntoView) sec.scrollIntoView({behavior:'smooth'});
+}
+function correctionData(){
+  const action = document.getElementById('corr-action').value;
+  const reason = document.getElementById('corr-reason').value.trim();
+  if(action === 'delete') return {action, resultId: document.getElementById('corr-id').value.trim(), reason};
+  return {action, reason, record:{ playerId: document.getElementById('corr-player').value, date: document.getElementById('corr-date').value, points: parseInt(document.getElementById('corr-points').value, 10) }};
+}
+async function correctionPreview(){
+  if(!canWriteNow()) return;
+  const out = document.getElementById('corr-preview');
+  const data = correctionData();
+  if(data.reason.length < 10){ out.innerHTML = '<div style="color:#C0404A;font-size:11px;">Укажите причину — от 10 символов.</div>'; return; }
+  _corrPending = null;
+  out.innerHTML = '<div style="font-size:11px;color:var(--text3);">Предпросмотр на сервере…</div>';
+  await refreshState();
+  let r;
+  try { r = await postToServer({action:'op', session:getSession().token, clientVersion:APP_VERSION, op:{type:'historyCorrection', requestId:genRequestId(), baseRevision:db.revision, data}}, 30000); }
+  catch(e){ out.innerHTML = '<div style="color:#C0404A;font-size:11px;">Нет связи с сервером.</div>'; return; }
+  if(!r.ok || !r.preview){ out.innerHTML = '<div style="color:#C0404A;font-size:11px;">'+escHtml((r.error||'')+': '+(r.message||''))+'</div>'; return; }
+  const b = r.result.before, a = r.result.after;
+  const row = (t, x, y)=>'<tr><td style="padding:3px 6px;">'+t+'</td><td style="padding:3px 6px;text-align:right;">'+x+'</td><td style="padding:3px 6px;text-align:right;">'+y+'</td></tr>';
+  out.innerHTML = '<div style="font-size:11px;line-height:1.5;">'+escHtml((data.action==='add'?'Добавить ':'Удалить запись ')+(r.result.player?('· '+r.result.player+' '):'')+'· месяц '+b.month)+
+    '<table style="width:100%;border-collapse:collapse;margin:6px 0;font-size:11px;"><tr><th></th><th style="text-align:right;">ДО</th><th style="text-align:right;">ПОСЛЕ</th></tr>'+
+    row('Игрок за месяц', b.playerMonthPoints, a.playerMonthPoints)+row('Игрок за всё время', b.playerAllTimePoints, a.playerAllTimePoints)+
+    row('Все игроки за месяц', b.monthTotalPoints, a.monthTotalPoints)+row('Записей за месяц', b.monthRecords, a.monthRecords)+'</table>'+
+    '<button class="btn-gold" onclick="correctionApply()">ПРИМЕНИТЬ ЭТОТ ПРЕДПРОСМОТР</button></div>';
+  _corrPending = {data, previewHash: r.result.previewHash};
+}
+async function correctionApply(){
+  if(!_corrPending) return;
+  if(!confirm('Применить корректировку истории? Она будет записана в журнал с вашей причиной.')) return;
+  const p = _corrPending; _corrPending = null;
+  const r = await sendOp('historyCorrection', Object.assign({}, p.data, {previewHash:p.previewHash}), 'Корректировка истории');
+  const out = document.getElementById('corr-preview');
+  if(r.ok){
+    out.innerHTML = '<div style="color:#7CCB8E;font-size:11px;">✓ Корректировка применена и записана в журнал.</div>';
+    document.getElementById('corr-reason').value = ''; document.getElementById('corr-points').value = ''; document.getElementById('corr-id').value = '';
+    renderAllViews();
+    showToast('✅ Корректировка истории применена');
+  } else {
+    out.innerHTML = '<div style="color:#C0404A;font-size:11px;">'+escHtml(r.error==='PREVIEW_STALE' ? 'Данные изменились после предпросмотра — сделайте предпросмотр заново.' : ((r.error||'')+': '+(r.message||'')))+'</div>';
+    opFailToast('Корректировка истории', r);
+  }
 }
 
 function exportCSV(){
@@ -1787,34 +2689,54 @@ function showToast(msg){
   setTimeout(()=>{ if(t) t.style.display='none'; },2500);
 }
 
-async function checkPin(){
-  let val=document.getElementById('pin-input').value;
-  if(val===getPin()){
-    document.getElementById('admin-lock-screen').style.display='none';
-    document.getElementById('admin-content').style.display='block';
-    document.getElementById('sel-date').value=todayStr();
-    setSyncBar('loading');
-    let ok=await loadFromCloudWithRetry(1, false);
-    if(ok){
-      setSyncBar('ok');
-      if(db.announcement) document.getElementById('ann-input').value=db.announcement;
-      if(db.seating && db.seating.tables) {
-        // Если есть сохранённый список игроков (до генерации рассадки) — используем его
-        if(db.seating.playerList && db.seating.playerList.length) {
-        }
-      }
-      renderPlayers();renderHistory();renderStats();renderRating();
-
-      // OLD LIVE DISABLED — TV/таймер вынесены в отдельный модуль
-      // Live autosave и восстановление отключены намеренно.
-    } else {
-      setSyncBar('err');
-      showToast('Нет связи с облаком — проверь интернет');
-    }
-  } else {document.getElementById('pin-error').style.display='block';}
+async function checkPin(){ return adminLogin(); }
+async function adminLogin(){
+  const loginEl=document.getElementById('admin-login');
+  const pwEl=document.getElementById('pin-input');
+  const errEl=document.getElementById('pin-error');
+  errEl.style.display='none';
+  const login=(loginEl?loginEl.value:'').trim().toLowerCase();
+  const password=pwEl.value;
+  if(!GS_URL_IS_SET){ errEl.textContent='НЕ ЗАДАН АДРЕС СЕРВЕРА'; errEl.style.display='block'; return; }
+  if(!login||!password){ errEl.textContent='ВВЕДИТЕ ЛОГИН И ПАРОЛЬ'; errEl.style.display='block'; return; }
+  let r;
+  try { r = await postToServer({action:'login', login, password}, 30000); }
+  catch(e){ errEl.textContent='НЕТ СВЯЗИ С СЕРВЕРОМ'; errEl.style.display='block'; return; }
+  pwEl.value='';
+  if(!r.ok){
+    errEl.textContent = r.error==='AUTH_LOCKED' ? 'ВХОД ВРЕМЕННО ЗАБЛОКИРОВАН (15 МИН)' : 'НЕВЕРНЫЙ ЛОГИН ИЛИ ПАРОЛЬ';
+    errEl.style.display='block'; return;
+  }
+  setSession({token:r.session, login:r.login, role:r.role, expiresAt:r.expiresAt});
+  await openAdminPanel();
+}
+async function openAdminPanel(){
+  document.getElementById('admin-lock-screen').style.display='none';
+  document.getElementById('admin-content').style.display='block';
+  document.getElementById('sel-date').value=todayStr();
+  setSyncBar('loading');
+  let ok=await loadFromCloudWithRetry(1, false);
+  if(ok){
+    isReadOnlyCacheMode=false;
+    setSyncBar(getOutbox().length ? 'err' : 'ok');
+    if(db.announcement) document.getElementById('ann-input').value=db.announcement;
+    renderAllViews();
+  } else {
+    setSyncBar('err');
+    showToast('Нет связи с сервером — '+(_lastLoadError||'проверь интернет'));
+  }
+}
+function requireRelogin(){
+  setSession(null);
+  const lock=document.getElementById('admin-lock-screen'), content=document.getElementById('admin-content');
+  if(lock && content && content.style.display!=='none'){ lock.style.display='block'; content.style.display='none'; }
+  showToast('Сессия администратора истекла — войдите снова. Неподтверждённые операции сохранены в очереди.');
 }
 
 function logout(){
+  const s=getSession();
+  if(s && GS_URL_IS_SET){ postToServer({action:'logout', session:s.token}, 10000).catch(()=>{}); }
+  setSession(null);
   document.getElementById('admin-lock-screen').style.display='block';
   document.getElementById('admin-content').style.display='none';
   document.getElementById('pin-input').value='';
@@ -1832,22 +2754,29 @@ function logout(){
   if(qBtn){qBtn.disabled=false;qBtn.textContent='НАЧИСЛИТЬ';}
 }
 
-function changePin(){
+async function changePin(){
   let current=document.getElementById('pin-current').value;
   let newPin=document.getElementById('pin-new').value;
-  let confirm=document.getElementById('pin-confirm').value;
+  let confirm2=document.getElementById('pin-confirm').value;
   let errEl=document.getElementById('pin-change-error');
   errEl.style.display='none';
-  if(current!==getPin()){errEl.textContent='ТЕКУЩИЙ КОД НЕВЕРНЫЙ';errEl.style.display='block';return;}
-  if(newPin.length!==6||!/^\d{6}$/.test(newPin)){errEl.textContent='КОД ДОЛЖЕН БЫТЬ 6 ЦИФР';errEl.style.display='block';return;}
-  if(newPin!==confirm){errEl.textContent='КОДЫ НЕ СОВПАДАЮТ';errEl.style.display='block';return;}
-  localStorage.setItem('obshestvo_pin',newPin);
+  if(newPin.length<12){errEl.textContent='ПАРОЛЬ НЕ КОРОЧЕ 12 СИМВОЛОВ';errEl.style.display='block';return;}
+  if(newPin!==confirm2){errEl.textContent='ПАРОЛИ НЕ СОВПАДАЮТ';errEl.style.display='block';return;}
+  const s=getSession();
+  if(!s){ requireRelogin(); return; }
+  let r;
+  try { r = await postToServer({action:'changePassword', session:s.token, oldPassword:current, newPassword:newPin}, 30000); }
+  catch(e){ errEl.textContent='НЕТ СВЯЗИ С СЕРВЕРОМ'; errEl.style.display='block'; return; }
+  if(!r.ok){ errEl.textContent = r.error==='AUTH_FAILED' ? 'ТЕКУЩИЙ ПАРОЛЬ НЕВЕРНЫЙ' : (r.message||r.error); errEl.style.display='block'; return; }
   document.getElementById('pin-current').value='';
   document.getElementById('pin-new').value='';
   document.getElementById('pin-confirm').value='';
-  showToast('✓ PIN-код изменён');
+  // Сервер отозвал все сессии этого аккаунта, включая текущую
+  setSession(null);
+  document.getElementById('admin-lock-screen').style.display='block';
+  document.getElementById('admin-content').style.display='none';
+  showToast('✓ Пароль изменён. Все сессии этого аккаунта завершены — войдите с новым паролем.');
 }
-
 
 // ── СОХРАНЕНИЕ РЕЗУЛЬТАТОВ ТУРНИРА В РЕЙТИНГ ───────────────
 // ── ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ (совместимость с confirmSaveResults) ──
@@ -1866,28 +2795,32 @@ async function confirmSaveResults() {
   document.getElementById('final-standings-modal').style.display = 'none';
   if(!_pendingSaveEntries || !db){ delete actionLocks['saveTournament']; return; }
   let {date, dayName, formatName, dayKey, dayMax, monthKey} = _pendingSaveMeta;
+  let _fz=frozenSeasonForDate(date);
+  if(_fz){ showToast('⛔ Дата в завершённом сезоне «'+_fz.name+'» — начисление запрещено (нужна корректировка).'); _pendingSaveEntries=null; _pendingSaveMeta=null; delete actionLocks['saveTournament']; return; }
   let allEntries = _pendingSaveEntries;
   _pendingSaveEntries = null; _pendingSaveMeta = null;
 
-  prevRating={};
+  prevRating=Object.create(null);
   getMonthRating(currentMonth,currentYear).forEach(([name],i)=>{prevRating[name]=i+1;});
   localStorage.setItem('obshestvo_prevRating',JSON.stringify(prevRating));
   let ts = Date.now()*100;
-  allEntries.forEach(e=>{
+  let liveRules = resolveRules(date, dayKey); // привязка к сезону по дате
+  const recs = [];
+  for(const e of allEntries){
+    const pid = pidByName(e.name);
+    if(!pid){ showToast('⚠ Игрок «'+e.name+'» не найден на сервере. Обновите страницу.'); delete actionLocks['saveTournament']; return; }
     let inTop = PLACE_PERCENT[e.place] !== undefined;
-    db.results.push({player:e.name, points:e.pts, dayName, formatName:formatName||'',
+    recs.push({id:genResultId(), playerId:pid, player:e.name, points:e.pts, dayName, formatName:formatName||'',
       dayKey:dayKey||'', dayMax:dayMax||0,
       place: inTop ? e.place : 0,
       placeName: inTop ? e.place+' место' : 'Участие',
       date, monthKey, ts:ts++, type:'tournament_result', isBonus:false,
-      rulesVersion:RATING_RULES_VERSION});
-  });
-  renderRating(); renderHistory(); renderStats();
-  saveCache(db); // local-first сразу
-  console.log('[confirmSaveResults] added', allEntries.length, 'entries, total results:', db.results.length);
-  const ok = await saveRatingCritical('rating:live_results');
-  if(ok) showToast('✅ Результаты сохранены в рейтинг и облако — '+allEntries.length+' игроков');
-  else showToast('⚠️ Результаты сохранены локально. Облако не ответило — попробуй ПОВТОРИТЬ.');
+      rulesVersion:liveRules.rulesVersion, seasonId:liveRules.seasonId});
+  }
+  const r = await sendOp('addResults', {results:recs}, 'Результаты турнира '+date);
+  renderAllViews();
+  if(r.ok) showToast('✅ Результаты сохранены на сервере — '+recs.length+' игроков');
+  else opFailToast('Результаты', r);
   window.cinematicPlayed = false;
   delete actionLocks['saveTournament'];
 }
@@ -1901,14 +2834,15 @@ function renderAllTime() {
 
   if(!Array.isArray(db.results)) db.results = [];
 
-  let map={};
+  let map=Object.create(null);
   db.results.forEach(r=>{
     if(!r||!r.player) return;
-    if(!map[r.player])map[r.player]={points:0,games:0,wins:0,months:new Set()};
-    map[r.player].points += Number(r.points||0);
-    map[r.player].games += 1;
-    if(normalizePlace(r)===1||(r.placeName&&r.placeName.includes('1 место')))map[r.player].wins+=1;
-    if(r.monthKey)map[r.player].months.add(r.monthKey);
+    const nm = toDisplay(r.player); // отображаемое имя (оверлей переименования)
+    if(!map[nm])map[nm]={points:0,games:0,wins:0,months:new Set()};
+    map[nm].points += Number(r.points||0);
+    if(!r.isBonus) map[nm].games += 1; // бонусы не считаются играми (как в getMonthRating)
+    if(normalizePlace(r)===1||(r.placeName&&r.placeName.includes('1 место')))map[nm].wins+=1;
+    if(getResultMonthKey(r))map[nm].months.add(getResultMonthKey(r));
   });
   let alltime=Object.entries(map).sort((a,b)=>b[1].points-a[1].points);
 
@@ -1945,18 +2879,31 @@ function renderAllTime() {
 }
 
 // ── SHARE RATING ──
+const PUBLIC_URL = 'https://joshik209.github.io/obshestvo-poker/obshestvo_rating.html';
 function shareRating() {
-  let rating=getMonthRating(currentMonth,currentYear);
+  let rating, title, header, topN;
+  if(ratingView==='season'){
+    let season=getViewSeason();
+    rating = season ? seasonRatingForView(season) : [];
+    topN = season ? (Math.max(1,parseInt(season.finalistCount)||20)) : 20;
+    title = season ? season.name : 'Рейтинг сезона';
+    header = '🏆 '+(season?season.name:'Рейтинг клуба ОБЩЕСТВО');
+  } else {
+    rating = getMonthRating(currentMonth,currentYear);
+    topN = 10;
+    title = 'Общество — Рейтинг';
+    header = '🏆 Рейтинг клуба ОБЩЕСТВО — '+MONTHS[currentMonth]+' '+currentYear;
+  }
   if(!rating.length){showToast('Нет данных для отправки');return;}
-  let text='🏆 Рейтинг клуба ОБЩЕСТВО — '+MONTHS[currentMonth]+' '+currentYear+'\n\n';
-  rating.slice(0,10).forEach(([name,d],i)=>{
+  let text=header+'\n\n';
+  rating.slice(0,topN).forEach(([name,d],i)=>{
     let medals=['🥇','🥈','🥉'];
     let medal=i<3?medals[i]:(i+1)+'.';
     text+=medal+' '+name+' — '+d.points+' очков\n';
   });
-  text+='\nobshestvo-poker.ru';
+  text+='\n'+PUBLIC_URL;
   if(navigator.share){
-    navigator.share({title:'Общество — Рейтинг',text}).catch(()=>{});
+    navigator.share({title:title,text}).catch(()=>{});
   } else {
     navigator.clipboard.writeText(text).then(()=>showToast('✓ Скопировано в буфер')).catch(()=>showToast('Используй кнопку Share в браузере'));
   }
@@ -2008,8 +2955,36 @@ function showPage(name,btn){
 }
 
 // Кэш рейтинга отключён специально. Источник правды — только облако.
-function saveCache(data){ }
-function loadCache(){ return null; }
+// ── ЛОКАЛЬНЫЙ КЭШ (реальная запись, честные сообщения) ──────────
+// Пишем снимок в localStorage как страховку. НЕ авто-загружаем его поверх
+// облака (loadCache используется только для ручного восстановления).
+const RATING_CACHE_KEY = 'obshestvo_v5_state_copy';
+const UNSYNCED_KEY = 'obshestvo_v5_unsynced';
+let _lastLocalSaveOk = false;
+function saveCache(data){
+  try{
+    localStorage.setItem(RATING_CACHE_KEY, JSON.stringify({savedAt:new Date().toISOString(), data:data}));
+    _lastLocalSaveOk = true; return true;
+  }catch(e){ console.warn('[saveCache] НЕ удалось сохранить локально:', e.message); _lastLocalSaveOk=false; return false; }
+}
+function loadCache(){
+  try{ const raw=localStorage.getItem(RATING_CACHE_KEY); if(!raw) return null; const o=JSON.parse(raw); return (o&&o.data)?o.data:null; }
+  catch(e){ return null; }
+}
+function markUnsynced(on){
+  try{ if(on) localStorage.setItem(UNSYNCED_KEY, new Date().toISOString()); else localStorage.removeItem(UNSYNCED_KEY); }catch(e){}
+}
+function getUnsynced(){ try{ return localStorage.getItem(UNSYNCED_KEY); }catch(e){ return null; } }
+// High-water-mark: максимум числа результатов, который мы когда-либо видели в облаке.
+// Нужен, чтобы отличить реальную пустую базу от усечённого/битого ответа (Б4).
+const HWM_KEY = 'obshestvo_hwm_count';
+function getHwm(){ try{ return parseInt(localStorage.getItem(HWM_KEY))||0; }catch(e){ return 0; } }
+function setHwm(n){ try{ if(n>getHwm()) localStorage.setItem(HWM_KEY, String(n)); }catch(e){} }
+// Честное сообщение, когда облако НЕ подтвердило сохранение
+function cloudFailToast(what){
+  if(_lastLocalSaveOk) showToast('⚠️ '+what+': НЕ подтверждено облаком. Сохранено только в этом браузере — не закрывайте вкладку и нажмите ПОВТОРИТЬ.');
+  else showToast('❌ '+what+': НЕ сохранено (нет облака и локального сохранения). Повторите.');
+}
 
 async function fetchWithTimeout(url, options, timeoutMs){
   timeoutMs = timeoutMs || 7000;
@@ -2036,7 +3011,7 @@ async function loadFromCloudWithRetry(retries, allowCache){
   gsAlive=false;
   isReadOnlyCacheMode=true;
   setSyncBar('err');
-  showToast('⚠️ Нет связи с облаком. Данные не показаны, чтобы не открыть старый рейтинг.');
+  showToast('⚠️ Нет связи с сервером ('+(_lastLoadError||'?')+'). Данные не показаны, чтобы не открыть старый рейтинг.');
   return false;
 }
 
@@ -2044,21 +3019,12 @@ async function loadFromCloudWithRetry(retries, allowCache){
 let adminPressTimer = null;
 // ── ДИАГНОСТИКА из консоли ─────────────────────────────────────
 window.checkCloud = async function(){
-  console.log('LOCAL results:', db ? db.results.length : 'no db');
-  const res = await fetch(GS_URL+'?token='+GS_TOKEN+'&_='+Date.now(), {cache:'no-store'});
-  const cloud = await res.json();
-  console.log('CLOUD results:', (cloud.results||[]).length);
-  console.log('LOCAL last:', db&&db.results ? db.results[db.results.length-1] : null);
-  console.log('CLOUD last:', (cloud.results||[])[(cloud.results||[]).length-1]);
-  return cloud;
+  const st = await fetchServerState();
+  console.log('СЕРВЕР: ревизия', st.revision, '· записей', st.results.length, '· сумма', st.integrity.pointsTotal, '· среда', st.env);
+  console.log('ЛОКАЛЬНО: ревизия', db?db.revision:'—', '· очередь', getOutbox().length);
+  return st;
 };
-
-window.forceCloudSave = async function(){
-  console.log('Force saving', db ? db.results.length : 0, 'results...');
-  const ok = await saveRatingCritical('rating:forceCloudSave');
-  if(ok) return await window.checkCloud();
-  return null;
-};
+window.forceCloudSave = async function(){ return flushOutbox(); };
 
 document.addEventListener('DOMContentLoaded', function(){
   let titleEl = document.getElementById('secret-title');
@@ -2092,7 +3058,7 @@ document.addEventListener('DOMContentLoaded', function(){
   titleEl.addEventListener('touchcancel', cancelPress, {passive:true});
 });
 
-document.getElementById('pin-input').addEventListener('keyup',e=>{if(e.key==='Enter')checkPin();});
+document.getElementById('pin-input').addEventListener('keyup',e=>{if(e.key==='Enter')adminLogin();});
 
 let touchStartX=0;
 document.getElementById('page-rating').addEventListener('touchstart',e=>{touchStartX=e.touches[0].clientX;},{passive:true});
@@ -2117,57 +3083,22 @@ function hideLoadingScreen(){
   el.style.opacity='0';
   setTimeout(()=>{el.style.display='none';},500);
 }
-
-initParticles();
-loadFromCloudWithRetry().then(ok=>{
-  if(!ok){
-    document.getElementById('rating-content').innerHTML='<div class="empty-state"><div class="big">⚠️</div><p>Не удалось загрузить данные.<br>Проверь интернет и обнови страницу.</p></div>';
-  }
-  renderRating();
-  hideLoadingScreen();
-});
-
+// (Дубликат init-блока удалён — единственная инициализация ниже, в «// ── INIT ──».)
 
 // ── ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ──────────────────────────────────
 
 function updateTournamentForm(){
   renderTournamentRows();
+  // Показать поле выбиваний в строках только для баунти-дня (воскресенье)
+  let koDay=isBountyDayKey(document.getElementById('sel-day').value);
+  document.querySelectorAll('#tournament-players .tp-ko').forEach(inp=>{
+    inp.style.display = koDay ? 'inline-block' : 'none';
+    if(!koDay) inp.value='0';
+  });
 }
 
 
-async function saveRatingCritical(source){
-  if(!db){return false;}
-  // Блокируем сохранение в режиме кэша
-  if(isReadOnlyCacheMode){
-    console.warn('[SAVE BLOCKED] cache-only mode, source:', source);
-    showToast('⚠️ Сохранение запрещено — нет связи с облаком. Обнови страницу.');
-    return false;
-  }
-  // Блокируем старые вкладки
-  if(sessionStorage.getItem('obshestvo_app_version') !== APP_VERSION){
-    console.warn('[SAVE BLOCKED] old tab version');
-    showToast('⚠️ Старая вкладка. Обнови страницу перед сохранением.');
-    return false;
-  }
-  saveCache(db);
-  console.log('[RATING SAVE] start', source, 'results:', db.results.length);
-  let waitStart=Date.now();
-  while(_saveInProgress && Date.now()-waitStart<10000){
-    await new Promise(r=>setTimeout(r,200));
-  }
-  try{
-    await _doSaveToCloud(source);
-    saveCache(db);
-    setSyncBar('ok');
-    console.log('[RATING SAVE] OK', source, 'results:', db.results.length);
-    return true;
-  }catch(e){
-    console.error('[RATING SAVE] FAILED', source, e.message);
-    saveCache(db);
-    setSyncBar('err');
-    return false;
-  }
-}
+// saveRatingCritical — УДАЛЕНА в V5 (полный снимок больше не отправляется).
 
 
 // ── АВАРИЙНАЯ ОЧИСТКА ЗОМБИ-КЭША ────────────────────────────
@@ -2175,14 +3106,16 @@ async function saveRatingCritical(source){
 
 function canWriteNow() {
   if (!db) { showToast('Нет данных'); return false; }
+  if (!GS_URL_IS_SET) { showToast('⚠️ Не задан адрес сервера'); return false; }
   if (isReadOnlyCacheMode) {
-    showToast('⚠️ Сохранение запрещено — нет связи с облаком. Обнови страницу.');
+    showToast('⚠️ Сохранение запрещено — нет связи с сервером. Обнови страницу.');
     return false;
   }
   if (sessionStorage.getItem('obshestvo_app_version') !== APP_VERSION) {
     showToast('⚠️ Старая вкладка. Обнови страницу перед сохранением.');
     return false;
   }
+  if (!getSession()) { requireRelogin(); return false; }
   return true;
 }
 
@@ -2216,41 +3149,13 @@ function dismissCinematic(){
 
 async function retrySave(){
   if(!canWriteNow()) return;
-  if(!db){showToast('Нет данных для сохранения');return;}
-  showToast('Повторяем сохранение...');
-  const ok=await saveRatingCritical('rating:retry');
-  if(ok) showToast('✅ Облако сохранено');
-  else showToast('⚠️ Снова ошибка облака. Проверь интернет.');
+  if(!getOutbox().length){ showToast('Нет неподтверждённых операций'); return; }
+  showToast('Повторяем отправку...');
+  const r = await flushOutbox();
+  showToast(r.bad ? '⚠️ Не подтверждено: '+r.bad+'. Проверь интернет.' : '✅ Всё подтверждено сервером');
 }
-
-
-// ── FORCE CLOUD SAVE ─────────────────────────────────────────
-async function forceCloudSave(){
-  if(!canWriteNow()) return;
-  if(!db){showToast('Нет данных');return;}
-  console.log('Force saving '+db.results.length+' results...');
-  const ok=await saveRatingCritical('rating:forceCloudSave');
-  if(ok) showToast('✅ Облако сохранено ('+db.results.length+' записей)');
-  else showToast('⚠️ Ошибка сохранения');
-}
-
-// ── CHECK CLOUD ───────────────────────────────────────────────
-async function checkCloud(){
-  console.log('LOCAL results:', db?db.results.length:0);
-  try{
-    const res=await fetchWithTimeout(GS_URL+'?token='+GS_TOKEN+'&_='+Date.now(),{method:'GET',cache:'no-store'},7000);
-    if(!res.ok){console.log('CLOUD: HTTP error',res.status);return;}
-    const cloud=await res.json();
-    console.log('CLOUD results:', cloud.results?cloud.results.length:0);
-    if(db&&db.results&&cloud.results){
-      console.log('LOCAL last:', db.results[db.results.length-1]);
-      console.log('CLOUD last:', cloud.results[cloud.results.length-1]);
-    }
-  }catch(e){console.log('CLOUD: error',e.message);}
-}
-
-// ── CLEAR ZOMBIE CACHE ────────────────────────────────────────
-// ── STUBS удалены: дубли пустых заглушек (см. блок выше, строки ~1963) ──
+async function forceCloudSave(){ return retrySave(); }
+async function checkCloud(){ try{ await window.checkCloud(); }catch(e){ console.log('СЕРВЕР: ошибка', e.message); } }
 
 // ── INIT ──────────────────────────────────────────────────────
 sessionStorage.setItem('obshestvo_app_version', APP_VERSION);
@@ -2258,9 +3163,9 @@ isReadOnlyCacheMode = false;
 initParticles();
 loadFromCloudWithRetry().then(ok=>{
   if(!ok){
-    document.getElementById('rating-content').innerHTML='<div class="empty-state"><div class="big">⚠️</div><p>Не удалось загрузить данные.<br>Проверь интернет и обнови страницу.</p></div>';
+    document.getElementById('rating-content').innerHTML='<div class="empty-state"><div class="big">⚠️</div><p>Не удалось загрузить данные.<br>'+escHtml(GS_URL_IS_SET ? (_lastLoadError||'Проверь интернет и обнови страницу.') : 'Не задан адрес сервера.')+'</p></div>';
   }
-  renderRating();
+  else renderRating();
   hideLoadingScreen();
 });
 
